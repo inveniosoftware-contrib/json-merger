@@ -1,7 +1,9 @@
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
-*$py.class
+
+# Idea software family
+.idea/
 
 # C extensions
 *.so
@@ -43,11 +45,9 @@ htmlcov/
 nosetests.xml
 coverage.xml
 *,cover
-.hypothesis/
 
 # Translations
 *.mo
-*.pot
 
 # Django stuff:
 *.log
@@ -57,6 +57,3 @@ docs/_build/
 
 # PyBuilder
 target/
-
-#Ipython Notebook
-.ipynb_checkpoints
