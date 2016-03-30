@@ -27,14 +27,19 @@
 
 from __future__ import absolute_import, print_function
 
-from flask import Flask
+import pytest
 
 from json_merger import merge_records
 
 
 def test_merge_records_empty_update():
-    # TODO add a fixture
     src = {'some': 'stuff'}
     update = {}
 
     assert merge_records(src, update) == src
+
+
+@pytest.mark.skip
+def test_merge_records_author_typo(json_loader):
+    src, update, expected, desc = json_loader.load_test('author_typo')
+    assert merge_records(src, update) == expected, desc
