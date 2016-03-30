@@ -28,4 +28,5 @@ from __future__ import absolute_import, print_function
 
 
 def merge_records(src, update):
+    """Merge update upon src."""
     return src
