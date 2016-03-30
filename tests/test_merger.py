@@ -39,7 +39,7 @@ def test_merge_records_empty_update():
     assert merge_records(src, update) == src
 
 
-@pytest.mark.skip
+@pytest.mark.xfail
 def test_merge_records_author_typo(json_loader):
     src, update, expected, desc = json_loader.load_test('author_typo')
     assert merge_records(src, update) == expected, desc
