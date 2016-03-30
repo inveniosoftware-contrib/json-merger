@@ -50,13 +50,3 @@ def test_init():
     assert 'json-merger' not in app.extensions
     ext.init_app(app)
     assert 'json-merger' in app.extensions
-
-
-def test_view(app):
-    """Test view."""
-    Babel(app)
-    JsonMerger(app)
-    with app.test_client() as client:
-        res = client.get("/")
-        assert res.status_code == 200
-        assert 'Welcome to json-merger' in str(res.data)
