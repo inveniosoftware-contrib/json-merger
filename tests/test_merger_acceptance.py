@@ -22,12 +22,23 @@
 # waive the privileges and immunities granted to it by virtue of its status
 # as an Intergovernmental Organization or submit itself to any jurisdiction.
 
-"""Invenio module that is able to merge json record objects."""
+
+"""Acceptance scenarios for the merger."""
 
 from __future__ import absolute_import, print_function
 
-from .ext import JsonMerger
-from .merger import merge_records
-from .version import __version__
+import pytest
 
-__all__ = ('__version__', 'JsonMerger', 'merge_records')
+from json_merger import merge_records
+
+
+@pytest.mark.xfail
+@pytest.mark.parametrize('scenario', [
+    'author_typo',
+    'author_prepend',
+    'author_delete',
+    'author_prepend_and_typo',
+    'author_delete_and_typo'])
+def test_expected_outcome(json_loader, scenario):
+    src, update, expected, desc = json_loader.load_test(scenario)
+    assert merge_records(src, update) == expected, desc

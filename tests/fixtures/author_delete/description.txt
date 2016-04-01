@@ -1,0 +1,1 @@
+Deleting an author should preserve affiliations for the other.

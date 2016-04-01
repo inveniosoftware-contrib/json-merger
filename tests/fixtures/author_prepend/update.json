@@ -1,0 +1,16 @@
+{
+    "authors": [
+        {
+            "full_name": "New, Author"
+        },
+        {
+            "curated_relation": false,
+            "full_name": "Horowitz, Gary T."
+        },
+        {
+            "curated_relation": false,
+            "full_name": "Ooguri, Hirosi",
+            "inspire_id": "INSPIRE-00113241"
+        }
+    ]
+}

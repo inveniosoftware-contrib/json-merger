@@ -27,8 +27,13 @@
 
 from __future__ import absolute_import, print_function
 
+import json
+import os
+
 import pytest
 from flask import Flask
+
+from json_merger import JsonMerger
 
 
 @pytest.fixture()
@@ -38,4 +43,28 @@ def app():
     app.config.update(
         TESTING=True
     )
+    JsonMerger(app)
     return app
+
+
+@pytest.fixture()
+def json_loader():
+    class _Loader(object):
+        def __init__(self, basedir):
+            self.basedir = basedir
+
+        def _read_file(self, test_name, file_name):
+            with open(os.path.join(self.basedir, test_name, file_name)) as f:
+                return f.read()
+
+        def load_single(self, test_name, file_name):
+            return json.loads(self._read_file(test_name, file_name))
+
+        def load_test(self, test_name):
+            src = self.load_single(test_name, 'src.json')
+            update = self.load_single(test_name, 'update.json')
+            expected = self.load_single(test_name, 'expected.json')
+            desc = self._read_file(test_name, 'description.txt')
+            return src, update, expected, desc
+
+    return _Loader('./tests/fixtures/')

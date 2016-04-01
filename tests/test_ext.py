@@ -22,12 +22,30 @@
 # waive the privileges and immunities granted to it by virtue of its status
 # as an Intergovernmental Organization or submit itself to any jurisdiction.
 
-"""Invenio module that is able to merge json record objects."""
+
+"""Module tests."""
 
 from __future__ import absolute_import, print_function
 
-from .ext import JsonMerger
-from .merger import merge_records
-from .version import __version__
+from flask import Flask
 
-__all__ = ('__version__', 'JsonMerger', 'merge_records')
+from json_merger import JsonMerger
+
+
+def test_version():
+    """Test version import."""
+    from json_merger import __version__
+    assert __version__
+
+
+def test_init():
+    """Test extension initialization."""
+    app = Flask('testapp')
+    ext = JsonMerger(app)
+    assert 'json-merger' in app.extensions
+
+    app = Flask('testapp')
+    ext = JsonMerger()
+    assert 'json-merger' not in app.extensions
+    ext.init_app(app)
+    assert 'json-merger' in app.extensions
