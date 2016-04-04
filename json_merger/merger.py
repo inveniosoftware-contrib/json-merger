@@ -28,7 +28,7 @@ from __future__ import absolute_import, print_function
 
 import copy
 
-from dictdiffer import diff, patch, REMOVE
+from dictdiffer import REMOVE, diff, patch
 from munkres import Munkres, print_matrix
 
 
