@@ -57,11 +57,11 @@ def author_distance():
 
 
 @pytest.mark.parametrize('scenario', [
-    'author_typo',
-    'author_prepend',
-    'author_delete',
-    'author_prepend_and_typo',
-    'author_delete_and_typo'])
+    'author_list_basic/author_typo',
+    'author_list_basic/author_prepend',
+    'author_list_basic/author_delete',
+    'author_list_basic/author_prepend_and_typo',
+    'author_list_basic/author_delete_and_typo'])
 def test_expected_outcome_authors(json_loader, author_distance, scenario):
     m = Merger({'ALLOW_REMOVES_FROM': ['authors']}, author_distance)
     src, update, expected, desc = json_loader.load_test(scenario)
