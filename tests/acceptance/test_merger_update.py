@@ -29,8 +29,18 @@ from __future__ import absolute_import, print_function
 
 import pytest
 
-from dictdiffer import patch
-from dictdiffer.merge import Merger
+from json_merger import merge_with_update
+
+
+class AuthorComparator(object):
+
+    def distance(self, obj1, obj2):
+        return 0 if self.equal(obj1, obj2) else 1
+
+    def equal(self, obj1, obj2):
+        if 'inspire_id' in obj1 and 'inspire_id' in obj2:
+            return obj1['inspire_id'] == obj2['inspire_id']
+        return obj1['full_name'][:5] == obj2['full_name'][:5]
 
 
 @pytest.mark.xfail
@@ -47,12 +57,10 @@ from dictdiffer.merge import Merger
     'author_replace_and_single_curator_typo_fix',
     'author_delete_and_double_curator_typo_fix'])
 def test_author_typo_scenarios(update_fixture_loader, scenario):
+    comparators = {'authors': AuthorComparator()}
     root, head, update, exp, desc = update_fixture_loader.load_test(scenario)
-    m = Merger(root, head, update, {})
     if exp.get('conflict'):
-        with pytest.raises(Exception):
-            m.run()
+        merge_with_update(root, head, update, comparators)
     else:
-        m.run()
-        result = patch(m.unified_patches, root)
-        assert result == exp, desc
+        res = merge_with_update(root, head, update, comparators)
+        assert res == exp, desc
