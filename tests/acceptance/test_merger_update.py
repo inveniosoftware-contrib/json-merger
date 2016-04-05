@@ -29,42 +29,20 @@ from __future__ import absolute_import, print_function
 
 import pytest
 
-from json_merger import Merger
 
-
-@pytest.fixture
-def author_distance():
-    def distance(a1, a2):
-        if a1 == a2:
-            return 0
-
-        if not isinstance(a1, dict):
-            return 1
-        if not isinstance(a2, dict):
-            return 1
-
-        if 'full_name' not in a1:
-            return 1
-        if 'full_name' not in a2:
-            return 1
-
-        if a1['full_name'][:5] == a2['full_name'][:5]:
-            return 0
-
-        return 1
-
-    return distance
-
-
+@pytest.mark.xfail
 @pytest.mark.parametrize('scenario', [
-    'author_list_basic/author_typo',
-    'author_list_basic/author_prepend',
-    'author_list_basic/author_delete',
-    'author_list_basic/author_prepend_and_typo',
-    'author_list_basic/author_delete_and_typo'])
-def test_expected_outcome_authors(json_loader, author_distance, scenario):
-    m = Merger({'ALLOW_REMOVES_FROM': ['authors']}, author_distance)
-    src, update, expected, desc = json_loader.load_test(scenario)
-
-    merged = m.merge_records(src, update)
-    assert merged == expected, desc
+    'author_typo_update_fix',
+    'author_typo_curator_fix',
+    'author_typo_update_and_curator_fix',
+    'author_typo_conflict',
+    'author_prepend_and_curator_typo_fix',
+    'author_delete_and_single_curator_typo_fix',
+    'author_delete_and_double_curator_typo_fix',
+    'author_reorder_and_double_curator_typo_fix',
+    'author_reorder_conflict',
+    'author_replace_and_single_curator_typo_fix',
+    'author_delete_and_double_curator_typo_fix'])
+def test_author_typo_scenarios(update_fixture_loader, scenario):
+    root, head, update, exp, desc = update_fixture_loader.load_test(scenario)
+    assert False
