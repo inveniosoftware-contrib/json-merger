@@ -29,6 +29,9 @@ from __future__ import absolute_import, print_function
 
 import pytest
 
+from dictdiffer import patch
+from dictdiffer.merge import Merger
+
 
 @pytest.mark.xfail
 @pytest.mark.parametrize('scenario', [
@@ -45,4 +48,11 @@ import pytest
     'author_delete_and_double_curator_typo_fix'])
 def test_author_typo_scenarios(update_fixture_loader, scenario):
     root, head, update, exp, desc = update_fixture_loader.load_test(scenario)
-    assert False
+    m = Merger(root, head, update, {})
+    if exp.get('conflict'):
+        with pytest.raises(Exception):
+            m.run()
+    else:
+        m.run()
+        result = patch(m.unified_patches, root)
+        assert result == exp, desc
