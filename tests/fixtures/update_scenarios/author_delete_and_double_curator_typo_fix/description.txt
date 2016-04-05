@@ -1,0 +1,1 @@
+Curator touched both author names. Update deletes one author. Expect a single author containing the curator added info.

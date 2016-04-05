@@ -1,0 +1,1 @@
+Curator touched an author name, data should be preserved after update.

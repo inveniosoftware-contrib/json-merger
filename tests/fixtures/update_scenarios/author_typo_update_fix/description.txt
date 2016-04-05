@@ -1,0 +1,1 @@
+Curator only added metadata, name should be updated by update.

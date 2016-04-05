@@ -1,0 +1,15 @@
+In this suite we test the following workflow:
+* A record harvested from source "A" is inserted into the database.
+* The database record is annotaded via external sources (e.g. Catalogers).
+* We receive an update from source "B" and we only want to add extra fields
+  while not losing any of the data added by "A" as source of truth.
+
+The expected behavior is:
+* Record order in list fields is given the source of truth record.
+  Update won't perform any:
+  * Additions
+  * Reorderings
+  * _Deletions_
+* Any field present in "A" will be locked to the value added in "A".
+* Any field addition added in "B" will be present in the end result.
+* Any field change that is not present in "A" will be updated by the "B" update.

@@ -1,0 +1,1 @@
+Curator fixed a typo in an author. Update reorders authors and fixes the typo differently. Expect a conflict.
