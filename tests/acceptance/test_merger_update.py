@@ -29,6 +29,9 @@ from __future__ import absolute_import, print_function
 
 import pytest
 
+from dictdiffer import patch
+from dictdiffer.merge import Merger
+
 from json_merger import merge_with_update
 
 
@@ -43,7 +46,6 @@ class AuthorComparator(object):
         return obj1['full_name'][:5] == obj2['full_name'][:5]
 
 
-@pytest.mark.xfail
 @pytest.mark.parametrize('scenario', [
     'author_typo_update_fix',
     'author_typo_curator_fix',
@@ -60,7 +62,8 @@ def test_author_typo_scenarios(update_fixture_loader, scenario):
     comparators = {'authors': AuthorComparator()}
     root, head, update, exp, desc = update_fixture_loader.load_test(scenario)
     if exp.get('conflict'):
-        merge_with_update(root, head, update, comparators)
+        with pytest.raises(Exception):
+            merge_with_update(root, head, update, comparators)
     else:
-        res = merge_with_update(root, head, update, comparators)
-        assert res == exp, desc
+        result = merge_with_update(root, head, update, comparators)
+        assert result == exp, desc
