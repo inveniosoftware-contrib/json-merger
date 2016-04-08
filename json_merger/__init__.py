@@ -27,7 +27,8 @@
 from __future__ import absolute_import, print_function
 
 from .ext import JsonMerger
-from .merger import merge_with_update
+from .merger import UpdateMerger, ListAlignMergerException
 from .version import __version__
 
-__all__ = ('__version__', 'JsonMerger', 'merge_with_update')
+__all__ = ('__version__', 'JsonMerger', 'UpdateMerger',
+           'ListAlignMergerException')
