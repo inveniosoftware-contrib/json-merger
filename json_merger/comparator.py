@@ -22,13 +22,16 @@
 # waive the privileges and immunities granted to it by virtue of its status
 # as an Intergovernmental Organization or submit itself to any jurisdiction.
 
-"""Invenio module that is able to merge json record objects."""
-
 from __future__ import absolute_import, print_function
 
-from .errors import MergeError
-from .ext import JsonMerger
-from .merger import UpdateMerger
-from .version import __version__
 
-__all__ = ('__version__', 'JsonMerger', 'UpdateMerger', 'MergeError')
+class ComparatorBase(object):
+
+    def equal(self, obj1, obj2):
+        raise NotImplementedError()
+
+
+class DefaultComparator(object):
+
+    def equal(self, obj1, obj2):
+        return obj1 == obj2

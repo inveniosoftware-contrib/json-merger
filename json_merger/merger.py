@@ -31,7 +31,10 @@ import copy
 from dictdiffer import patch
 from dictdiffer.merge import Merger, UnresolvedConflictsException
 
-from .list_unify import ListUnifier, ListUnifyException
+from .comparator import DefaultComparator
+from .errors import MergeError
+from .list_unify import ListUnifier, UnifierOps
+from .nothing import NOTHING
 
 
 def _get_list_fields(obj, res, key_path=()):
@@ -56,14 +59,22 @@ def _set_obj_at_key_path(obj, key_path, value):
     obj[key_path[-1]] = value
 
 
-class DefaultComparator(object):
+def _nothing_to_base_type(src_obj, target_obj):
+    if src_obj != NOTHING:
+        return src_obj
+    if isinstance(target_obj, dict):
+        return {}
+    if isinstance(target_obj, list):
+        return []
+    if isinstance(target_obj, basestring):
+        return ''
+    if isinstance(target_obj, (int, long, float, complex)):
+        return 0
 
-    def equal(self, obj1, obj2):
-        return obj1 == obj2
 
-
-class ListAlignMergerException(Exception):
-    pass
+def _translate_nothing_objects(*args):
+    typed_obj = [a for a in args if a != NOTHING][0]
+    return (_nothing_to_base_type(a, typed_obj) for a in args)
 
 
 class ListAlignMerger(object):
@@ -85,7 +96,7 @@ class ListAlignMerger(object):
         self.merged_root = self._recursive_merge(self.root, self.head,
                                                  self.update)
         if self.conflicts:
-            raise ListAlignMergerException('replace me with a proper one')
+            raise MergeError('replace me with a proper one', None)
 
     def _backup_lists(self, root, head, update, list_key_paths):
         list_backups = {}
@@ -136,7 +147,7 @@ class ListAlignMerger(object):
             comparator = self.comparators.get(dotted_key_path,
                                               DefaultComparator())
             list_unifier = ListUnifier(root_l, head_l, update_l,
-                                       comparator, operation)
+                                       operation, comparator)
             try:
                 list_unifier.unify()
             except ListUnifyException as e:
@@ -146,6 +157,9 @@ class ListAlignMerger(object):
             for root_obj, head_obj, update_obj in list_unifier.unified:
                 # Intentionally skip list index in key path as ops and
                 # comparators do not contain list index keys.
+                root_obj, head_obj, update_obj = _translate_nothing_objects(
+                    root_obj, head_obj, update_obj)
+
                 new_obj = self._recursive_merge(root_obj, head_obj, update_obj,
                                                 absolute_key_path)
                 new_root_list.append(new_obj)
@@ -159,5 +173,5 @@ class UpdateMerger(ListAlignMerger):
 
     def __init__(self, root, head, update, comparators=None, ops=None):
         super(UpdateMerger, self).__init__(
-                root, head, update, ListUnifier.KEEP_ONLY_UPDATE_ENTITIES,
+                root, head, update, UnifierOps.KEEP_ONLY_UPDATE_ENTITIES,
                 comparators, ops)

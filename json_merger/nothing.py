@@ -22,13 +22,28 @@
 # waive the privileges and immunities granted to it by virtue of its status
 # as an Intergovernmental Organization or submit itself to any jurisdiction.
 
-"""Invenio module that is able to merge json record objects."""
-
 from __future__ import absolute_import, print_function
 
-from .errors import MergeError
-from .ext import JsonMerger
-from .merger import UpdateMerger
-from .version import __version__
 
-__all__ = ('__version__', 'JsonMerger', 'UpdateMerger', 'MergeError')
+class Nothing(object):
+
+    def __eq__(self, other):
+        if isinstance(other, Nothing):
+            return True
+        return False
+
+    def __ne__(self, other):
+        if isinstance(other, Nothing):
+            return False
+        return True
+
+    def __str__(self):
+        return 'NOTHING'
+
+    def __repr__(self):
+        return 'NOTHING'
+
+
+# Create a new placeholder for None objects that doesn't conflict with None
+# entries in the dicts.
+NOTHING = Nothing()

@@ -29,7 +29,7 @@ from __future__ import absolute_import, print_function
 
 import pytest
 
-from json_merger import UpdateMerger, ListAlignMergerException
+from json_merger import UpdateMerger, MergeError
 
 
 class AuthorComparator(object):
@@ -61,7 +61,7 @@ def test_author_typo_scenarios(update_fixture_loader, scenario):
     root, head, update, exp, desc = update_fixture_loader.load_test(scenario)
     merger = UpdateMerger(root, head, update, comparators=comparators)
     if exp.get('conflict'):
-        with pytest.raises(ListAlignMergerException):
+        with pytest.raises(MergeError):
             merger.merge()
     else:
         merger.merge()
