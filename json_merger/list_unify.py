@@ -26,11 +26,10 @@
 
 from __future__ import absolute_import, print_function
 
-from toposort import toposort
-
 from .comparator import DefaultComparator
 from .errors import MergeError
-from .graph_builder import OrderGraphBuilder
+from .graph_builder import (
+    ListMatchGraphBuilder, toposort, sort_cyclic_graph_best_effort)
 from .nothing import NOTHING
 
 _OPERATIONS = [
@@ -92,28 +91,16 @@ class ListUnifier(object):
         self.unified = []
 
     def unify(self):
-        graph_builder = OrderGraphBuilder(self.root, self.head, self.update,
-                                          self.sources, self.comparator)
+        graph_builder = ListMatchGraphBuilder(
+            self.root, self.head, self.update, self.sources, self.comparator)
+        # TODO check for multiple match exceptions and do something about it.
         graph, nodes = graph_builder.build_graph()
-        ordered = toposort(graph)
 
-        head_id = 1
-        update_id = 2
-        for node_set in ordered:
-            head_nodes = [nodes[n] for n in node_set
-                          if nodes[n][head_id] != NOTHING and
-                          nodes[n][update_id] == NOTHING]
-            update_nodes = [nodes[n] for n in node_set
-                            if nodes[n][head_id] == NOTHING and
-                            nodes[n][update_id] != NOTHING]
-            common_nodes = [nodes[n] for n in node_set
-                            if nodes[n][head_id] != NOTHING and
-                            nodes[n][update_id] != NOTHING]
-            if self.pick_first == 'head':
-                self.unified.extend(head_nodes)
-                self.unified.extend(common_nodes)
-                self.unified.extend(update_nodes)
-            else:
-                self.unified.extend(update_nodes)
-                self.unified.extend(common_nodes)
-                self.unified.extend(head_nodes)
+        try:
+            node_order = toposort(graph, self.pick_first)
+        except ValueError:
+            node_order = sort_cyclic_graph_best_effort(graph, self.pick_first)
+            raise MergeError('Check Order', [])
+        finally:
+            for node in node_order:
+                self.unified.append(nodes[node])

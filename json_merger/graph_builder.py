@@ -28,8 +28,21 @@ from .comparator import DefaultComparator
 from .errors import MergeError
 from .nothing import NOTHING
 
+FIRST = 'first'
 
-class OrderGraphBuilder(object):
+
+class BeforeNodes(object):
+
+    def __init__(self, head_node=None, update_node=None):
+        self.head_node = head_node
+        self.update_node = update_node
+
+    def __repr__(self):
+        return 'BeforeNodes <head_node: {}, update_node: {}>'.format(
+            self.head_node, self.update_node)
+
+
+class ListMatchGraphBuilder(object):
 
     def __init__(self, root, head, update, sources, comparator=None):
         self.root = root
@@ -38,8 +51,8 @@ class OrderGraphBuilder(object):
         self.comparator = comparator or DefaultComparator()
         self.sources = sources
 
-        self.graph = {}
         self.node_data = {}
+        self.graph = {}
 
         self._node_src_indices = {}
         self._head_idx_to_node = {}
@@ -99,17 +112,98 @@ class OrderGraphBuilder(object):
     def build_graph(self):
         self._populate_nodes()
 
+        # Link a dummy first node before the first element of the sources
+        # lists.
+        self.node_data[FIRST] = (NOTHING, NOTHING, NOTHING)
+        self.graph[FIRST] = BeforeNodes()
+
+        if 'head' in self.sources and 0 in self._head_idx_to_node:
+            self.graph[FIRST].head_node = self._head_idx_to_node[0]
+        if 'update' in self.sources and 0 in self._update_idx_to_node:
+            self.graph[FIRST].update_node = self._update_idx_to_node[0]
+
+        # Link any other nodes with the elements that come after them in their
+        # source lists.
         for node_id, node_indices in self._node_src_indices.iteritems():
             root_idx, head_idx, update_idx = node_indices
-            head_prev = head_idx - 1
-            update_prev = update_idx - 1
+            head_next = head_idx + 1 if head_idx >= 0 else -1
+            update_next = update_idx + 1 if update_idx >= 0 else -1
 
-            self.graph[node_id] = set()
-            if (head_prev in self._head_idx_to_node and
+            next_head_node = None
+            next_update_node = None
+            if (head_next in self._head_idx_to_node and
                     'head' in self.sources):
-                self.graph[node_id].add(self._head_idx_to_node[head_prev])
-            if (update_prev in self._update_idx_to_node and
+                next_head_node = self._head_idx_to_node[head_next]
+            if (update_next in self._update_idx_to_node and
                     'update' in self.sources):
-                self.graph[node_id].add(self._update_idx_to_node[update_prev])
+                next_update_node = self._update_idx_to_node[update_next]
+            self.graph[node_id] = BeforeNodes(next_head_node, next_update_node)
 
         return self.graph, self.node_data
+
+
+def _get_traversal(next_nodes, pick_first):
+    if pick_first == 'head':
+        return [next_nodes.update_node, next_nodes.head_node]
+    else:
+        return [next_nodes.head_node, next_nodes.update_node]
+
+
+def toposort(graph, pick_first='head'):
+    """Toplogically sorts a list match graph.
+
+    Tries to perform a topological sort using as tiebreaker the pick_first
+    argument. If the graph contains cycles, raise ValueError.
+    """
+    in_deg = {}
+    for node, next_nodes in graph.iteritems():
+        for next_node in [next_nodes.head_node, next_nodes.update_node]:
+            if next_node is None:
+                continue
+            in_deg[next_node] = in_deg.get(next_node, 0) + 1
+
+    stk = [FIRST]
+    ordered = []
+    visited = set()
+    while stk:
+        node = stk.pop()
+        visited.add(node)
+        if node != FIRST:
+            ordered.append(node)
+        traversal = _get_traversal(graph.get(node, BeforeNodes()), pick_first)
+        for next_node in traversal:
+            if next_node is None:
+                continue
+            if next_node in visited:
+                raise ValueError('Graph has a cycle')
+
+            in_deg[next_node] -= 1
+            if in_deg[next_node] == 0:
+                stk.append(next_node)
+
+    # Nodes may not be walked because they don't reach in degree 0.
+    if len(ordered) != len(graph) - 1:
+        raise ValueError('Graph has a cycle')
+    return ordered
+
+
+def sort_cyclic_graph_best_effort(graph, pick_first='head'):
+    """Fallback for cases in which the graph has cycles."""
+    stk = [FIRST]
+    visited = set()
+    ordered = []
+    while stk:
+        node = stk.pop()
+        if node != FIRST:
+            ordered.append(node)
+
+        visited.add(node)
+        traversal = _get_traversal(graph.get(node, BeforeNodes()), pick_first)
+
+        for next_node in traversal:
+            if next_node is None:
+                continue
+            if next_node not in visited:
+                stk.append(next_node)
+
+    return ordered
