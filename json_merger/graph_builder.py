@@ -42,6 +42,47 @@ class BeforeNodes(object):
             self.head_node, self.update_node)
 
 
+class ListMatchStats(object):
+
+    def __init__(self, lst, root):
+        self.lst = lst
+        self.root = root
+
+        self.in_result_idx = set()
+        self.not_in_result_idx = set(range(len(lst)))
+        self.not_in_result_root_match_idx = set()
+
+    def move_to_result(self, lst_idx):
+        self.in_result_idx.add(lst_idx)
+        self.not_in_result_idx.remove(lst_idx)
+
+    def add_root_match(self, lst_idx):
+        if lst_idx in self.in_result_idx:
+            return
+        self.not_in_result_root_match_idx.add(lst_idx)
+
+    @property
+    def not_in_result_not_root_match_idx(self):
+        return self.not_in_result_idx.difference(
+            self.not_in_result_root_match_idx)
+
+    @property
+    def in_result(self):
+        return [self.lst[e] for e in self.in_result_idx]
+
+    @property
+    def not_in_result(self):
+        return [self.lst[e] for e in self.not_in_result_idx]
+
+    @property
+    def not_in_result_root_match(self):
+        return [self.lst[e] for e in self.not_in_result_root_match_idx]
+
+    @property
+    def not_in_result_not_root_match(self):
+        return [self.lst[e] for e in self.not_in_result_not_root_match_idx]
+
+
 class ListMatchGraphBuilder(object):
 
     def __init__(self, root, head, update, sources, comparator=None):
@@ -53,6 +94,8 @@ class ListMatchGraphBuilder(object):
 
         self.node_data = {}
         self.graph = {}
+        self.head_stats = ListMatchStats(head, root)
+        self.update_stats = ListMatchStats(update, root)
 
         self._node_src_indices = {}
         self._head_idx_to_node = {}
@@ -109,8 +152,28 @@ class ListMatchGraphBuilder(object):
 
                 self._push_node(root_elem, head_elem, update_elem)
 
+    def _build_stats(self):
+        for root_idx, head_idx, update_idx in self._node_src_indices.values():
+            if head_idx >= 0:
+                self.head_stats.move_to_result(head_idx)
+            if update_idx >= 0:
+                self.update_stats.move_to_result(update_idx)
+
+        for idx in self.head_stats.not_in_result_idx:
+            root_idx, root = self._get_matching_element(self.root,
+                                                        self.head[idx])
+            if root_idx >= 0:
+                self.head_stats.add_root_match(root_idx)
+
+        for idx in self.update_stats.not_in_result_idx:
+            root_idx, root = self._get_matching_element(self.root,
+                                                        self.head[idx])
+            if root_idx >= 0:
+                self.head_stats.add_root_match(root_idx)
+
     def build_graph(self):
         self._populate_nodes()
+        self._build_stats()
 
         # Link a dummy first node before the first element of the sources
         # lists.
@@ -189,21 +252,26 @@ def toposort(graph, pick_first='head'):
 
 def sort_cyclic_graph_best_effort(graph, pick_first='head'):
     """Fallback for cases in which the graph has cycles."""
-    stk = [FIRST]
-    visited = set()
     ordered = []
-    while stk:
-        node = stk.pop()
-        if node != FIRST:
-            ordered.append(node)
+    visited = set()
+    # Go first on the pick_first chain then go back again on the others
+    # that were not visited. Given the way the graph is built both chains
+    # will always contain all the elements.
+    if pick_first == 'head':
+        fst_attr, snd_attr = ('head_node', 'update_node')
+    else:
+        fst_attr, snd_attr = ('update_node', 'head_node')
 
-        visited.add(node)
-        traversal = _get_traversal(graph.get(node, BeforeNodes()), pick_first)
-
-        for next_node in traversal:
-            if next_node is None:
-                continue
-            if next_node not in visited:
-                stk.append(next_node)
-
+    current = FIRST
+    while current is not None:
+        visited.add(current)
+        current = getattr(graph[current], fst_attr)
+        if current not in visited and current is not None:
+            ordered.append(current)
+    current = FIRST
+    while current is not None:
+        visited.add(current)
+        current = getattr(graph[current], snd_attr)
+        if current not in visited and current is not None:
+            ordered.append(current)
     return ordered

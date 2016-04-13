@@ -79,6 +79,9 @@ class ListUnifier(object):
         self.update = update
         self.comparator = comparator or DefaultComparator()
 
+        self.head_stats = None
+        self.update_stats = None
+
         # Wether to raise error on deleting a head entity.
         # TODO implement this
         self.raise_on_head_delete = operation in _RAISE_ERROR_OPS
@@ -96,6 +99,9 @@ class ListUnifier(object):
         # TODO check for multiple match exceptions and do something about it.
         graph, nodes = graph_builder.build_graph()
 
+        self.head_stats = graph_builder.head_stats
+        self.update_stats = graph_builder.update_stats
+
         try:
             node_order = toposort(graph, self.pick_first)
         except ValueError:
@@ -104,3 +110,7 @@ class ListUnifier(object):
         finally:
             for node in node_order:
                 self.unified.append(nodes[node])
+            if (self.raise_on_head_delete and
+                    self.head_stats.not_in_result_not_root_match_idx):
+                removed = self.head_stats.not_in_result_not_root_match
+                raise MergeError('Might want to put these back', removed)

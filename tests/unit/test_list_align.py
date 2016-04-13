@@ -93,7 +93,6 @@ def test_keep_update_and_head_ent_update_fst():
                          (NOTHING, NOTHING, 11)]
 
 
-@pytest.mark.xfail
 def test_keep_update_and_head_ent_head_fst_fallback():
     root = [1, 2]
     head = [1, 2, 3]
@@ -112,7 +111,6 @@ def test_keep_update_and_head_ent_head_fst_fallback():
                          (NOTHING, NOTHING, 4)]
 
 
-@pytest.mark.xfail
 def test_error_on_head_delete():
     root = [1, 2]
     head = [1, 2, 3]
