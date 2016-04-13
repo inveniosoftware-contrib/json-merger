@@ -121,3 +121,32 @@ def test_error_on_head_delete():
 
     with pytest.raises(MergeError):
         u.unify()
+
+    root = [1, 2]
+    head = [1, 2]
+    update = [1, 4]
+
+    u = ListUnifier(root, head, update,
+                    UnifierOps.KEEP_UPDATE_ENTITIES_CONFLICT_ON_HEAD_DELETE)
+    u.unify()
+    assert u.unified == [(1, 1, 1), (NOTHING, NOTHING, 4)]
+
+
+def test_stats():
+    root = [1, 2]
+    head = [1, 2, 3, 4]
+    update = [1, 3, 5]
+
+    u = ListUnifier(root, head, update,
+                    UnifierOps.KEEP_ONLY_UPDATE_ENTITIES)
+    u.unify()
+
+    assert sorted(u.head_stats.in_result) == [1, 3]
+    assert sorted(u.head_stats.not_in_result) == [2, 4]
+    assert sorted(u.head_stats.not_in_result_root_match) == [2]
+    assert sorted(u.head_stats.not_in_result_not_root_match) == [4]
+
+    assert sorted(u.update_stats.in_result) == [1, 3, 5]
+    assert sorted(u.update_stats.not_in_result) == []
+    assert sorted(u.update_stats.not_in_result_root_match) == []
+    assert sorted(u.update_stats.not_in_result_not_root_match) == []
