@@ -24,30 +24,35 @@
 
 from __future__ import absolute_import, print_function
 
-
-class ConflictType(object):
-    pass
-
-_CONFLICTS = (
-    'REORDER',
-    'MANUAL_MERGE',
-    'ADD_BACK_TO_HEAD',
-    'SET_FIELD',
-    'REMOVE_FIELD'
-)
-for conflict_type in _CONFLICTS:
-    setattr(ConflictType, conflict_type, conflict_type)
+from .nothing import NOTHING
 
 
-class Conflict(tuple):
-    """Immutable representation of a conflict."""
+def get_obj_at_key_path(obj, key_path, default=None):
+    current = obj
+    for k in key_path:
+        try:
+            current = current[k]
+        except (KeyError, IndexError, TypeError):
+            return default
+    return current
 
-    # Based on http://stackoverflow.com/a/4828108
-    # Compatible with Python<=2.6
 
-    def __new__(cls, conflict_type, path, body):
-        return tuple.__new__(cls, (conflict_type, path, body))
+def set_obj_at_key_path(obj, key_path, value):
+    obj = get_obj_at_key_path(obj, key_path[:-1], NOTHING)
+    if obj == NOTHING:
+        raise KeyError(key_path)
+    try:
+        obj[key_path[-1]] = value
+    except (KeyError, IndexError, TypeError):
+        raise KeyError(key_path)
 
-    conflict_type = property(lambda self: self[0])
-    path = property(lambda self: self[1])
-    body = property(lambda self: self[2])
+
+def del_obj_at_key_path(obj, key_path, raise_key_error=True):
+    obj = get_obj_at_key_path(obj, key_path[:-1], NOTHING)
+    not_found = True
+    if obj != NOTHING:
+        try:
+            del obj[key_path[-1]]
+        except (KeyError, IndexError, TypeError):
+            if raise_key_error:
+                raise KeyError(key_path)

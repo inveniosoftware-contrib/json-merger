@@ -28,35 +28,17 @@ from __future__ import absolute_import, print_function
 
 import copy
 
-from dictdiffer import patch
-from dictdiffer.merge import Merger, UnresolvedConflictsException
-
 from .comparator import DefaultComparator
+from .dict_merger import SkipListsMerger
 from .errors import MergeError
 from .list_unify import ListUnifier, UnifierOps
 from .nothing import NOTHING
+from .utils import get_obj_at_key_path, set_obj_at_key_path
 
 
-def _get_list_fields(obj, res, key_path=()):
-    if isinstance(obj, list):
-        res.append(key_path)
-    elif isinstance(obj, dict):
-        for key, value in obj.iteritems():
-            _get_list_fields(value, res, key_path + (key, ))
-
-    return res
-
-
-def _get_obj_at_key_path(obj, key_path):
-    current = obj
-    for k in key_path:
-        current = current[k]
-    return current
-
-
-def _set_obj_at_key_path(obj, key_path, value):
-    obj = _get_obj_at_key_path(obj, key_path[:-1])
-    obj[key_path[-1]] = value
+def _translate_nothing_objects(*args):
+    typed_obj = [a for a in args if a != NOTHING][0]
+    return (_nothing_to_base_type(a, typed_obj) for a in args)
 
 
 def _nothing_to_base_type(src_obj, target_obj):
@@ -66,24 +48,17 @@ def _nothing_to_base_type(src_obj, target_obj):
         return {}
     if isinstance(target_obj, list):
         return []
-    if isinstance(target_obj, basestring):
-        return ''
-    if isinstance(target_obj, (int, long, float, complex)):
-        return 0
-
-
-def _translate_nothing_objects(*args):
-    typed_obj = [a for a in args if a != NOTHING][0]
-    return (_nothing_to_base_type(a, typed_obj) for a in args)
+    return None
 
 
 class ListAlignMerger(object):
 
     def __init__(self, root, head, update, default_op,
-                 comparators=None, ops=None):
+                 comparators=None, ops=None, dict_merger_kwargs=None):
         self.comparators = comparators or {}
         self.default_op = default_op
         self.ops = ops or {}
+        self.dict_merger_kwargs = dict_merger_kwargs or {}
 
         self.root = copy.deepcopy(root)
         self.head = copy.deepcopy(head)
@@ -99,59 +74,34 @@ class ListAlignMerger(object):
             raise MergeError('Conflicts Occured in Merge Process',
                              self.conflicts)
 
-    def _backup_lists(self, root, head, update, list_key_paths):
-        list_backups = {}
-        for l in list_key_paths:
-            list_backups[l] = (_get_obj_at_key_path(root, l),
-                               _get_obj_at_key_path(head, l),
-                               _get_obj_at_key_path(update, l))
-            _set_obj_at_key_path(root, l, None)
-            _set_obj_at_key_path(head, l, None)
-            _set_obj_at_key_path(update, l, None)
-        return list_backups
-
-    def _restore_lists(self, root, head, update, list_backups):
-        for l, (bak_r, bak_h, bak_u) in list_backups.iteritems():
-            _set_obj_at_key_path(root, l, bak_r)
-            _set_obj_at_key_path(head, l, bak_h)
-            _set_obj_at_key_path(update, l, bak_u)
-
     def _recursive_merge(self, root, head, update, key_path=()):
-        common_lists = set(_get_list_fields(root, []))
-        common_lists.intersection_update(set(_get_list_fields(head, [])))
-        common_lists.intersection_update(set(_get_list_fields(update, [])))
-
-        list_backups = self._backup_lists(root, head, update, common_lists)
-        non_list_merger = Merger(root, head, update, {})
-
+        non_list_merger = SkipListsMerger(root, head, update,
+                                          **self.dict_merger_kwargs)
         try:
-            non_list_merger.run()
-        except UnresolvedConflictsException as e:
+            non_list_merger.merge()
+        except MergeError as e:
             # TODO resolve conflict paths to key_path
             self.conflicts.extend(e.content)
 
-        if hasattr(non_list_merger, 'unified_patches'):
-            # TODO do it correctly
-            root = patch(non_list_merger.unified_patches, root)
+        root = non_list_merger.merged_root
 
-        self._restore_lists(root, head, update, list_backups)
-
-        for list_field in common_lists:
+        for list_field in non_list_merger.skipped_lists:
             absolute_key_path = key_path + list_field
             dotted_key_path = '.'.join(absolute_key_path)
-
-            root_l = _get_obj_at_key_path(root, list_field)
-            head_l = _get_obj_at_key_path(head, list_field)
-            update_l = _get_obj_at_key_path(update, list_field)
 
             operation = self.ops.get(dotted_key_path, self.default_op)
             comparator = self.comparators.get(dotted_key_path,
                                               DefaultComparator())
+            root_l = get_obj_at_key_path(root, list_field, [])
+            head_l = get_obj_at_key_path(head, list_field, [])
+            update_l = get_obj_at_key_path(update, list_field, [])
+
             list_unifier = ListUnifier(root_l, head_l, update_l,
                                        operation, comparator)
             try:
                 list_unifier.unify()
             except MergeError as e:
+                # TODO resolve conflict paths to key_path
                 self.conflicts.extend(e.content)
 
             new_root_list = []
@@ -165,7 +115,7 @@ class ListAlignMerger(object):
                                                 absolute_key_path)
                 new_root_list.append(new_obj)
 
-            _set_obj_at_key_path(root, list_field, new_root_list)
+            set_obj_at_key_path(root, list_field, new_root_list)
 
         return root
 
