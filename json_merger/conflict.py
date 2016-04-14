@@ -46,8 +46,13 @@ class Conflict(tuple):
     # Compatible with Python<=2.6
 
     def __new__(cls, conflict_type, path, body):
+        if conflict_type not in _CONFLICTS:
+            raise ValueError('Bad Conflict Type %s' % conflict_type)
         return tuple.__new__(cls, (conflict_type, path, body))
 
     conflict_type = property(lambda self: self[0])
     path = property(lambda self: self[1])
     body = property(lambda self: self[2])
+
+    def with_prepended_path(self, root_path):
+        return Conflict(self.conflict_type, root_path + self.path, self.body)

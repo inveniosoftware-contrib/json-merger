@@ -51,6 +51,10 @@ def _nothing_to_base_type(src_obj, target_obj):
     return None
 
 
+def _get_config_key_path(absolute_key_path):
+    return '.'.join(a for a in absolute_key_path if not isinstance(a, int))
+
+
 class ListAlignMerger(object):
 
     def __init__(self, root, head, update, default_op,
@@ -80,14 +84,14 @@ class ListAlignMerger(object):
         try:
             non_list_merger.merge()
         except MergeError as e:
-            # TODO resolve conflict paths to key_path
-            self.conflicts.extend(e.content)
+            self.conflicts.extend(c.with_prepended_path(key_path)
+                                  for c in e.content)
 
         root = non_list_merger.merged_root
 
         for list_field in non_list_merger.skipped_lists:
             absolute_key_path = key_path + list_field
-            dotted_key_path = '.'.join(absolute_key_path)
+            dotted_key_path = _get_config_key_path(absolute_key_path)
 
             operation = self.ops.get(dotted_key_path, self.default_op)
             comparator = self.comparators.get(dotted_key_path,
@@ -101,18 +105,16 @@ class ListAlignMerger(object):
             try:
                 list_unifier.unify()
             except MergeError as e:
-                # TODO resolve conflict paths to key_path
-                self.conflicts.extend(e.content)
+                self.conflicts.extend(c.with_prepended_path(absolute_key_path)
+                                      for c in e.content)
 
             new_root_list = []
-            for root_obj, head_obj, update_obj in list_unifier.unified:
+            for idx, objects in enumerate(list_unifier.unified):
                 root_obj, head_obj, update_obj = _translate_nothing_objects(
-                    root_obj, head_obj, update_obj)
+                    *objects)
 
-                # Intentionally skip list index in key path as ops and
-                # comparators do not contain list index keys.
                 new_obj = self._recursive_merge(root_obj, head_obj, update_obj,
-                                                absolute_key_path)
+                                                absolute_key_path + (idx, ))
                 new_root_list.append(new_obj)
 
             set_obj_at_key_path(root, list_field, new_root_list)
