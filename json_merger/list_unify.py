@@ -27,9 +27,11 @@
 from __future__ import absolute_import, print_function
 
 from .comparator import DefaultComparator
+from .conflict import Conflict, ConflictType
 from .errors import MergeError
 from .graph_builder import (
-    ListMatchGraphBuilder, toposort, sort_cyclic_graph_best_effort)
+    ListMatchGraphBuilder, GraphBuilderError,
+    sort_cyclic_graph_best_effort, toposort)
 from .nothing import NOTHING
 
 _OPERATIONS = [
@@ -96,8 +98,15 @@ class ListUnifier(object):
     def unify(self):
         graph_builder = ListMatchGraphBuilder(
             self.root, self.head, self.update, self.sources, self.comparator)
-        # TODO check for multiple match exceptions and do something about it.
-        graph, nodes = graph_builder.build_graph()
+        try:
+            graph, nodes = graph_builder.build_graph()
+        except GraphBuilderError as e:
+            # Can't partially recover from this, just keep self.head and call.
+            # For manual alignment with self.update.
+            self.unified = [(h, h, h) for h in self.head]
+            raise MergeError(e.message,
+                             [Conflict(ConflictType.MANUAL_MERGE, (),
+                                       self.update)])
 
         self.head_stats = graph_builder.head_stats
         self.update_stats = graph_builder.update_stats
@@ -106,11 +115,15 @@ class ListUnifier(object):
             node_order = toposort(graph, self.pick_first)
         except ValueError:
             node_order = sort_cyclic_graph_best_effort(graph, self.pick_first)
-            raise MergeError('Check Order', [])
+            raise MergeError('Order Might Be Wrong',
+                             [Conflict(ConflictType.REORDER, (), None)])
         finally:
             for node in node_order:
                 self.unified.append(nodes[node])
             if (self.raise_on_head_delete and
                     self.head_stats.not_in_result_not_root_match_idx):
                 removed = self.head_stats.not_in_result_not_root_match
-                raise MergeError('Might want to put these back', removed)
+                raise MergeError(
+                    'Some elements might need to go back to HEAD',
+                    [Conflict(ConflictType.ADD_BACK_TO_HEAD, (), r)
+                     for r in removed])

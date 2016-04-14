@@ -96,7 +96,8 @@ class ListAlignMerger(object):
         self.merged_root = self._recursive_merge(self.root, self.head,
                                                  self.update)
         if self.conflicts:
-            raise MergeError('replace me with a proper one', None)
+            raise MergeError('Conflicts Occured in Merge Process',
+                             self.conflicts)
 
     def _backup_lists(self, root, head, update, list_key_paths):
         list_backups = {}
@@ -150,16 +151,16 @@ class ListAlignMerger(object):
                                        operation, comparator)
             try:
                 list_unifier.unify()
-            except ListUnifyException as e:
+            except MergeError as e:
                 self.conflicts.extend(e.content)
 
             new_root_list = []
             for root_obj, head_obj, update_obj in list_unifier.unified:
-                # Intentionally skip list index in key path as ops and
-                # comparators do not contain list index keys.
                 root_obj, head_obj, update_obj = _translate_nothing_objects(
                     root_obj, head_obj, update_obj)
 
+                # Intentionally skip list index in key path as ops and
+                # comparators do not contain list index keys.
                 new_obj = self._recursive_merge(root_obj, head_obj, update_obj,
                                                 absolute_key_path)
                 new_root_list.append(new_obj)

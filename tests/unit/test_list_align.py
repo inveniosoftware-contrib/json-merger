@@ -29,6 +29,7 @@ from __future__ import absolute_import, print_function
 
 import pytest
 
+from json_merger.conflict import ConflictType
 from json_merger.errors import MergeError
 from json_merger.list_unify import ListUnifier, UnifierOps
 from json_merger.nothing import NOTHING
@@ -101,8 +102,14 @@ def test_keep_update_and_head_ent_head_fst_fallback():
     u = ListUnifier(root, head, update,
                     UnifierOps.KEEP_UPDATE_AND_HEAD_ENTITIES_HEAD_FIRST)
 
-    with pytest.raises(MergeError):
+    with pytest.raises(MergeError) as excinfo:
         u.unify()
+
+    assert len(excinfo.value.content) == 1
+    conflict = excinfo.value.content[0]
+    assert conflict.conflict_type == ConflictType.REORDER
+    assert conflict.path == ()
+    assert conflict.body is None
 
     assert u.unified == [(1, 1, 1), (2, 2, 2), (NOTHING, 3, 3),
                          (NOTHING, NOTHING, 7),
@@ -113,15 +120,28 @@ def test_keep_update_and_head_ent_head_fst_fallback():
 
 def test_error_on_head_delete():
     root = [1, 2]
-    head = [1, 2, 3]
+    head = [1, 2, 3, 5]
     update = [1, 2, 4]
 
     u = ListUnifier(root, head, update,
                     UnifierOps.KEEP_UPDATE_ENTITIES_CONFLICT_ON_HEAD_DELETE)
 
-    with pytest.raises(MergeError):
+    with pytest.raises(MergeError) as excinfo:
         u.unify()
+    assert len(excinfo.value.content) == 2
 
+    expect_removed = {3, 5}
+    removed = set()
+    for conflict in excinfo.value.content:
+        assert conflict.conflict_type == ConflictType.ADD_BACK_TO_HEAD
+        assert conflict.path == ()
+        removed.add(conflict.body)
+    assert removed == expect_removed
+
+    assert u.unified == [(1, 1, 1), (2, 2, 2), (NOTHING, NOTHING, 4)]
+
+
+def test_no_error_on_head_delete_from_root():
     root = [1, 2]
     head = [1, 2]
     update = [1, 4]
@@ -130,6 +150,25 @@ def test_error_on_head_delete():
                     UnifierOps.KEEP_UPDATE_ENTITIES_CONFLICT_ON_HEAD_DELETE)
     u.unify()
     assert u.unified == [(1, 1, 1), (NOTHING, NOTHING, 4)]
+
+
+def test_error_on_multiple_match():
+    root = [1, 2]
+    head = [1, 2, 2]
+    update = [1, 2, 3]
+
+    u = ListUnifier(root, head, update,
+                    UnifierOps.KEEP_UPDATE_ENTITIES_CONFLICT_ON_HEAD_DELETE)
+    with pytest.raises(MergeError) as excinfo:
+        u.unify()
+
+    assert len(excinfo.value.content) == 1
+    conflict = excinfo.value.content[0]
+    assert conflict.conflict_type == ConflictType.MANUAL_MERGE
+    assert conflict.path == ()
+    assert conflict.body == update
+
+    assert u.unified == [(1, 1, 1), (2, 2, 2), (2, 2, 2)]
 
 
 def test_stats():

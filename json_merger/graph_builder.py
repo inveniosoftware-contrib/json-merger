@@ -25,10 +25,14 @@
 from __future__ import absolute_import, print_function
 
 from .comparator import DefaultComparator
-from .errors import MergeError
+from .conflict import Conflict, ConflictType
 from .nothing import NOTHING
 
 FIRST = 'first'
+
+
+class GraphBuilderError(Exception):
+    pass
 
 
 class BeforeNodes(object):
@@ -126,9 +130,9 @@ class ListMatchGraphBuilder(object):
         matches = [(i, o) for i, o in enumerate(target)
                    if self.comparator.equal(o, obj)]
         if len(matches) > 1:
-            # Can't do anything with multiple matches.
-            # TODO find a meaningful content
-            raise MergeError('fixme', None)
+            # Can't do anything with multiple matches. Abort the matching
+            # completely.
+            raise GraphBuilderError('Can not match lists.')
         return matches[0] if matches else (-1, NOTHING)
 
     def _populate_nodes(self):
