@@ -30,6 +30,7 @@ from __future__ import absolute_import, print_function
 import pytest
 
 from json_merger import UpdateMerger, MergeError
+from json_merger.conflict import Conflict
 
 
 class AuthorComparator(object):
@@ -60,9 +61,13 @@ def test_author_typo_scenarios(update_fixture_loader, scenario):
     comparators = {'authors': AuthorComparator()}
     root, head, update, exp, desc = update_fixture_loader.load_test(scenario)
     merger = UpdateMerger(root, head, update, comparators=comparators)
-    if exp.get('conflict'):
-        with pytest.raises(MergeError):
+    if exp.get('conflicts'):
+        with pytest.raises(MergeError) as excinfo:
             merger.merge()
+        expected_conflicts = [Conflict(t, tuple(p), b)
+                              for t, p, b in exp.pop('conflicts')]
+        assert set(expected_conflicts) == set(excinfo.value.content)
     else:
         merger.merge()
-        assert merger.merged_root == exp, desc
+
+    assert merger.merged_root == exp, desc
