@@ -33,19 +33,6 @@ import os
 import pytest
 from flask import Flask
 
-from json_merger import JsonMerger
-
-
-@pytest.fixture()
-def app():
-    """Flask application fixture."""
-    app = Flask('testapp')
-    app.config.update(
-        TESTING=True
-    )
-    JsonMerger(app)
-    return app
-
 
 class AbstractFixtureLoader(object):
     def __init__(self, basedir):

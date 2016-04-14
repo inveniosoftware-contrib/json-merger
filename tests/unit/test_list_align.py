@@ -23,7 +23,7 @@
 # as an Intergovernmental Organization or submit itself to any jurisdiction.
 
 
-"""Acceptance scenarios for the merger."""
+"""Test list aligner correct output."""
 
 from __future__ import absolute_import, print_function
 

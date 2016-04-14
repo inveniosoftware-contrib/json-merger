@@ -27,8 +27,7 @@
 from __future__ import absolute_import, print_function
 
 from .errors import MergeError
-from .ext import JsonMerger
 from .merger import UpdateMerger
 from .version import __version__
 
-__all__ = ('__version__', 'JsonMerger', 'UpdateMerger', 'MergeError')
+__all__ = ('__version__', 'UpdateMerger', 'MergeError')
