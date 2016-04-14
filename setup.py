@@ -63,7 +63,6 @@ setup_requires = [
 install_requires = [
     'Flask-BabelEx>=0.9.2',
     'dictdiffer>=0.4.0',
-    'toposort>=1.0.0'
 ]
 
 packages = find_packages()
