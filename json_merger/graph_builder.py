@@ -24,6 +24,8 @@
 
 from __future__ import absolute_import, print_function
 
+import six
+
 from .comparator import DefaultComparator
 from .conflict import Conflict, ConflictType
 from .nothing import NOTHING
@@ -191,7 +193,7 @@ class ListMatchGraphBuilder(object):
 
         # Link any other nodes with the elements that come after them in their
         # source lists.
-        for node_id, node_indices in self._node_src_indices.iteritems():
+        for node_id, node_indices in six.iteritems(self._node_src_indices):
             root_idx, head_idx, update_idx = node_indices
             head_next = head_idx + 1 if head_idx >= 0 else -1
             update_next = update_idx + 1 if update_idx >= 0 else -1
@@ -223,7 +225,7 @@ def toposort(graph, pick_first='head'):
     argument. If the graph contains cycles, raise ValueError.
     """
     in_deg = {}
-    for node, next_nodes in graph.iteritems():
+    for node, next_nodes in six.iteritems(graph):
         for next_node in [next_nodes.head_node, next_nodes.update_node]:
             if next_node is None:
                 continue

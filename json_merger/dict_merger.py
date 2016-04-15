@@ -24,6 +24,7 @@
 
 from __future__ import absolute_import, print_function
 
+import six
 
 from dictdiffer import patch, ADD, CHANGE, REMOVE
 from dictdiffer.merge import Merger, UnresolvedConflictsException
@@ -38,7 +39,7 @@ def _get_list_fields(obj, res, key_path=()):
     if isinstance(obj, list):
         res.append(key_path)
     elif isinstance(obj, dict):
-        for key, value in obj.iteritems():
+        for key, value in six.iteritems(obj):
             _get_list_fields(value, res, key_path + (key, ))
 
     return res
@@ -98,7 +99,7 @@ class SkipListsMerger(object):
             del_obj_at_key_path(self.update, l)
 
     def _restore_lists(self):
-        for l, (bak_r, bak_h, bak_u) in self.list_backups.iteritems():
+        for l, (bak_r, bak_h, bak_u) in six.iteritems(self.list_backups):
             if bak_r is not None:
                 set_obj_at_key_path(self.root, l, bak_r)
             set_obj_at_key_path(self.head, l, bak_h)
