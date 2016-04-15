@@ -29,4 +29,5 @@ class MergeError(Exception):
 
     def __init__(self, message, content):
         super(MergeError, self).__init__(message)
+        self.message = message
         self.content = content

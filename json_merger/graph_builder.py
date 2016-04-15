@@ -34,7 +34,11 @@ FIRST = 'first'
 
 
 class GraphBuilderError(Exception):
-    pass
+
+    def __init__(self, message):
+        super(GraphBuilderError, self).__init__(message)
+        # Make this work with Python 3.
+        self.message = message
 
 
 class BeforeNodes(object):
