@@ -31,7 +31,6 @@ import json
 import os
 
 import pytest
-from flask import Flask
 
 
 class AbstractFixtureLoader(object):
