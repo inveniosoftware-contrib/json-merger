@@ -60,7 +60,7 @@ setup_requires = [
 ]
 
 install_requires = [
-    'dictdiffer>=0.4.0',
+    'dictdiffer>=0.5.0',
 ]
 
 packages = find_packages()
