@@ -173,7 +173,7 @@ def test_error_on_multiple_match():
 
 def test_stats():
     root = [1, 2]
-    head = [1, 2, 3, 4]
+    head = [1, 3, 4, 2]
     update = [1, 3, 5]
 
     u = ListUnifier(root, head, update,
@@ -183,6 +183,7 @@ def test_stats():
     assert sorted(u.head_stats.in_result) == [1, 3]
     assert sorted(u.head_stats.not_in_result) == [2, 4]
     assert sorted(u.head_stats.not_in_result_root_match) == [2]
+    assert sorted(u.head_stats.not_in_result_root_match_idx) == [3]
     assert sorted(u.head_stats.not_in_result_not_root_match) == [4]
 
     assert sorted(u.update_stats.in_result) == [1, 3, 5]
