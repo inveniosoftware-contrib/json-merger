@@ -25,13 +25,44 @@
 from __future__ import absolute_import, print_function
 
 
-class ComparatorBase(object):
+class BaseComparator(object):
 
-    def equal(self, obj1, obj2):
+    def __init__(self, l1, l2):
+        self.l1 = l1
+        self.l2 = l2
+        self.process_lists()
+
+    def process_lists(self):
+        """Do any preprocessing of the lists."""
+        pass
+
+    def equal(self, idx_l1, idx_l2):
         raise NotImplementedError()
 
+    def get_matches(self, src, src_idx):
+        """Get elements equal to the idx'th in src from the other list.
 
-class DefaultComparator(object):
+        e.g. get_matches(self, 'l1', 0) will return all elements from self.l2
+        matching with self.l1[0]
+        """
+        if src not in ('l1', 'l2'):
+            raise ValueError('Must have one of "l1" or "l2" as src')
+        if src == 'l1':
+            source_list = self.l1
+            target_list = self.l2
+        else:
+            source_list = self.l2
+            target_list = self.l1
+        comparator = {
+            'l1': lambda s_idx, t_idx: self.equal(s_idx, t_idx),
+            'l2': lambda s_idx, t_idx: self.equal(t_idx, s_idx)
+        }[src]
 
-    def equal(self, obj1, obj2):
-        return obj1 == obj2
+        return [(trg_idx, obj) for trg_idx, obj in enumerate(target_list)
+                if comparator(src_idx, trg_idx)]
+
+
+class DefaultComparator(BaseComparator):
+
+    def equal(self, idx_l1, idx_l2):
+        return self.l1[idx_l1] == self.l2[idx_l2]

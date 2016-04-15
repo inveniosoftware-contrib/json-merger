@@ -30,15 +30,15 @@ from __future__ import absolute_import, print_function
 import pytest
 
 from json_merger import UpdateMerger, MergeError
+from json_merger.comparator import BaseComparator
 from json_merger.conflict import Conflict
 
 
-class AuthorComparator(object):
+class AuthorComparator(BaseComparator):
 
-    def distance(self, obj1, obj2):
-        return 0 if self.equal(obj1, obj2) else 1
-
-    def equal(self, obj1, obj2):
+    def equal(self, l1_idx, l2_idx):
+        obj1 = self.l1[l1_idx]
+        obj2 = self.l2[l2_idx]
         if 'inspire_id' in obj1 and 'inspire_id' in obj2:
             return obj1['inspire_id'] == obj2['inspire_id']
         return obj1['full_name'][:5] == obj2['full_name'][:5]
@@ -58,7 +58,7 @@ class AuthorComparator(object):
     'author_delete_and_double_curator_typo_fix',
     'author_curator_collab_addition'])
 def test_author_typo_scenarios(update_fixture_loader, scenario):
-    comparators = {'authors': AuthorComparator()}
+    comparators = {'authors': AuthorComparator}
     root, head, update, exp, desc = update_fixture_loader.load_test(scenario)
     merger = UpdateMerger(root, head, update, comparators=comparators)
     if exp.get('conflicts'):

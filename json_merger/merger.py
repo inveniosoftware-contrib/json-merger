@@ -94,14 +94,14 @@ class ListAlignMerger(object):
             dotted_key_path = _get_config_key_path(absolute_key_path)
 
             operation = self.ops.get(dotted_key_path, self.default_op)
-            comparator = self.comparators.get(dotted_key_path,
-                                              DefaultComparator())
+            comparator_cls = self.comparators.get(dotted_key_path,
+                                                  DefaultComparator)
             root_l = get_obj_at_key_path(root, list_field, [])
             head_l = get_obj_at_key_path(head, list_field, [])
             update_l = get_obj_at_key_path(update, list_field, [])
 
             list_unifier = ListUnifier(root_l, head_l, update_l,
-                                       operation, comparator)
+                                       operation, comparator_cls)
             try:
                 list_unifier.unify()
             except MergeError as e:

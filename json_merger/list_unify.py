@@ -72,14 +72,15 @@ _RAISE_ERROR_OPS = [
 
 class ListUnifier(object):
 
-    def __init__(self, root, head, update, operation, comparator=None):
+    def __init__(self, root, head, update, operation,
+                 comparator_cls=DefaultComparator):
         if operation not in _OPERATIONS:
             raise ValueError('Operation %r not permitted' % operation)
 
         self.root = root
         self.head = head
         self.update = update
-        self.comparator = comparator or DefaultComparator()
+        self.comparator_cls = comparator_cls
 
         self.head_stats = None
         self.update_stats = None
@@ -97,7 +98,8 @@ class ListUnifier(object):
 
     def unify(self):
         graph_builder = ListMatchGraphBuilder(
-            self.root, self.head, self.update, self.sources, self.comparator)
+            self.root, self.head, self.update, self.sources,
+            self.comparator_cls)
         try:
             graph, nodes = graph_builder.build_graph()
         except GraphBuilderError as e:

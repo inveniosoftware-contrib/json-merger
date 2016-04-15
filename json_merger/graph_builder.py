@@ -95,12 +95,27 @@ class ListMatchStats(object):
 
 class ListMatchGraphBuilder(object):
 
-    def __init__(self, root, head, update, sources, comparator=None):
+    def __init__(self, root, head, update, sources,
+                 comparator_cls=DefaultComparator):
         self.root = root
         self.head = head
         self.update = update
-        self.comparator = comparator or DefaultComparator()
         self.sources = sources
+
+        self.root_head_comparator = comparator_cls(self.root, self.head)
+        self.root_update_comparator = comparator_cls(self.root, self.update)
+        self.head_update_comparator = comparator_cls(self.head, self.update)
+
+        # Keys are (target, source), values are comparator_instance and
+        # the source list from which to search.
+        self.comparators = {
+            ('root', 'head'): (self.root_head_comparator, 'l2'),
+            ('head', 'root'): (self.root_head_comparator, 'l1'),
+            ('root', 'update'): (self.root_update_comparator, 'l2'),
+            ('update', 'root'): (self.root_update_comparator, 'l1'),
+            ('head', 'update'): (self.head_update_comparator, 'l2'),
+            ('update', 'head'): (self.head_update_comparator, 'l1'),
+        }
 
         self.node_data = {}
         self.graph = {}
@@ -132,9 +147,9 @@ class ListMatchGraphBuilder(object):
         if update_idx >= 0:
             self._update_idx_to_node[update_idx] = node_id
 
-    def _get_matching_element(self, target, obj):
-        matches = [(i, o) for i, o in enumerate(target)
-                   if self.comparator.equal(o, obj)]
+    def _get_match(self, target, source, source_idx):
+        comparator, src_list = self.comparators[(target, source)]
+        matches = comparator.get_matches(src_list, source_idx)
         if len(matches) > 1:
             # Can't do anything with multiple matches. Abort the matching
             # completely.
@@ -145,8 +160,8 @@ class ListMatchGraphBuilder(object):
         if 'head' in self.sources:
             for head_idx, head_obj in enumerate(self.head):
                 head_elem = (head_idx, head_obj)
-                root_elem = self._get_matching_element(self.root, head_obj)
-                update_elem = self._get_matching_element(self.update, head_obj)
+                root_elem = self._get_match('root', 'head', head_idx)
+                update_elem = self._get_match('update', 'head', head_idx)
 
                 self._push_node(root_elem, head_elem, update_elem)
 
@@ -157,8 +172,8 @@ class ListMatchGraphBuilder(object):
                     continue
 
                 update_elem = (update_idx, update_obj)
-                root_elem = self._get_matching_element(self.root, update_obj)
-                head_elem = self._get_matching_element(self.head, update_obj)
+                root_elem = self._get_match('root', 'update', update_idx)
+                head_elem = self._get_match('head', 'update', update_idx)
 
                 self._push_node(root_elem, head_elem, update_elem)
 
@@ -170,16 +185,14 @@ class ListMatchGraphBuilder(object):
                 self.update_stats.move_to_result(update_idx)
 
         for idx in self.head_stats.not_in_result_idx:
-            root_idx, root = self._get_matching_element(self.root,
-                                                        self.head[idx])
+            root_idx, root = self._get_match('root', 'head', idx)
             if root_idx >= 0:
-                self.head_stats.add_root_match(root_idx)
+                self.head_stats.add_root_match(idx)
 
         for idx in self.update_stats.not_in_result_idx:
-            root_idx, root = self._get_matching_element(self.root,
-                                                        self.head[idx])
+            root_idx, root = self._get_match('root', 'update', idx)
             if root_idx >= 0:
-                self.head_stats.add_root_match(root_idx)
+                self.head_stats.add_root_match(idx)
 
     def build_graph(self):
         self._populate_nodes()
