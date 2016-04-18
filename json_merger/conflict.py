@@ -54,5 +54,5 @@ class Conflict(tuple):
     path = property(lambda self: self[1])
     body = property(lambda self: self[2])
 
-    def with_prepended_path(self, root_path):
+    def with_prefix(self, root_path):
         return Conflict(self.conflict_type, root_path + self.path, self.body)

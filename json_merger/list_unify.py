@@ -30,8 +30,9 @@ from .comparator import DefaultComparator
 from .conflict import Conflict, ConflictType
 from .errors import MergeError
 from .graph_builder import (
-    ListMatchGraphBuilder, GraphBuilderError,
-    sort_cyclic_graph_best_effort, toposort)
+    GraphBuilderError, ListMatchGraphBuilder, sort_cyclic_graph_best_effort,
+    toposort
+)
 from .nothing import NOTHING
 
 _OPERATIONS = [
@@ -39,7 +40,7 @@ _OPERATIONS = [
     'KEEP_ONLY_UPDATE_ENTITIES',
     'KEEP_UPDATE_AND_HEAD_ENTITIES_HEAD_FIRST',
     'KEEP_UPDATE_AND_HEAD_ENTITIES_UPDATE_FIRST',
-    'KEEP_UPDATE_ENTITIES_CONFLICT_ON_HEAD_DELETE'
+    'KEEP_UPDATE_ENTITIES_CONFLICT_ON_HEAD_DELETE',
 ]
 
 

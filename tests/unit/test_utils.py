@@ -29,7 +29,8 @@ from __future__ import absolute_import, print_function
 import pytest
 
 from json_merger.utils import (
-    del_obj_at_key_path, get_obj_at_key_path, set_obj_at_key_path)
+    del_obj_at_key_path, get_obj_at_key_path, set_obj_at_key_path,
+    get_conf_set_for_key_path, remove_prefix)
 
 
 def test_del_obj_at_key_path():
@@ -93,3 +94,16 @@ def test_set_obj_at_key_path():
     assert o['a'][0] == 42
     set_obj_at_key_path(o, ['a'], 42)
     assert o['a'] == 42
+
+
+def test_get_conf_set_for_key_path():
+    expected = set(['d', 'd.e', 'd.e.f'])
+    actual = get_conf_set_for_key_path(
+        set(['a.b.c.d', 'a.b.c.d.e', 'a.b.c.d.e.f',
+             'd', 'd.e', 'd.e.f']), ('a', 'b', 'c'))
+    assert actual == expected
+
+
+def test_remove_prefix_value_error():
+    with pytest.raises(ValueError):
+        remove_prefix('a.b.c.d.e', 'a.b.c.e')

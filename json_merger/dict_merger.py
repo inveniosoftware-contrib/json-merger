@@ -25,14 +25,16 @@
 from __future__ import absolute_import, print_function
 
 import six
-
-from dictdiffer import patch, ADD, CHANGE, REMOVE
+from dictdiffer import ADD, CHANGE, REMOVE, patch
 from dictdiffer.merge import Merger, UnresolvedConflictsException
 
 from .conflict import Conflict, ConflictType
 from .errors import MergeError
+from .nothing import NOTHING
 from .utils import (
-    del_obj_at_key_path, get_obj_at_key_path, set_obj_at_key_path)
+    del_obj_at_key_path, get_dotted_key_path, get_obj_at_key_path,
+    set_obj_at_key_path
+)
 
 
 def _get_list_fields(obj, res, key_path=()):
@@ -67,15 +69,30 @@ def patch_to_conflict_set(patch):
     return conflicts
 
 
+_OPERATIONS = [
+    'FALLBACK_KEEP_HEAD_CONFLICT',
+    'FALLBACK_KEEP_HEAD_NO_CONFLICT',
+    'FALLBACK_KEEP_UPDATE_CONFLICT',
+    'FALLBACK_KEEP_UPDATE_NO_CONFLICT',
+]
+
+
+class DictMergerOps(object):
+    pass
+
+for mode in _OPERATIONS:
+    setattr(DictMergerOps, mode, mode)
+
+
 class SkipListsMerger(object):
 
-    def __init__(self, root, head, update, keep='head',
-                 raise_on_conflict=True):
+    def __init__(self, root, head, update, default_op,
+                 data_lists=None):
         self.root = root
         self.head = head
         self.update = update
-        self.pick = 'f' if keep == 'head' else 's'
-        self.raise_on_conflict = raise_on_conflict
+        self.pick, self.raise_on_conflict = self._parse_op(default_op)
+        self.data_lists = set(data_lists or [])
 
         # We can have the same conflict appear more times because we keep only
         # one of the possible resolutions as a conflict while we apply the
@@ -86,7 +103,25 @@ class SkipListsMerger(object):
         self.merged_root = None
         self.list_backups = {}
 
+    def _parse_op(self, op):
+        pick, raise_on_conflict = {
+            DictMergerOps.FALLBACK_KEEP_HEAD_CONFLICT: ('f', True),
+            DictMergerOps.FALLBACK_KEEP_HEAD_NO_CONFLICT: ('f', False),
+            DictMergerOps.FALLBACK_KEEP_UPDATE_CONFLICT: ('s', True),
+            DictMergerOps.FALLBACK_KEEP_UPDATE_NO_CONFLICT: ('s', False)}[op]
+        return pick, raise_on_conflict
+
+    def _build_skipped_lists(self):
+        lists = set()
+        lists.update(_get_list_fields(self.head, []))
+        lists.intersection_update(_get_list_fields(self.update, []))
+        for l in lists:
+            dotted = get_dotted_key_path(l, True)
+            if dotted not in self.data_lists:
+                self.skipped_lists.add(l)
+
     def _backup_lists(self):
+        self._build_skipped_lists()
         for l in self.skipped_lists:
             self.list_backups[l] = (
                 get_obj_at_key_path(self.root, l),
@@ -112,14 +147,28 @@ class SkipListsMerger(object):
         # Make this compatible with the project convention (list of conflicts).
         return list(self.conflict_set)
 
-    def merge(self):
-        self.skipped_lists.update(_get_list_fields(self.head, []))
-        self.skipped_lists.intersection_update(
-            _get_list_fields(self.update, []))
+    def _merge_base_values(self):
+        if self.head == self.update:
+            self.merged_root = self.head
+        elif self.head == NOTHING:
+            self.merged_root = self.update
+        elif self.update == NOTHING:
+            self.merged_root = self.head
+        elif self.head == self.root:
+            self.merged_root = self.update
+        elif self.update == self.root:
+            self.merged_root = self.head
+        else:
+            self.merged_root, conflict = {
+                'f': (self.head, self.update),
+                's': (self.update, self.head)}[self.pick]
+            self.conflict_set.add(
+                Conflict(ConflictType.SET_FIELD, (), conflict))
 
-        list_backups = self._backup_lists()
+    def _merge_dicts(self):
+        self._backup_lists()
+
         non_list_merger = Merger(self.root, self.head, self.update, {})
-
         try:
             non_list_merger.run()
         except UnresolvedConflictsException as e:
@@ -131,8 +180,15 @@ class SkipListsMerger(object):
                 self.conflict_set.update(patch_to_conflict_set(conflict_patch))
 
         self._restore_lists()
-
         self.merged_root = patch(non_list_merger.unified_patches, self.root)
+
+    def merge(self):
+        if isinstance(self.head, dict) and isinstance(self.update, dict):
+            if not isinstance(self.root, dict):
+                self.root = {}
+            self._merge_dicts()
+        else:
+            self._merge_base_values()
 
         if self.raise_on_conflict and self.conflict_set:
             raise MergeError('Dictdiffer Errors', self.conflicts)

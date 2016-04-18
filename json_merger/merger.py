@@ -22,47 +22,33 @@
 # waive the privileges and immunities granted to it by virtue of its status
 # as an Intergovernmental Organization or submit itself to any jurisdiction.
 
-"""Invenio module that is able to merge json record objects."""
+"""Module that is able to merge JSON record objects."""
 
 from __future__ import absolute_import, print_function
 
 import copy
 
 from .comparator import DefaultComparator
-from .dict_merger import SkipListsMerger
+from .dict_merger import DictMergerOps, SkipListsMerger
 from .errors import MergeError
 from .list_unify import ListUnifier, UnifierOps
-from .nothing import NOTHING
-from .utils import get_obj_at_key_path, set_obj_at_key_path
-
-
-def _translate_nothing_objects(*args):
-    typed_obj = [a for a in args if a != NOTHING][0]
-    return (_nothing_to_base_type(a, typed_obj) for a in args)
-
-
-def _nothing_to_base_type(src_obj, target_obj):
-    if src_obj != NOTHING:
-        return src_obj
-    if isinstance(target_obj, dict):
-        return {}
-    if isinstance(target_obj, list):
-        return []
-    return None
-
-
-def _get_config_key_path(absolute_key_path):
-    return '.'.join(a for a in absolute_key_path if not isinstance(a, int))
+from .utils import (
+    get_conf_set_for_key_path, get_dotted_key_path, get_obj_at_key_path,
+    set_obj_at_key_path
+)
 
 
 class ListAlignMerger(object):
 
-    def __init__(self, root, head, update, default_op,
-                 comparators=None, ops=None, dict_merger_kwargs=None):
+    def __init__(self, root, head, update,
+                 default_dict_merge_op, default_list_merge_op,
+                 list_merge_ops=None, comparators=None, data_lists=None):
         self.comparators = comparators or {}
-        self.default_op = default_op
-        self.ops = ops or {}
-        self.dict_merger_kwargs = dict_merger_kwargs or {}
+        self.data_lists = set(data_lists or [])
+        self.list_merge_ops = list_merge_ops or {}
+
+        self.default_dict_merge_op = default_dict_merge_op
+        self.default_list_merge_op = default_list_merge_op
 
         self.root = copy.deepcopy(root)
         self.head = copy.deepcopy(head)
@@ -78,53 +64,75 @@ class ListAlignMerger(object):
             raise MergeError('Conflicts Occured in Merge Process',
                              self.conflicts)
 
-    def _recursive_merge(self, root, head, update, key_path=()):
-        non_list_merger = SkipListsMerger(root, head, update,
-                                          **self.dict_merger_kwargs)
+    def _merge_objects(self, root, head, update, key_path):
+        data_lists = get_conf_set_for_key_path(self.data_lists, key_path)
+        object_merger = SkipListsMerger(root, head, update,
+                                        self.default_dict_merge_op, data_lists)
         try:
-            non_list_merger.merge()
+            object_merger.merge()
         except MergeError as e:
-            self.conflicts.extend(c.with_prepended_path(key_path)
-                                  for c in e.content)
+            self.conflicts.extend(c.with_prefix(key_path) for c in e.content)
+        return object_merger
 
-        root = non_list_merger.merged_root
+    def _merge_lists(self, root, head, update, key_path):
+        dotted_key_path = get_dotted_key_path(key_path, True)
 
-        for list_field in non_list_merger.skipped_lists:
+        operation = self.list_merge_ops.get(dotted_key_path,
+                                            self.default_list_merge_op)
+        comparator_cls = self.comparators.get(dotted_key_path,
+                                              DefaultComparator)
+        list_unifier = ListUnifier(root, head, update,
+                                   operation, comparator_cls)
+        try:
+            list_unifier.unify()
+        except MergeError as e:
+            self.conflicts.extend(c.with_prefix(key_path) for c in e.content)
+
+        new_root_list = []
+        for idx, objects in enumerate(list_unifier.unified):
+            root_obj, head_obj, update_obj = objects
+            new_obj = self._recursive_merge(root_obj, head_obj, update_obj,
+                                            key_path + (idx, ))
+            new_root_list.append(new_obj)
+
+        return new_root_list
+
+    def _recursive_merge(self, root, head, update, key_path=()):
+        dotted_key_path = get_dotted_key_path(key_path, True)
+        if (isinstance(head, list) and isinstance(update, list) and
+                dotted_key_path not in self.data_lists):
+            # We are aligning bare lists so the key path is an empty tuple.
+            lists = [()]
+            if not isinstance(root, list):
+                root = []
+        else:
+            m = self._merge_objects(root, head, update, key_path)
+            root = m.merged_root
+            lists = m.skipped_lists
+
+        for list_field in lists:
             absolute_key_path = key_path + list_field
-            dotted_key_path = _get_config_key_path(absolute_key_path)
 
-            operation = self.ops.get(dotted_key_path, self.default_op)
-            comparator_cls = self.comparators.get(dotted_key_path,
-                                                  DefaultComparator)
             root_l = get_obj_at_key_path(root, list_field, [])
             head_l = get_obj_at_key_path(head, list_field, [])
             update_l = get_obj_at_key_path(update, list_field, [])
 
-            list_unifier = ListUnifier(root_l, head_l, update_l,
-                                       operation, comparator_cls)
-            try:
-                list_unifier.unify()
-            except MergeError as e:
-                self.conflicts.extend(c.with_prepended_path(absolute_key_path)
-                                      for c in e.content)
-
-            new_root_list = []
-            for idx, objects in enumerate(list_unifier.unified):
-                root_obj, head_obj, update_obj = _translate_nothing_objects(
-                    *objects)
-
-                new_obj = self._recursive_merge(root_obj, head_obj, update_obj,
-                                                absolute_key_path + (idx, ))
-                new_root_list.append(new_obj)
-
-            set_obj_at_key_path(root, list_field, new_root_list)
+            new_list = self._merge_lists(root_l, head_l, update_l,
+                                         absolute_key_path)
+            if list_field == ():
+                root = new_list
+            else:
+                set_obj_at_key_path(root, list_field, new_list)
 
         return root
 
 
 class UpdateMerger(ListAlignMerger):
 
-    def __init__(self, root, head, update, comparators=None, ops=None):
+    def __init__(self, root, head, update,
+                 list_merge_ops=None, comparators=None, data_lists=None):
         super(UpdateMerger, self).__init__(
-                root, head, update, UnifierOps.KEEP_ONLY_UPDATE_ENTITIES,
-                comparators, ops)
+                root, head, update,
+                DictMergerOps.FALLBACK_KEEP_HEAD_CONFLICT,
+                UnifierOps.KEEP_ONLY_UPDATE_ENTITIES,
+                list_merge_ops, comparators, data_lists)

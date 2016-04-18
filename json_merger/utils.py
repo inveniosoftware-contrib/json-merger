@@ -24,6 +24,8 @@
 
 from __future__ import absolute_import, print_function
 
+import six
+
 from .nothing import NOTHING
 
 
@@ -56,3 +58,24 @@ def del_obj_at_key_path(obj, key_path, raise_key_error=True):
         except (KeyError, IndexError, TypeError):
             if raise_key_error:
                 raise KeyError(key_path)
+
+
+def has_prefix(key_path, prefix):
+    return len(prefix) <= len(key_path) and key_path[:len(prefix)] == prefix
+
+
+def remove_prefix(key_path, prefix):
+    if not has_prefix(key_path, prefix):
+        raise ValueError('Bad Prefix {}'.format(prefix))
+    return key_path[len(prefix):]
+
+
+def get_dotted_key_path(key_path, filter_int_keys=False):
+    return '.'.join(k for k in key_path
+                    if not isinstance(k, int) and filter_int_keys)
+
+
+def get_conf_set_for_key_path(conf_set, key_path):
+    prefix = get_dotted_key_path(key_path, True)
+    return set(remove_prefix(k, prefix).lstrip('.')
+               for k in conf_set if has_prefix(k, prefix))
