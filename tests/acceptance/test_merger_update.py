@@ -30,18 +30,43 @@ from __future__ import absolute_import, print_function
 import pytest
 
 from json_merger import UpdateMerger, MergeError
-from json_merger.comparator import BaseComparator
+from json_merger.comparator import PrimaryKeyComparator
 from json_merger.conflict import Conflict
+from json_merger.list_unify import UnifierOps
 
 
-class AuthorComparator(BaseComparator):
+class AuthorComparator(PrimaryKeyComparator):
+
+    primary_key_fields = ['inspire_id']
 
     def equal(self, l1_idx, l2_idx):
-        obj1 = self.l1[l1_idx]
-        obj2 = self.l2[l2_idx]
-        if 'inspire_id' in obj1 and 'inspire_id' in obj2:
-            return obj1['inspire_id'] == obj2['inspire_id']
-        return obj1['full_name'][:5] == obj2['full_name'][:5]
+        ret = super(AuthorComparator, self).equal(l1_idx, l2_idx)
+        if not ret:
+            return (self.l1[l1_idx]['full_name'][:5] ==
+                    self.l2[l2_idx]['full_name'][:5])
+        else:
+            return True
+
+
+class TitleComparator(PrimaryKeyComparator):
+
+    primary_key_fields = ['source']
+
+
+class AffiliationComparator(PrimaryKeyComparator):
+
+    primary_key_fields = ['value']
+
+
+COMPARATORS = {
+    'authors': AuthorComparator,
+    'authors.affiliations': AffiliationComparator,
+    'titles': TitleComparator
+}
+LIST_MERGE_OPS = {
+    'titles': UnifierOps.KEEP_UPDATE_AND_HEAD_ENTITIES_HEAD_FIRST,
+    'authors.affiliations': UnifierOps.KEEP_UPDATE_AND_HEAD_ENTITIES_HEAD_FIRST
+}
 
 
 @pytest.mark.parametrize('scenario', [
@@ -56,11 +81,15 @@ class AuthorComparator(BaseComparator):
     'author_reorder_conflict',
     'author_replace_and_single_curator_typo_fix',
     'author_delete_and_double_curator_typo_fix',
-    'author_curator_collab_addition'])
+    'author_curator_collab_addition',
+    'author_affiliation_addition',
+    'title_addition',
+    'title_change'])
 def test_author_typo_scenarios(update_fixture_loader, scenario):
-    comparators = {'authors': AuthorComparator}
     root, head, update, exp, desc = update_fixture_loader.load_test(scenario)
-    merger = UpdateMerger(root, head, update, comparators=comparators)
+    merger = UpdateMerger(root, head, update,
+                          comparators=COMPARATORS,
+                          list_merge_ops=LIST_MERGE_OPS)
     if exp.get('conflicts'):
         with pytest.raises(MergeError) as excinfo:
             merger.merge()

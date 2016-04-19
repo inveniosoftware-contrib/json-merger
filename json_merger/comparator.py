@@ -24,6 +24,9 @@
 
 from __future__ import absolute_import, print_function
 
+from .nothing import NOTHING
+from .utils import get_obj_at_key_path
+
 
 class BaseComparator(object):
 
@@ -60,6 +63,27 @@ class BaseComparator(object):
 
         return [(trg_idx, obj) for trg_idx, obj in enumerate(target_list)
                 if comparator(src_idx, trg_idx)]
+
+
+class PrimaryKeyComparator(BaseComparator):
+    """Renders two objects as equal if they have the same primary key.
+
+    If two objects have at least one of the configured primary_key_fields equal
+    then they are equal.
+    """
+
+    primary_key_fields = ['pk']
+
+    def equal(self, idx_l1, idx_l2):
+        if self.l1[idx_l1] == self.l2[idx_l2]:
+            return True
+        for field in self.primary_key_fields:
+            key_path = tuple(k for k in field.split('.') if k)
+            o1 = get_obj_at_key_path(self.l1[idx_l1], key_path, NOTHING)
+            o2 = get_obj_at_key_path(self.l2[idx_l2], key_path, NOTHING)
+            if o1 != NOTHING and o2 != NOTHING and o1 == o2:
+                return True
+        return False
 
 
 class DefaultComparator(BaseComparator):

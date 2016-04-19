@@ -1,0 +1,1 @@
+Title addition in Update should preserve both titles with the HEAD first.
