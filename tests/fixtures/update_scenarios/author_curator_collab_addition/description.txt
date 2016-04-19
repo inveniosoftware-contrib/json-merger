@@ -1,0 +1,1 @@
+Curator added authors. Update adds another one. Expect the authors from update.

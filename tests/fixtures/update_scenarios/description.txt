@@ -1,0 +1,12 @@
+In this suite we test the following workflow:
+* A record harvested from source "A" is inserted into the database.
+* The database record is annotaded via external sources (e.g. Catalogers).
+* We receive an update from source "A" and we don't want to lose the annotated information.
+
+The expected behavior is:
+* Record order in list fields is given by the update.
+  * Additions
+  * Reorderings
+  * _Deletions_ (In this case the Cataloger work would be lost)
+* Any fields changed by the update are seen in the HEAD version.
+* If a field was changed both in HEAD and in the update then raise a Conflict.

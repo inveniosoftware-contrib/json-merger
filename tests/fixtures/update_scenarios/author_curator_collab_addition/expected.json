@@ -1,0 +1,38 @@
+{
+    "authors": [
+        {
+            "affiliations": [
+                {
+                    "value": "UC, Santa Barbara"
+                }
+            ],
+            "curated_relation": false,
+            "full_name": "Cox, Brian"
+        },
+        {
+            "affiliations": [
+                {
+                    "record": {
+                        "$ref": "http://localhost:5000/api/institutions/903889"
+                    },
+                    "value": "UC, Berkeley"
+                },
+                {
+                    "record": {
+                        "$ref": "http://localhost:5000/api/institutions/903889"
+                    },
+                    "value": "LBL, Berkeley"
+                },
+                {
+                    "record": {
+                        "$ref": "http://localhost:5000/api/institutions/903889"
+                    },
+                    "value": "Santa Barbara, KITP"
+                }
+            ],
+            "curated_relation": false,
+            "full_name": "O Brien, Dara",
+            "inspire_id": "INSPIRE-00113241"
+        }
+    ]
+}

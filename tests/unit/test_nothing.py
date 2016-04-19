@@ -22,19 +22,36 @@
 # waive the privileges and immunities granted to it by virtue of its status
 # as an Intergovernmental Organization or submit itself to any jurisdiction.
 
-# Extraction from Python source files
 
-[python: **.py]
-encoding = utf-8
+"""Test NOTHING global variable value."""
 
-# Extraction from Jinja2 templates
+from __future__ import absolute_import, print_function
 
-[jinja2: **/templates/**.html]
-encoding = utf-8
-extensions = jinja2.ext.autoescape, jinja2.ext.with_
 
-# Extraction from JavaScript files
+from json_merger.nothing import Nothing, NOTHING
 
-[javascript: **.js]
-encoding = utf-8
-extract_messages = $._, jQuery._
+
+def test_nothing_eq():
+    assert NOTHING == NOTHING
+    assert NOTHING == Nothing()
+    assert NOTHING is not None
+    # Force evaluation of the __eq__ method.
+    assert (NOTHING == {}) is False
+    assert (NOTHING == []) is False
+    assert (NOTHING == 0) is False
+    assert (NOTHING == '') is False
+
+
+def test_nothing_neq():
+    # Force evaluation of the __neq__ method.
+    assert (NOTHING != NOTHING) is False
+    assert (NOTHING != Nothing()) is False
+    assert NOTHING != {}
+    assert NOTHING != []
+    assert NOTHING != 0
+    assert NOTHING != ''
+
+
+def test_nothing_repr():
+    assert str(NOTHING) == 'NOTHING'
+    assert repr(NOTHING) == 'NOTHING'

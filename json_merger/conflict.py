@@ -22,25 +22,37 @@
 # waive the privileges and immunities granted to it by virtue of its status
 # as an Intergovernmental Organization or submit itself to any jurisdiction.
 
-
-"""Minimal Flask application example for development.
-
-Run example development server:
-
-.. code-block:: console
-
-   $ cd examples
-   $ flask -a app.py --debug run
-"""
-
 from __future__ import absolute_import, print_function
 
-from flask import Flask
-from flask_babelex import Babel
 
-from json_merger import JsonMerger
+class ConflictType(object):
+    pass
 
-# Create Flask application
-app = Flask(__name__)
-Babel(app)
-JsonMerger(app)
+_CONFLICTS = (
+    'REORDER',
+    'MANUAL_MERGE',
+    'ADD_BACK_TO_HEAD',
+    'SET_FIELD',
+    'REMOVE_FIELD'
+)
+for conflict_type in _CONFLICTS:
+    setattr(ConflictType, conflict_type, conflict_type)
+
+
+class Conflict(tuple):
+    """Immutable representation of a conflict."""
+
+    # Based on http://stackoverflow.com/a/4828108
+    # Compatible with Python<=2.6
+
+    def __new__(cls, conflict_type, path, body):
+        if conflict_type not in _CONFLICTS:
+            raise ValueError('Bad Conflict Type %s' % conflict_type)
+        return tuple.__new__(cls, (conflict_type, path, body))
+
+    conflict_type = property(lambda self: self[0])
+    path = property(lambda self: self[1])
+    body = property(lambda self: self[2])
+
+    def with_prefix(self, root_path):
+        return Conflict(self.conflict_type, root_path + self.path, self.body)

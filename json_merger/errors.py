@@ -22,24 +22,12 @@
 # waive the privileges and immunities granted to it by virtue of its status
 # as an Intergovernmental Organization or submit itself to any jurisdiction.
 
-"""Invenio module that is able to merge json record objects."""
-
 from __future__ import absolute_import, print_function
 
 
-class JsonMerger(object):
-    """json-merger extension."""
+class MergeError(Exception):
 
-    def __init__(self, app=None):
-        """Extension initialization."""
-        if app:
-            self.init_app(app)
-
-    def init_app(self, app):
-        """Flask application initialization."""
-        self.init_config(app)
-        app.extensions['json-merger'] = self
-
-    def init_config(self, app):
-        """Initialize configuration."""
-        pass
+    def __init__(self, message, content):
+        super(MergeError, self).__init__(message)
+        self.message = message
+        self.content = content

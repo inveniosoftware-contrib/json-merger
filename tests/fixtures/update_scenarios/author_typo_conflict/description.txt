@@ -1,0 +1,1 @@
+Both curator and update touch the same field, expect conflict.

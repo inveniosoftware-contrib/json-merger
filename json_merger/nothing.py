@@ -22,49 +22,28 @@
 # waive the privileges and immunities granted to it by virtue of its status
 # as an Intergovernmental Organization or submit itself to any jurisdiction.
 
-
-"""Acceptance scenarios for the merger."""
-
 from __future__ import absolute_import, print_function
 
-import pytest
 
-from json_merger import Merger
+class Nothing(object):
 
+    def __eq__(self, other):
+        if isinstance(other, Nothing):
+            return True
+        return False
 
-@pytest.fixture
-def author_distance():
-    def distance(a1, a2):
-        if a1 == a2:
-            return 0
+    def __ne__(self, other):
+        if isinstance(other, Nothing):
+            return False
+        return True
 
-        if not isinstance(a1, dict):
-            return 1
-        if not isinstance(a2, dict):
-            return 1
+    def __str__(self):
+        return 'NOTHING'
 
-        if 'full_name' not in a1:
-            return 1
-        if 'full_name' not in a2:
-            return 1
-
-        if a1['full_name'][:5] == a2['full_name'][:5]:
-            return 0
-
-        return 1
-
-    return distance
+    def __repr__(self):
+        return 'NOTHING'
 
 
-@pytest.mark.parametrize('scenario', [
-    'author_typo',
-    'author_prepend',
-    'author_delete',
-    'author_prepend_and_typo',
-    'author_delete_and_typo'])
-def test_expected_outcome_authors(json_loader, author_distance, scenario):
-    m = Merger({'ALLOW_REMOVES_FROM': ['authors']}, author_distance)
-    src, update, expected, desc = json_loader.load_test(scenario)
-
-    merged = m.merge_records(src, update)
-    assert merged == expected, desc
+# Create a new placeholder for None objects that doesn't conflict with None
+# entries in the dicts.
+NOTHING = Nothing()

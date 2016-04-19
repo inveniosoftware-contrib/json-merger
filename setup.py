@@ -56,14 +56,12 @@ for reqs in extras_require.values():
     extras_require['all'].extend(reqs)
 
 setup_requires = [
-    'Babel>=1.3',
     'pytest-runner>=2.6.2',
 ]
 
 install_requires = [
-    'Flask-BabelEx>=0.9.2',
-    'dictdiffer>=0.4.0',
-    'munkres>=1.0.7'
+    'dictdiffer>=0.5.0',
+    'six>=1.10.0'
 ]
 
 packages = find_packages()

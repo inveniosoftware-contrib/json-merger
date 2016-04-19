@@ -1,0 +1,1 @@
+Curator touched an author name. Update adds a new author. Curator added data shouldn't be lost.

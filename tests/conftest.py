@@ -31,40 +31,33 @@ import json
 import os
 
 import pytest
-from flask import Flask
 
-from json_merger import JsonMerger
+
+class AbstractFixtureLoader(object):
+    def __init__(self, basedir):
+        self.basedir = basedir
+
+    def _read_file(self, test_dir, file_name):
+        with open(os.path.join(self.basedir, test_dir, file_name)) as f:
+            return f.read()
+
+    def load_single(self, test_dir, file_name):
+        return json.loads(self._read_file(test_dir, file_name))
+
+    def load_test(self, test_dir):
+        raise NotImplementedError('You have to implement me!')
 
 
 @pytest.fixture()
-def app():
-    """Flask application fixture."""
-    app = Flask('testapp')
-    app.config.update(
-        TESTING=True
-    )
-    JsonMerger(app)
-    return app
+def update_fixture_loader():
+    class _Loader(AbstractFixtureLoader):
 
+        def load_test(self, test_dir):
+            root = self.load_single(test_dir, 'root.json')
+            head = self.load_single(test_dir, 'head.json')
+            update = self.load_single(test_dir, 'update.json')
+            expected = self.load_single(test_dir, 'expected.json')
+            desc = self._read_file(test_dir, 'description.txt')
+            return root, head, update, expected, desc
 
-@pytest.fixture()
-def json_loader():
-    class _Loader(object):
-        def __init__(self, basedir):
-            self.basedir = basedir
-
-        def _read_file(self, test_name, file_name):
-            with open(os.path.join(self.basedir, test_name, file_name)) as f:
-                return f.read()
-
-        def load_single(self, test_name, file_name):
-            return json.loads(self._read_file(test_name, file_name))
-
-        def load_test(self, test_name):
-            src = self.load_single(test_name, 'src.json')
-            update = self.load_single(test_name, 'update.json')
-            expected = self.load_single(test_name, 'expected.json')
-            desc = self._read_file(test_name, 'description.txt')
-            return src, update, expected, desc
-
-    return _Loader('./tests/fixtures/')
+    return _Loader('./tests/fixtures/update_scenarios/')

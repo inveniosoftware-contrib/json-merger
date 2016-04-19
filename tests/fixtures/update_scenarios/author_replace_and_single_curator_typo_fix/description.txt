@@ -1,0 +1,1 @@
+Curator touched an author name. Update replaces the other author. Expect the authors in the update with the curator data.

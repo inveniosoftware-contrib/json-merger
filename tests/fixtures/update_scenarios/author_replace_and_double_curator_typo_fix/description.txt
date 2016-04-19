@@ -1,0 +1,1 @@
+Curator touched both author names. Update replaces one author with another. Keep the typo fix done by the curator.
