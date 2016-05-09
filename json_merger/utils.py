@@ -24,8 +24,6 @@
 
 from __future__ import absolute_import, print_function
 
-import six
-
 from .nothing import NOTHING
 
 
@@ -39,25 +37,42 @@ def get_obj_at_key_path(obj, key_path, default=None):
     return current
 
 
-def set_obj_at_key_path(obj, key_path, value):
-    obj = get_obj_at_key_path(obj, key_path[:-1], NOTHING)
-    if obj == NOTHING:
+def set_obj_at_key_path(obj, key_path, value, raise_key_error=True):
+    try:
+        return _set_obj_at_key_path(obj, key_path, value)
+    except KeyError as e:
+        if raise_key_error:
+            raise e
+        else:
+            return obj
+
+
+def _set_obj_at_key_path(obj, key_path, value):
+    # We are setting the obj param to another value.
+    if len(key_path) == 0:
+        return value
+
+    # Try to get the parent of the object to be set.
+    parent = get_obj_at_key_path(obj, key_path[:-1], NOTHING)
+    if parent == NOTHING:
         raise KeyError(key_path)
     try:
-        obj[key_path[-1]] = value
+        parent[key_path[-1]] = value
     except (KeyError, IndexError, TypeError):
         raise KeyError(key_path)
+    return obj
 
 
 def del_obj_at_key_path(obj, key_path, raise_key_error=True):
     obj = get_obj_at_key_path(obj, key_path[:-1], NOTHING)
-    not_found = True
     if obj != NOTHING:
         try:
             del obj[key_path[-1]]
         except (KeyError, IndexError, TypeError):
             if raise_key_error:
                 raise KeyError(key_path)
+    elif raise_key_error:
+        raise KeyError(key_path)
 
 
 def has_prefix(key_path, prefix):

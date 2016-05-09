@@ -27,7 +27,6 @@ from __future__ import absolute_import, print_function
 import six
 
 from .comparator import DefaultComparator
-from .conflict import Conflict, ConflictType
 from .nothing import NOTHING
 
 FIRST = 'first'
@@ -61,12 +60,16 @@ class ListMatchStats(object):
         self.in_result_idx = set()
         self.not_in_result_idx = set(range(len(lst)))
         self.not_in_result_root_match_idx = set()
+        self.root_matches = {}
 
     def move_to_result(self, lst_idx):
         self.in_result_idx.add(lst_idx)
         self.not_in_result_idx.remove(lst_idx)
+        if lst_idx in self.not_in_result_root_match_idx:
+            self.not_in_result_root_match_idx.remove(lst_idx)
 
-    def add_root_match(self, lst_idx):
+    def add_root_match(self, lst_idx, root_idx):
+        self.root_matches[lst_idx] = root_idx
         if lst_idx in self.in_result_idx:
             return
         self.not_in_result_root_match_idx.add(lst_idx)
@@ -91,6 +94,17 @@ class ListMatchStats(object):
     @property
     def not_in_result_not_root_match(self):
         return [self.lst[e] for e in self.not_in_result_not_root_match_idx]
+
+    @property
+    def not_in_result_root_match_pairs(self):
+        return [(self.lst[e], self.root[self.root_matches[e]])
+                for e in self.not_in_result_root_match_idx]
+
+    @property
+    def not_matched_root_objects(self):
+        matched_root_idx = set(self.root_matches.values())
+        return [o for idx, o in enumerate(self.root)
+                if idx not in matched_root_idx]
 
 
 class ListMatchGraphBuilder(object):
@@ -184,15 +198,15 @@ class ListMatchGraphBuilder(object):
             if update_idx >= 0:
                 self.update_stats.move_to_result(update_idx)
 
-        for idx in self.head_stats.not_in_result_idx:
+        for idx in range(len(self.head)):
             root_idx, root = self._get_match('root', 'head', idx)
             if root_idx >= 0:
-                self.head_stats.add_root_match(idx)
+                self.head_stats.add_root_match(idx, root_idx)
 
-        for idx in self.update_stats.not_in_result_idx:
+        for idx in range(len(self.update)):
             root_idx, root = self._get_match('root', 'update', idx)
             if root_idx >= 0:
-                self.head_stats.add_root_match(idx)
+                self.update_stats.add_root_match(idx, root_idx)
 
     def build_graph(self):
         self._populate_nodes()
