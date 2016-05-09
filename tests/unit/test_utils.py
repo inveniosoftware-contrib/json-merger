@@ -78,22 +78,33 @@ def test_get_obj_at_key_path():
 
 def test_set_obj_at_key_path():
     o = {'a': [{'a': [1, 2, 3]}]}
+    original_o = {'a': [{'a': [1, 2, 3]}]}
 
     with pytest.raises(KeyError):
         set_obj_at_key_path(o, ['a', '1234'], 42)
+    o = set_obj_at_key_path(o, ['a', '1234'], 42, False)
+    assert o == original_o
+
     with pytest.raises(KeyError):
         set_obj_at_key_path(o, ['a', 1234], 42)
+    o = set_obj_at_key_path(o, ['a', 1234], 42, False)
+    assert o == original_o
+
     with pytest.raises(KeyError):
         set_obj_at_key_path(o, ['a', 0, 'd', 10, 11, 12], 42)
+    o = set_obj_at_key_path(o, ['a', 0, 'd', 10, 11, 12], 42, False)
+    assert o == original_o
 
-    set_obj_at_key_path(o, ['a', 0, 'a', 0], 42)
+    o = set_obj_at_key_path(o, ['a', 0, 'a', 0], 42)
     assert o['a'][0]['a'][0] == 42
-    set_obj_at_key_path(o, ['a', 0, 'a'], 42)
+    o = set_obj_at_key_path(o, ['a', 0, 'a'], 42)
     assert o['a'][0]['a'] == 42
-    set_obj_at_key_path(o, ['a', 0], 42)
+    o = set_obj_at_key_path(o, ['a', 0], 42)
     assert o['a'][0] == 42
-    set_obj_at_key_path(o, ['a'], 42)
+    o = set_obj_at_key_path(o, ['a'], 42)
     assert o['a'] == 42
+    o = set_obj_at_key_path(o, [], 42)
+    assert o == 42
 
 
 def test_get_conf_set_for_key_path():

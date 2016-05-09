@@ -37,6 +37,9 @@ class Nothing(object):
             return False
         return True
 
+    def __nonzero__(self):
+        return False
+
     def __str__(self):
         return 'NOTHING'
 

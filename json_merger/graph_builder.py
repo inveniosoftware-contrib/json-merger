@@ -27,7 +27,6 @@ from __future__ import absolute_import, print_function
 import six
 
 from .comparator import DefaultComparator
-from .conflict import Conflict, ConflictType
 from .nothing import NOTHING
 
 FIRST = 'first'
@@ -61,12 +60,16 @@ class ListMatchStats(object):
         self.in_result_idx = set()
         self.not_in_result_idx = set(range(len(lst)))
         self.not_in_result_root_match_idx = set()
+        self.matched_root_idx_pairs = set()
 
     def move_to_result(self, lst_idx):
         self.in_result_idx.add(lst_idx)
         self.not_in_result_idx.remove(lst_idx)
+        if lst_idx in self.not_in_result_root_match_idx:
+            self.not_in_result_root_match_idx.remove(lst_idx)
 
-    def add_root_match(self, lst_idx):
+    def add_root_match(self, lst_idx, root_idx):
+        self.matched_root_idx_pairs.add((lst_idx, root_idx))
         if lst_idx in self.in_result_idx:
             return
         self.not_in_result_root_match_idx.add(lst_idx)
@@ -187,12 +190,12 @@ class ListMatchGraphBuilder(object):
         for idx in self.head_stats.not_in_result_idx:
             root_idx, root = self._get_match('root', 'head', idx)
             if root_idx >= 0:
-                self.head_stats.add_root_match(idx)
+                self.head_stats.add_root_match(idx, root_idx)
 
         for idx in self.update_stats.not_in_result_idx:
             root_idx, root = self._get_match('root', 'update', idx)
             if root_idx >= 0:
-                self.head_stats.add_root_match(idx)
+                self.update_stats.add_root_match(idx, root_idx)
 
     def build_graph(self):
         self._populate_nodes()
