@@ -24,7 +24,9 @@
 
 from __future__ import absolute_import, print_function
 
+import copy
 import six
+
 from dictdiffer import ADD, CHANGE, REMOVE, patch
 from dictdiffer.merge import Merger, UnresolvedConflictsException
 
@@ -88,9 +90,9 @@ class SkipListsMerger(object):
 
     def __init__(self, root, head, update, default_op,
                  data_lists=None):
-        self.root = root
-        self.head = head
-        self.update = update
+        self.root = copy.deepcopy(root)
+        self.head = copy.deepcopy(head)
+        self.update = copy.deepcopy(update)
         self.pick, self.raise_on_conflict = self._parse_op(default_op)
         self.data_lists = set(data_lists or [])
 
