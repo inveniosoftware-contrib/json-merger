@@ -40,6 +40,9 @@ class Nothing(object):
     def __nonzero__(self):
         return False
 
+    def __bool__(self):
+        return False
+
     def __str__(self):
         return 'NOTHING'
 
