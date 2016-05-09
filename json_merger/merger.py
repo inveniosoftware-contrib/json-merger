@@ -37,6 +37,8 @@ from .utils import (
     set_obj_at_key_path
 )
 
+PLACEHOLDER_STR = "#$PLACEHOLDER$#"
+
 
 class ListAlignMerger(object):
 
@@ -86,11 +88,11 @@ class ListAlignMerger(object):
         head_list = []
         update_list = []
         for root_obj, head_obj, update_obj in list_unifier.unified:
-            # Cast NOTHING objects to None so we reserialize back to JSON
-            # if needed.
-            root_list.append(root_obj or None)
-            head_list.append(head_obj or None)
-            update_list.append(update_obj or None)
+            # Cast NOTHING objects to a placeholder so we reserialize back to
+            # JSON if needed.
+            root_list.append(root_obj or PLACEHOLDER_STR)
+            head_list.append(head_obj or PLACEHOLDER_STR)
+            update_list.append(update_obj or PLACEHOLDER_STR)
 
         # If we can't set that key path a list to be merged wasn't there
         # In the first place.
