@@ -108,13 +108,13 @@ class ListUnifier(object):
             # TODO find a method to align only the conflictual entities.
             self.unified = [(h, h, h) for h in self.head]
 
-            self.head_stats = graph_builder.head_stats
-            self.update_stats = graph_builder.update_stats
 
             raise MergeError(e.message,
                              [Conflict(ConflictType.MANUAL_MERGE, (),
                                        self.update)])
-
+        finally:
+            self.head_stats = graph_builder.head_stats
+            self.update_stats = graph_builder.update_stats
 
         try:
             node_order = toposort(graph, self.pick_first)
