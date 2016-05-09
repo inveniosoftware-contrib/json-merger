@@ -37,6 +37,8 @@ from .utils import (
     set_obj_at_key_path
 )
 
+PLACEHOLDER_STR = "#$PLACEHOLDER$#"
+
 
 class ListAlignMerger(object):
 
@@ -60,6 +62,10 @@ class ListAlignMerger(object):
         self.conflicts = []
         self.merged_root = None
 
+        self.aligned_root = copy.deepcopy(root)
+        self.aligned_head = copy.deepcopy(head)
+        self.aligned_update = copy.deepcopy(update)
+
     def merge(self):
         self.merged_root = self._recursive_merge(self.root, self.head,
                                                  self.update)
@@ -76,6 +82,29 @@ class ListAlignMerger(object):
         except MergeError as e:
             self.conflicts.extend(c.with_prefix(key_path) for c in e.content)
         return object_merger
+
+    def _build_aligned_lists_and_stats(self, list_unifier, key_path):
+        root_list = []
+        head_list = []
+        update_list = []
+        for root_obj, head_obj, update_obj in list_unifier.unified:
+            # Cast NOTHING objects to a placeholder so we reserialize back to
+            # JSON if needed.
+            root_list.append(root_obj or PLACEHOLDER_STR)
+            head_list.append(head_obj or PLACEHOLDER_STR)
+            update_list.append(update_obj or PLACEHOLDER_STR)
+
+        # If we can't set that key path a list to be merged wasn't there
+        # In the first place.
+        self.aligned_root = set_obj_at_key_path(self.aligned_root,
+                                                key_path, root_list, False)
+        self.aligned_head = set_obj_at_key_path(self.aligned_head,
+                                                key_path, head_list, False)
+        self.aligned_update = set_obj_at_key_path(self.aligned_update,
+                                                  key_path, update_list, False)
+        self.head_stats[key_path] = list_unifier.head_stats
+        self.update_stats[key_path] = list_unifier.update_stats
+        self.match_uids[key_path] = list_unifier.match_uids
 
     def _unify_lists(self, root, head, update, key_path):
         dotted_key_path = get_dotted_key_path(key_path, True)
@@ -123,14 +152,8 @@ class ListAlignMerger(object):
                                                 absolute_key_path + (idx, ))
                 new_list.append(new_obj)
 
-            self.head_stats[absolute_key_path] = unifier.head_stats
-            self.update_stats[absolute_key_path] = unifier.update_stats
-            self.match_uids[absolute_key_path] = unifier.match_uids
-
-            if list_field == ():
-                root = new_list
-            else:
-                set_obj_at_key_path(root, list_field, new_list)
+            root = set_obj_at_key_path(root, list_field, new_list)
+            self._build_aligned_lists_and_stats(unifier, absolute_key_path)
 
         return root
 

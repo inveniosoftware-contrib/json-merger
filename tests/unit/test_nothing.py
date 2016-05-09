@@ -55,3 +55,7 @@ def test_nothing_neq():
 def test_nothing_repr():
     assert str(NOTHING) == 'NOTHING'
     assert repr(NOTHING) == 'NOTHING'
+
+
+def test_nothing_bool():
+    assert not NOTHING

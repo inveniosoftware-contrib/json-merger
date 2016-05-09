@@ -60,8 +60,9 @@ class ListMatchStats(object):
         self.in_result_idx = set()
         self.not_in_result_idx = set(range(len(lst)))
         self.not_in_result_root_match_idx = set()
-        self.next_root_match_uid = 0
+        self.root_matches = {}
 
+        self.next_root_match_uid = 0
         # For a given index in the initial list retrieve the match uid.
         self.match_uids = {}
         # For a given index in the initial list retrieve root match uid.
@@ -74,11 +75,15 @@ class ListMatchStats(object):
         self.not_in_result_idx.remove(lst_idx)
         self.match_uids[lst_idx] = match_uid
 
+        if lst_idx in self.not_in_result_root_match_idx:
+            self.not_in_result_root_match_idx.remove(lst_idx)
+
     def add_root_match(self, lst_idx, root_idx):
         self.lst_root_match_uids[lst_idx] = self.next_root_match_uid
         self.root_root_match_uids[root_idx] = self.next_root_match_uid
         self.next_root_match_uid += 1
 
+        self.root_matches[lst_idx] = root_idx
         if lst_idx in self.in_result_idx:
             return
 
@@ -104,6 +109,17 @@ class ListMatchStats(object):
     @property
     def not_in_result_not_root_match(self):
         return [self.lst[e] for e in self.not_in_result_not_root_match_idx]
+
+    @property
+    def not_in_result_root_match_pairs(self):
+        return [(self.lst[e], self.root[self.root_matches[e]])
+                for e in self.not_in_result_root_match_idx]
+
+    @property
+    def not_matched_root_objects(self):
+        matched_root_idx = set(self.root_matches.values())
+        return [o for idx, o in enumerate(self.root)
+                if idx not in matched_root_idx]
 
 
 class ListMatchGraphBuilder(object):
