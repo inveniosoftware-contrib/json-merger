@@ -198,7 +198,7 @@ class ListMatchGraphBuilder(object):
             if update_idx >= 0:
                 self.update_stats.move_to_result(update_idx)
 
-        for idx in xrange(len(self.head)):
+        for idx in range(len(self.head)):
             root_idx, root = self._get_match('root', 'head', idx)
             if root_idx >= 0:
                 self.head_stats.add_root_match(idx, root_idx)
