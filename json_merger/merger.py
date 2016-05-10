@@ -53,6 +53,9 @@ class ListAlignMerger(object):
         self.root = copy.deepcopy(root)
         self.head = copy.deepcopy(head)
         self.update = copy.deepcopy(update)
+        self.match_uids = {}
+        self.head_stats = {}
+        self.update_stats = {}
 
         self.conflicts = []
         self.merged_root = None
@@ -74,7 +77,7 @@ class ListAlignMerger(object):
             self.conflicts.extend(c.with_prefix(key_path) for c in e.content)
         return object_merger
 
-    def _merge_lists(self, root, head, update, key_path):
+    def _unify_lists(self, root, head, update, key_path):
         dotted_key_path = get_dotted_key_path(key_path, True)
 
         operation = self.list_merge_ops.get(dotted_key_path,
@@ -88,14 +91,7 @@ class ListAlignMerger(object):
         except MergeError as e:
             self.conflicts.extend(c.with_prefix(key_path) for c in e.content)
 
-        new_root_list = []
-        for idx, objects in enumerate(list_unifier.unified):
-            root_obj, head_obj, update_obj = objects
-            new_obj = self._recursive_merge(root_obj, head_obj, update_obj,
-                                            key_path + (idx, ))
-            new_root_list.append(new_obj)
-
-        return new_root_list
+        return list_unifier
 
     def _recursive_merge(self, root, head, update, key_path=()):
         dotted_key_path = get_dotted_key_path(key_path, True)
@@ -117,8 +113,20 @@ class ListAlignMerger(object):
             head_l = get_obj_at_key_path(head, list_field, [])
             update_l = get_obj_at_key_path(update, list_field, [])
 
-            new_list = self._merge_lists(root_l, head_l, update_l,
-                                         absolute_key_path)
+            unifier = self._unify_lists(root_l, head_l, update_l,
+                                        absolute_key_path)
+
+            new_list = []
+            for idx, objects in enumerate(unifier.unified):
+                root_obj, head_obj, update_obj = objects
+                new_obj = self._recursive_merge(root_obj, head_obj, update_obj,
+                                                absolute_key_path + (idx, ))
+                new_list.append(new_obj)
+
+            self.head_stats[absolute_key_path] = unifier.head_stats
+            self.update_stats[absolute_key_path] = unifier.update_stats
+            self.match_uids[absolute_key_path] = unifier.match_uids
+
             if list_field == ():
                 root = new_list
             else:
