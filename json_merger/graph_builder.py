@@ -27,7 +27,6 @@ from __future__ import absolute_import, print_function
 import six
 
 from .comparator import DefaultComparator
-from .conflict import Conflict, ConflictType
 from .nothing import NOTHING
 
 FIRST = 'first'
@@ -61,14 +60,28 @@ class ListMatchStats(object):
         self.in_result_idx = set()
         self.not_in_result_idx = set(range(len(lst)))
         self.not_in_result_root_match_idx = set()
+        self.next_root_match_uid = 0
 
-    def move_to_result(self, lst_idx):
+        # For a given index in the initial list retrieve the match uid.
+        self.match_uids = {}
+        # For a given index in the initial list retrieve root match uid.
+        self.lst_root_match_uids = {}
+        # For a given index in the root list retrieve root match uid.
+        self.root_root_match_uids = {}
+
+    def move_to_result(self, lst_idx, match_uid):
         self.in_result_idx.add(lst_idx)
         self.not_in_result_idx.remove(lst_idx)
+        self.match_uids[lst_idx] = match_uid
 
-    def add_root_match(self, lst_idx):
+    def add_root_match(self, lst_idx, root_idx):
+        self.lst_root_match_uids[lst_idx] = self.next_root_match_uid
+        self.root_root_match_uids[root_idx] = self.next_root_match_uid
+        self.next_root_match_uid += 1
+
         if lst_idx in self.in_result_idx:
             return
+
         self.not_in_result_root_match_idx.add(lst_idx)
 
     @property
@@ -127,6 +140,7 @@ class ListMatchGraphBuilder(object):
         self._update_idx_to_node = {}
 
         self._next_node_id = 0
+        self.match_uids = {}
 
     def _new_node_id(self):
         node_id = self._next_node_id
@@ -178,21 +192,26 @@ class ListMatchGraphBuilder(object):
                 self._push_node(root_elem, head_elem, update_elem)
 
     def _build_stats(self):
-        for root_idx, head_idx, update_idx in self._node_src_indices.values():
-            if head_idx >= 0:
-                self.head_stats.move_to_result(head_idx)
-            if update_idx >= 0:
-                self.update_stats.move_to_result(update_idx)
+        match_uid = 0
+        for node_id, indices in self._node_src_indices.items():
+            root_idx, head_idx, update_idx = indices
+            match_uid += 1
 
-        for idx in self.head_stats.not_in_result_idx:
+            if head_idx >= 0:
+                self.head_stats.move_to_result(head_idx, match_uid)
+            if update_idx >= 0:
+                self.update_stats.move_to_result(update_idx, match_uid)
+            self.match_uids[node_id] = match_uid
+
+        for idx in range(len(self.head)):
             root_idx, root = self._get_match('root', 'head', idx)
             if root_idx >= 0:
-                self.head_stats.add_root_match(idx)
+                self.head_stats.add_root_match(idx, root_idx)
 
-        for idx in self.update_stats.not_in_result_idx:
+        for idx in range(len(self.update)):
             root_idx, root = self._get_match('root', 'update', idx)
             if root_idx >= 0:
-                self.head_stats.add_root_match(idx)
+                self.update_stats.add_root_match(idx, root_idx)
 
     def build_graph(self):
         self._populate_nodes()

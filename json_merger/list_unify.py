@@ -33,7 +33,6 @@ from .graph_builder import (
     GraphBuilderError, ListMatchGraphBuilder, sort_cyclic_graph_best_effort,
     toposort
 )
-from .nothing import NOTHING
 
 _OPERATIONS = [
     'KEEP_ONLY_HEAD_ENTITIES',
@@ -87,7 +86,6 @@ class ListUnifier(object):
         self.update_stats = None
 
         # Wether to raise error on deleting a head entity.
-        # TODO implement this
         self.raise_on_head_delete = operation in _RAISE_ERROR_OPS
         # Sources from which to keep entities.
         self.sources = _SOURCES[operation]
@@ -96,6 +94,7 @@ class ListUnifier(object):
         self.pick_first = _PICK_FIRST[operation]
 
         self.unified = []
+        self.match_uids = []
 
     def unify(self):
         graph_builder = ListMatchGraphBuilder(
@@ -106,13 +105,14 @@ class ListUnifier(object):
         except GraphBuilderError as e:
             # Can't partially recover from this, just keep self.head and call.
             # For manual alignment with self.update.
+            # TODO better fallback from this
             self.unified = [(h, h, h) for h in self.head]
             raise MergeError(e.message,
                              [Conflict(ConflictType.MANUAL_MERGE, (),
                                        self.update)])
-
-        self.head_stats = graph_builder.head_stats
-        self.update_stats = graph_builder.update_stats
+        finally:
+            self.head_stats = graph_builder.head_stats
+            self.update_stats = graph_builder.update_stats
 
         try:
             node_order = toposort(graph, self.pick_first)
@@ -123,6 +123,7 @@ class ListUnifier(object):
         finally:
             for node in node_order:
                 self.unified.append(nodes[node])
+                self.match_uids.append(graph_builder.match_uids[node])
             if (self.raise_on_head_delete and
                     self.head_stats.not_in_result_not_root_match_idx):
                 removed = self.head_stats.not_in_result_not_root_match
