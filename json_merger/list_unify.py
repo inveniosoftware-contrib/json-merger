@@ -125,7 +125,7 @@ class ListUnifier(object):
                 self.unified.append(nodes[node])
                 self.match_uids.append(graph_builder.match_uids[node])
             if (self.raise_on_head_delete and
-                    self.head_stats.not_in_result_not_root_match_idx):
+                    self.head_stats.not_in_result_not_root_match):
                 removed = self.head_stats.not_in_result_not_root_match
                 raise MergeError(
                     'Some elements might need to go back to HEAD',
