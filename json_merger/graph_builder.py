@@ -32,14 +32,6 @@ from .nothing import NOTHING
 FIRST = 'first'
 
 
-class GraphBuilderError(Exception):
-
-    def __init__(self, message):
-        super(GraphBuilderError, self).__init__(message)
-        # Make this work with Python 3.
-        self.message = message
-
-
 class BeforeNodes(object):
 
     def __init__(self, head_node=None, update_node=None):
@@ -158,6 +150,8 @@ class ListMatchGraphBuilder(object):
         self._next_node_id = 0
         self.match_uids = {}
 
+        self.multiple_match_choices = []
+
     def _new_node_id(self):
         node_id = self._next_node_id
         self._next_node_id += 1
@@ -177,23 +171,29 @@ class ListMatchGraphBuilder(object):
         if update_idx >= 0:
             self._update_idx_to_node[update_idx] = node_id
 
-    def _get_match(self, target, source, source_idx):
+    def _get_matches(self, target, source, source_idx):
         comparator, src_list = self.comparators[(target, source)]
         matches = comparator.get_matches(src_list, source_idx)
-        if len(matches) > 1:
-            # Can't do anything with multiple matches. Abort the matching
-            # completely.
-            raise GraphBuilderError('Can not match lists.')
-        return matches[0] if matches else (-1, NOTHING)
+        return matches if matches else [(-1, NOTHING)]
+
+    def _add_matches(self, root_elems, head_elems, update_elems):
+        matches = [(r, h, u)
+                   for r in root_elems
+                   for h in head_elems
+                   for u in update_elems]
+        if len(matches) == 1:
+            self._push_node(*matches[0])
+        else:
+            match_objs = [(r[1], h[1], u[1]) for r, h, u in matches]
+            self.multiple_match_choices.extend(match_objs)
 
     def _populate_nodes(self):
         if 'head' in self.sources:
             for head_idx, head_obj in enumerate(self.head):
-                head_elem = (head_idx, head_obj)
-                root_elem = self._get_match('root', 'head', head_idx)
-                update_elem = self._get_match('update', 'head', head_idx)
-
-                self._push_node(root_elem, head_elem, update_elem)
+                head_elems = [(head_idx, head_obj)]
+                root_elems = self._get_matches('root', 'head', head_idx)
+                update_elems = self._get_matches('update', 'head', head_idx)
+                self._add_matches(root_elems, head_elems, update_elems)
 
         if 'update' in self.sources:
             for update_idx, update_obj in enumerate(self.update):
@@ -201,11 +201,10 @@ class ListMatchGraphBuilder(object):
                 if update_idx in self._update_idx_to_node:
                     continue
 
-                update_elem = (update_idx, update_obj)
-                root_elem = self._get_match('root', 'update', update_idx)
-                head_elem = self._get_match('head', 'update', update_idx)
-
-                self._push_node(root_elem, head_elem, update_elem)
+                update_elems = [(update_idx, update_obj)]
+                root_elems = self._get_matches('root', 'update', update_idx)
+                head_elems = self._get_matches('head', 'update', update_idx)
+                self._add_matches(root_elems, head_elems, update_elems)
 
     def _build_stats(self):
         match_uid = 0
@@ -220,14 +219,15 @@ class ListMatchGraphBuilder(object):
             self.match_uids[node_id] = match_uid
 
         for idx in range(len(self.head)):
-            root_idx, root = self._get_match('root', 'head', idx)
-            if root_idx >= 0:
-                self.head_stats.add_root_match(idx, root_idx)
+            matches = self._get_matches('root', 'head', idx)
+            # Matches[0][0] is the index in the root list of the first match.
+            if len(matches) == 1 and matches[0][0] >= 0:
+                self.head_stats.add_root_match(idx, matches[0][0])
 
         for idx in range(len(self.update)):
-            root_idx, root = self._get_match('root', 'update', idx)
-            if root_idx >= 0:
-                self.update_stats.add_root_match(idx, root_idx)
+            matches = self._get_matches('root', 'update', idx)
+            if len(matches) == 1 and matches[0][0] >= 0:
+                self.head_stats.add_root_match(idx, matches[0][0])
 
     def build_graph(self):
         self._populate_nodes()
@@ -247,17 +247,25 @@ class ListMatchGraphBuilder(object):
         # source lists.
         for node_id, node_indices in six.iteritems(self._node_src_indices):
             root_idx, head_idx, update_idx = node_indices
-            head_next = head_idx + 1 if head_idx >= 0 else -1
-            update_next = update_idx + 1 if update_idx >= 0 else -1
+            head_next_l = []
+            update_next_l = []
+            if head_idx >= 0:
+                head_next_l = range(head_idx + 1, len(self.head))
+            if update_idx >= 0:
+                update_next_l = range(update_idx + 1, len(self.update))
 
             next_head_node = None
             next_update_node = None
-            if (head_next in self._head_idx_to_node and
-                    'head' in self.sources):
-                next_head_node = self._head_idx_to_node[head_next]
-            if (update_next in self._update_idx_to_node and
-                    'update' in self.sources):
-                next_update_node = self._update_idx_to_node[update_next]
+            for head_next in head_next_l:
+                if (head_next in self._head_idx_to_node and
+                        'head' in self.sources):
+                    next_head_node = self._head_idx_to_node[head_next]
+                    break
+            for update_next in update_next_l:
+                if (update_next in self._update_idx_to_node and
+                        'update' in self.sources):
+                    next_update_node = self._update_idx_to_node[update_next]
+                    break
             self.graph[node_id] = BeforeNodes(next_head_node, next_update_node)
 
         return self.graph, self.node_data

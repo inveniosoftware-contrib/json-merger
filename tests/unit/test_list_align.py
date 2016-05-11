@@ -162,13 +162,13 @@ def test_error_on_multiple_match():
     with pytest.raises(MergeError) as excinfo:
         u.unify()
 
-    assert len(excinfo.value.content) == 1
-    conflict = excinfo.value.content[0]
-    assert conflict.conflict_type == ConflictType.MANUAL_MERGE
-    assert conflict.path == ()
-    assert conflict.body == update
+    assert len(excinfo.value.content) == 2
+    for conflict in excinfo.value.content:
+        assert conflict.conflict_type == ConflictType.MANUAL_MERGE
+        assert conflict.path == ()
+        assert conflict.body == (2, 2, 2)
 
-    assert u.unified == [(1, 1, 1), (2, 2, 2), (2, 2, 2)]
+    assert u.unified == [(1, 1, 1), (NOTHING, NOTHING, 3)]
 
 
 def test_stats():
