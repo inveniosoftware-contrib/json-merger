@@ -1,7 +1,13 @@
 {
     "authors": [
         {
-            "full_name": "New, Author"
+            "affiliations": [
+                {
+                    "value": "UC, Santa Barbara"
+                }
+            ],
+            "full_name": "Cox, Brian E.",
+            "inspire_id": "INSPIRE-42"
         },
         {
             "affiliations": [
@@ -9,8 +15,8 @@
                     "value": "UC, Santa Barbara"
                 }
             ],
-            "curated_relation": false,
-            "full_name": "Horowitz, Gary"
+            "full_name": "Cox, Brian G.",
+            "inspire_id": "INSPIRE-42"
         },
         {
             "affiliations": [
@@ -34,7 +40,7 @@
                 }
             ],
             "curated_relation": false,
-            "full_name": "Ooguri, Hirosi",
+            "full_name": "O Brien, Dara",
             "inspire_id": "INSPIRE-00113241"
         }
     ]

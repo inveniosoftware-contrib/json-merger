@@ -31,7 +31,7 @@ import pytest
 
 from json_merger import UpdateMerger, MergeError
 from json_merger.comparator import PrimaryKeyComparator
-from json_merger.conflict import Conflict
+from json_merger.conflict import Conflict, ConflictType
 from json_merger.list_unify import UnifierOps
 
 
@@ -69,6 +69,12 @@ LIST_MERGE_OPS = {
 }
 
 
+def _deserialize_conflict(conflict_type, path, body):
+    if conflict_type == ConflictType.MANUAL_MERGE:
+        body = tuple(body)
+    return Conflict(conflict_type, tuple(path), body)
+
+
 @pytest.mark.parametrize('scenario', [
     'author_typo_update_fix',
     'author_typo_curator_fix',
@@ -83,6 +89,7 @@ LIST_MERGE_OPS = {
     'author_delete_and_double_curator_typo_fix',
     'author_curator_collab_addition',
     'author_affiliation_addition',
+    'author_double_match_conflict',
     'title_addition',
     'title_change'])
 def test_author_typo_scenarios(update_fixture_loader, scenario):
@@ -93,7 +100,7 @@ def test_author_typo_scenarios(update_fixture_loader, scenario):
     if exp.get('conflicts'):
         with pytest.raises(MergeError) as excinfo:
             merger.merge()
-        expected_conflicts = [Conflict(t, tuple(p), b)
+        expected_conflicts = [_deserialize_conflict(t, p, b)
                               for t, p, b in exp.pop('conflicts')]
         assert set(expected_conflicts) == set(excinfo.value.content)
     else:

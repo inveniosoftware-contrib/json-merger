@@ -153,26 +153,29 @@ def test_no_error_on_head_delete_from_root():
 
 
 def test_error_on_multiple_match():
-    root = [1, 2]
-    head = [1, 2, 2]
+    root = [2, 3]
+    head = [1, 1, 2, 3, 3]
     update = [1, 2, 3]
 
     u = ListUnifier(root, head, update,
-                    UnifierOps.KEEP_UPDATE_ENTITIES_CONFLICT_ON_HEAD_DELETE)
+                    UnifierOps.KEEP_ONLY_UPDATE_ENTITIES)
     with pytest.raises(MergeError) as excinfo:
         u.unify()
 
-    assert len(excinfo.value.content) == 1
-    conflict = excinfo.value.content[0]
-    assert conflict.conflict_type == ConflictType.MANUAL_MERGE
-    assert conflict.path == ()
-    assert conflict.body == update
+    assert len(excinfo.value.content) == 4
+    expected_bodies = [(None, 1, 1), (None, 1, 1), (3, 3, 3), (3, 3, 3)]
+    for conflict in excinfo.value.content:
+        assert conflict.conflict_type == ConflictType.MANUAL_MERGE
+        assert conflict.path == ()
+        assert conflict.body in expected_bodies
+        expected_bodies.remove(conflict.body)
+    assert not expected_bodies
 
-    assert u.unified == [(1, 1, 1), (2, 2, 2), (2, 2, 2)]
+    assert u.unified == [(2, 2, 2)]
 
 
 def test_stats():
-    root = [1, 2]
+    root = [1, 2, 10]
     head = [1, 3, 4, 2]
     update = [1, 3, 5]
 
@@ -185,8 +188,11 @@ def test_stats():
     assert sorted(u.head_stats.not_in_result_root_match) == [2]
     assert sorted(u.head_stats.not_in_result_root_match_idx) == [3]
     assert sorted(u.head_stats.not_in_result_not_root_match) == [4]
+    assert sorted(u.head_stats.not_in_result_root_match_pairs) == [(2, 2)]
+    assert sorted(u.head_stats.not_matched_root_objects) == [10]
 
     assert sorted(u.update_stats.in_result) == [1, 3, 5]
     assert sorted(u.update_stats.not_in_result) == []
     assert sorted(u.update_stats.not_in_result_root_match) == []
     assert sorted(u.update_stats.not_in_result_not_root_match) == []
+    assert sorted(u.update_stats.not_matched_root_objects) == [2, 10]

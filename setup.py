@@ -61,7 +61,8 @@ setup_requires = [
 
 install_requires = [
     'dictdiffer>=0.5.0',
-    'six>=1.10.0'
+    'six>=1.10.0',
+    'pyrsistent>=0.11.13'
 ]
 
 packages = find_packages()

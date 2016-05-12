@@ -1,1 +1,0 @@
-Prepending a new author should preserve affiliations for all the others.

@@ -1,0 +1,1 @@
+Curator added the same author twice. Update adds that author once. Call for a manual merge.

@@ -1,1 +1,0 @@
-Update typo in author name should preserve affiliations.

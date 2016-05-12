@@ -30,8 +30,7 @@ from .comparator import DefaultComparator
 from .conflict import Conflict, ConflictType
 from .errors import MergeError
 from .graph_builder import (
-    GraphBuilderError, ListMatchGraphBuilder, sort_cyclic_graph_best_effort,
-    toposort
+    ListMatchGraphBuilder, sort_cyclic_graph_best_effort, toposort
 )
 
 _OPERATIONS = [
@@ -100,34 +99,28 @@ class ListUnifier(object):
         graph_builder = ListMatchGraphBuilder(
             self.root, self.head, self.update, self.sources,
             self.comparator_cls)
-        try:
-            graph, nodes = graph_builder.build_graph()
-        except GraphBuilderError as e:
-            # Can't partially recover from this, just keep self.head and call.
-            # For manual alignment with self.update.
-            # TODO better fallback from this
-            self.unified = [(h, h, h) for h in self.head]
-            raise MergeError(e.message,
-                             [Conflict(ConflictType.MANUAL_MERGE, (),
-                                       self.update)])
-        finally:
-            self.head_stats = graph_builder.head_stats
-            self.update_stats = graph_builder.update_stats
+        graph, nodes = graph_builder.build_graph()
+        self.head_stats = graph_builder.head_stats
+        self.update_stats = graph_builder.update_stats
+
+        conflicts = []
+        if graph_builder.multiple_match_choices:
+            conflicts = [Conflict(ConflictType.MANUAL_MERGE, (), choice)
+                         for choice in graph_builder.multiple_match_choices]
 
         try:
             node_order = toposort(graph, self.pick_first)
         except ValueError:
             node_order = sort_cyclic_graph_best_effort(graph, self.pick_first)
-            raise MergeError('Order Might Be Wrong',
-                             [Conflict(ConflictType.REORDER, (), None)])
-        finally:
-            for node in node_order:
-                self.unified.append(nodes[node])
-                self.match_uids.append(graph_builder.match_uids[node])
-            if (self.raise_on_head_delete and
-                    self.head_stats.not_in_result_not_root_match):
-                removed = self.head_stats.not_in_result_not_root_match
-                raise MergeError(
-                    'Some elements might need to go back to HEAD',
-                    [Conflict(ConflictType.ADD_BACK_TO_HEAD, (), r)
-                     for r in removed])
+            conflicts.append(Conflict(ConflictType.REORDER, (), None))
+
+        for node in node_order:
+            self.unified.append(nodes[node])
+            self.match_uids.append(graph_builder.match_uids[node])
+        if (self.raise_on_head_delete and
+                self.head_stats.not_in_result_not_root_match):
+            removed = self.head_stats.not_in_result_not_root_match
+            conflicts.extend([Conflict(ConflictType.ADD_BACK_TO_HEAD, (), r)
+                              for r in removed])
+        if conflicts:
+            raise MergeError('Errors in list unifier', conflicts)

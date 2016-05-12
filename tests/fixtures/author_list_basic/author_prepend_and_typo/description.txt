@@ -1,1 +1,0 @@
-Update typo in author plus adding a new record should preserve affiliations.
