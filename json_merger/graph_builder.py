@@ -228,7 +228,7 @@ class ListMatchGraphBuilder(object):
         for idx in range(len(self.update)):
             matches = self._get_matches('root', 'update', idx)
             if len(matches) == 1 and matches[0][0] >= 0:
-                self.head_stats.add_root_match(idx, matches[0][0])
+                self.update_stats.add_root_match(idx, matches[0][0])
 
     def build_graph(self):
         self._populate_nodes()

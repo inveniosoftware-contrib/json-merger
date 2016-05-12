@@ -175,7 +175,7 @@ def test_error_on_multiple_match():
 
 
 def test_stats():
-    root = [1, 2]
+    root = [1, 2, 10]
     head = [1, 3, 4, 2]
     update = [1, 3, 5]
 
@@ -188,8 +188,11 @@ def test_stats():
     assert sorted(u.head_stats.not_in_result_root_match) == [2]
     assert sorted(u.head_stats.not_in_result_root_match_idx) == [3]
     assert sorted(u.head_stats.not_in_result_not_root_match) == [4]
+    assert sorted(u.head_stats.not_in_result_root_match_pairs) == [(2, 2)]
+    assert sorted(u.head_stats.not_matched_root_objects) == [10]
 
     assert sorted(u.update_stats.in_result) == [1, 3, 5]
     assert sorted(u.update_stats.not_in_result) == []
     assert sorted(u.update_stats.not_in_result_root_match) == []
     assert sorted(u.update_stats.not_in_result_not_root_match) == []
+    assert sorted(u.update_stats.not_matched_root_objects) == [2, 10]
