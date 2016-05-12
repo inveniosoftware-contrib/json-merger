@@ -184,7 +184,8 @@ class ListMatchGraphBuilder(object):
         if len(matches) == 1:
             self._push_node(*matches[0])
         else:
-            match_objs = [(r[1], h[1], u[1]) for r, h, u in matches]
+            match_objs = [(r[1] or None, h[1] or None, u[1] or None)
+                          for r, h, u in matches]
             self.multiple_match_choices.extend(match_objs)
 
     def _populate_nodes(self):
@@ -237,11 +238,22 @@ class ListMatchGraphBuilder(object):
         # lists.
         self.node_data[FIRST] = (NOTHING, NOTHING, NOTHING)
         self.graph[FIRST] = BeforeNodes()
+        next_head_node = None
+        next_update_node = None
 
-        if 'head' in self.sources and 0 in self._head_idx_to_node:
-            self.graph[FIRST].head_node = self._head_idx_to_node[0]
-        if 'update' in self.sources and 0 in self._update_idx_to_node:
-            self.graph[FIRST].update_node = self._update_idx_to_node[0]
+        if 'head' in self.sources:
+            for idx in range(len(self.head)):
+                if idx in self._head_idx_to_node:
+                    next_head_node = self._head_idx_to_node[idx]
+                    break
+        if 'update' in self.sources:
+            for idx in range(len(self.update)):
+                if idx in self._update_idx_to_node:
+                    next_update_node = self._update_idx_to_node[idx]
+                    break
+
+        self.graph[FIRST].head_node = next_head_node
+        self.graph[FIRST].update_node = next_update_node
 
         # Link any other nodes with the elements that come after them in their
         # source lists.

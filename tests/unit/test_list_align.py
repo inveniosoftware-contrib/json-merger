@@ -153,22 +153,25 @@ def test_no_error_on_head_delete_from_root():
 
 
 def test_error_on_multiple_match():
-    root = [1, 2]
-    head = [1, 2, 2]
+    root = [2, 3]
+    head = [1, 1, 2, 3, 3]
     update = [1, 2, 3]
 
     u = ListUnifier(root, head, update,
-                    UnifierOps.KEEP_UPDATE_ENTITIES_CONFLICT_ON_HEAD_DELETE)
+                    UnifierOps.KEEP_ONLY_UPDATE_ENTITIES)
     with pytest.raises(MergeError) as excinfo:
         u.unify()
 
-    assert len(excinfo.value.content) == 2
+    assert len(excinfo.value.content) == 4
+    expected_bodies = [(None, 1, 1), (None, 1, 1), (3, 3, 3), (3, 3, 3)]
     for conflict in excinfo.value.content:
         assert conflict.conflict_type == ConflictType.MANUAL_MERGE
         assert conflict.path == ()
-        assert conflict.body == (2, 2, 2)
+        assert conflict.body in expected_bodies
+        expected_bodies.remove(conflict.body)
+    assert not expected_bodies
 
-    assert u.unified == [(1, 1, 1), (NOTHING, NOTHING, 3)]
+    assert u.unified == [(2, 2, 2)]
 
 
 def test_stats():

@@ -24,6 +24,9 @@
 
 from __future__ import absolute_import, print_function
 
+import json
+from pyrsistent import freeze, thaw
+
 
 class ConflictType(object):
     pass
@@ -48,11 +51,15 @@ class Conflict(tuple):
     def __new__(cls, conflict_type, path, body):
         if conflict_type not in _CONFLICTS:
             raise ValueError('Bad Conflict Type %s' % conflict_type)
+        body = freeze(body)
         return tuple.__new__(cls, (conflict_type, path, body))
 
     conflict_type = property(lambda self: self[0])
     path = property(lambda self: self[1])
-    body = property(lambda self: self[2])
+    body = property(lambda self: thaw(self[2]))
 
     def with_prefix(self, root_path):
         return Conflict(self.conflict_type, root_path + self.path, self.body)
+
+    def to_json(self):
+        return json.dumps([self.conflict_type, self.path, self.body])
