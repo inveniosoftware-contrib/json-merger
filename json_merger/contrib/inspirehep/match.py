@@ -108,8 +108,8 @@ def _match_by_norm_func(l1, l2, norm_fn, dist_fn, thresh):
     l1_only_idx = set(range(len(l1)))
     l2_only_idx = set(range(len(l2)))
 
-    buckets_l1 = _group_by_fn(enumerate(l1), lambda (idx, x): norm_fn(x))
-    buckets_l2 = _group_by_fn(enumerate(l2), lambda (idx, x): norm_fn(x))
+    buckets_l1 = _group_by_fn(enumerate(l1), lambda x: norm_fn(x[1]))
+    buckets_l2 = _group_by_fn(enumerate(l2), lambda x: norm_fn(x[1]))
 
     for normed, l1_elements in buckets_l1.items():
         l2_elements = buckets_l2.get(normed, [])
