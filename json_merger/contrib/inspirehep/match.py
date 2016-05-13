@@ -30,17 +30,27 @@ from munkres import Munkres
 def distance_function_match(l1, l2, thresh, dist_fn, norm_funcs=[]):
     """Returns pairs of matching indices from l1 and l2."""
     common = []
+    # We will keep track of the global index in the source list as we
+    # will successively reduce their sizes.
+    l1 = list(enumerate(l1))
+    l2 = list(enumerate(l2))
 
-    # Use the distance function and threshold on hints given by normalization
-    # see _match_by_norm_func for implementation details.
+    # Use the distance function and threshold on hints given by normalization.
+    # See _match_by_norm_func for implementation details.
+    # Also wrap the list element function function to ignore the global list
+    # index computed above.
     for norm_fn in norm_funcs:
-        new_common, l1, l2 = _match_by_norm_func(l1, l2, norm_fn,
-                                                 dist_fn, thresh)
-        common.extend(new_common)
+        new_common, l1, l2 = _match_by_norm_func(
+                l1, l2,
+                lambda a: norm_fn(a[1]),
+                lambda a1, a2: dist_fn(a1[1], a2[1]),
+                thresh)
+        # Keep only the global list index in the end result.
+        common.extend((c1[0], c2[0]) for c1, c2 in new_common)
 
     # Take any remaining umatched entries and try to match them using the
     # Munkres algorithm.
-    dist_matrix = [[dist_fn(e1, e2) for e2 in l2] for e1 in l1]
+    dist_matrix = [[dist_fn(e1, e2) for i2, e2 in l2] for i1, e1 in l1]
 
     # Call Munkres on connected components on the remaining bipartite graph.
     # An edge links an element from l1 with an element from l2 only if
@@ -61,7 +71,7 @@ def distance_function_match(l1, l2, thresh, dist_fn, norm_funcs=[]):
                             for l1_i in l1_indices]
         part_cmn = _match_munkres(part_l1, part_l2, part_dist_matrix, thresh)
 
-        common.extend(part_cmn)
+        common.extend((c1[0], c2[0]) for c1, c2 in part_cmn)
 
     return common
 
@@ -91,15 +101,15 @@ def _match_by_norm_func(l1, l2, norm_fn, dist_fn, thresh):
         'Z' -> consider 'Z1' and 'Z5' as different since the distance is
                greater than the threshold.
     Return:
-        [(0, 0)]
+        [('X1', 'X2')]
     """
     common = []
 
     l1_only_idx = set(range(len(l1)))
     l2_only_idx = set(range(len(l2)))
 
-    buckets_l1 = _group_by_fn(enumerate(l1), lambda x: norm_fn(x[1]))
-    buckets_l2 = _group_by_fn(enumerate(l2), lambda x: norm_fn(x[1]))
+    buckets_l1 = _group_by_fn(enumerate(l1), lambda (idx, x): norm_fn(x))
+    buckets_l2 = _group_by_fn(enumerate(l2), lambda (idx, x): norm_fn(x))
 
     for normed, l1_elements in buckets_l1.items():
         l2_elements = buckets_l2.get(normed, [])
@@ -111,7 +121,7 @@ def _match_by_norm_func(l1, l2, norm_fn, dist_fn, thresh):
             continue
         l1_only_idx.remove(e1_idx)
         l2_only_idx.remove(e2_idx)
-        common.append((e1_idx, e2_idx))
+        common.append((e1, e2))
 
     l1_only = [l1[i] for i in l1_only_idx]
     l2_only = [l2[i] for i in l2_only_idx]
@@ -126,16 +136,22 @@ def _match_munkres(l1, l2, dist_matrix, thresh):
     of the distance between the linked elements and taking only the elements
     which have the distance between them less (or equal) than the threshold.
     """
-    common = []
+    equal_dist_matches = set()
     m = Munkres()
     indices = m.compute(dist_matrix)
 
     for l1_idx, l2_idx in indices:
-        if dist_matrix[l1_idx][l2_idx] > thresh:
+        dst = dist_matrix[l1_idx][l2_idx]
+        if dst > thresh:
             continue
-        common.append((l1_idx, l2_idx))
+        for eq_l2_idx, eq_val in enumerate(dist_matrix[l1_idx]):
+            if abs(dst - eq_val) < 1e-9:
+                equal_dist_matches.add((l1_idx, eq_l2_idx))
+        for eq_l1_idx, eq_row in enumerate(dist_matrix):
+            if abs(dst - eq_row[l2_idx]) < 1e-9:
+                equal_dist_matches.add((eq_l1_idx, l2_idx))
 
-    return common
+    return [(l1[l1_idx], l2[l2_idx]) for l1_idx, l2_idx in equal_dist_matches]
 
 
 class BipartiteConnectedComponents(object):

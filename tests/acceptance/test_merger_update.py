@@ -77,6 +77,7 @@ def _deserialize_conflict(conflict_type, path, body):
     'author_delete_and_double_curator_typo_fix',
     'author_curator_collab_addition',
     'author_affiliation_addition',
+    'author_double_match_conflict',
     'title_addition',
     'title_change'])
 def test_author_typo_scenarios(update_fixture_loader, scenario):
@@ -94,9 +95,3 @@ def test_author_typo_scenarios(update_fixture_loader, scenario):
         merger.merge()
 
     assert merger.merged_root == exp, desc
-
-
-@pytest.mark.xfail
-@pytest.mark.parametrize('scenario', ['author_double_match_conflict'])
-def test_autor_xfail_scenarios(update_fixture_loader, scenario):
-    test_author_typo_scenarios(update_fixture_loader, scenario)
