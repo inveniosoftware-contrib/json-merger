@@ -64,7 +64,13 @@ class ListMatchStats(object):
 
     def move_to_result(self, lst_idx, match_uid):
         self.in_result_idx.add(lst_idx)
-        self.not_in_result_idx.remove(lst_idx)
+        if lst_idx in self.not_in_result_idx:
+            self.not_in_result_idx.remove(lst_idx)
+
+        # TODO unless we actually do a same list comparator which is hard
+        # and takes a lot we need to drop this unused feature since:
+        # * arrows are bad
+        # * we have to implement them.
         self.match_uids[lst_idx] = match_uid
 
         if lst_idx in self.not_in_result_root_match_idx:
