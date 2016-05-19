@@ -30,22 +30,10 @@ from __future__ import absolute_import, print_function
 import pytest
 
 from json_merger import UpdateMerger, MergeError
+from json_merger.contrib.inspirehep.comparators import AuthorComparator
 from json_merger.comparator import PrimaryKeyComparator
 from json_merger.conflict import Conflict, ConflictType
 from json_merger.list_unify import UnifierOps
-
-
-class AuthorComparator(PrimaryKeyComparator):
-
-    primary_key_fields = ['inspire_id']
-
-    def equal(self, l1_idx, l2_idx):
-        ret = super(AuthorComparator, self).equal(l1_idx, l2_idx)
-        if not ret:
-            return (self.l1[l1_idx]['full_name'][:5] ==
-                    self.l2[l2_idx]['full_name'][:5])
-        else:
-            return True
 
 
 class TitleComparator(PrimaryKeyComparator):

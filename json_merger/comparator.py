@@ -51,10 +51,8 @@ class BaseComparator(object):
         if src not in ('l1', 'l2'):
             raise ValueError('Must have one of "l1" or "l2" as src')
         if src == 'l1':
-            source_list = self.l1
             target_list = self.l2
         else:
-            source_list = self.l2
             target_list = self.l1
         comparator = {
             'l1': lambda s_idx, t_idx: self.equal(s_idx, t_idx),
