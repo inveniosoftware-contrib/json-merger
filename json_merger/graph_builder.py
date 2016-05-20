@@ -64,8 +64,7 @@ class ListMatchStats(object):
 
     def move_to_result(self, lst_idx, match_uid):
         self.in_result_idx.add(lst_idx)
-        if lst_idx in self.not_in_result_idx:
-            self.not_in_result_idx.remove(lst_idx)
+        self.not_in_result_idx.remove(lst_idx)
 
         # TODO unless we actually do a same list comparator which is hard
         # and takes a lot we need to drop this unused feature since:
@@ -236,6 +235,18 @@ class ListMatchGraphBuilder(object):
             if len(matches) == 1 and matches[0][0] >= 0:
                 self.update_stats.add_root_match(idx, matches[0][0])
 
+    def _get_next_node(self, source, indices):
+        if source not in self.sources:
+            return None
+        idx_to_node = {
+            'head': self._head_idx_to_node,
+            'update': self._update_idx_to_node
+        }[source]
+        for idx in indices:
+            if idx in idx_to_node:
+                return idx_to_node[idx]
+        return None
+
     def build_graph(self):
         self._populate_nodes()
         self._build_stats()
@@ -244,20 +255,10 @@ class ListMatchGraphBuilder(object):
         # lists.
         self.node_data[FIRST] = (NOTHING, NOTHING, NOTHING)
         self.graph[FIRST] = BeforeNodes()
-        next_head_node = None
-        next_update_node = None
 
-        if 'head' in self.sources:
-            for idx in range(len(self.head)):
-                if idx in self._head_idx_to_node:
-                    next_head_node = self._head_idx_to_node[idx]
-                    break
-        if 'update' in self.sources:
-            for idx in range(len(self.update)):
-                if idx in self._update_idx_to_node:
-                    next_update_node = self._update_idx_to_node[idx]
-                    break
-
+        next_head_node = self._get_next_node('head', range(len(self.head)))
+        next_update_node = self._get_next_node('update',
+                                               range(len(self.update)))
         self.graph[FIRST].head_node = next_head_node
         self.graph[FIRST].update_node = next_update_node
 
@@ -272,18 +273,8 @@ class ListMatchGraphBuilder(object):
             if update_idx >= 0:
                 update_next_l = range(update_idx + 1, len(self.update))
 
-            next_head_node = None
-            next_update_node = None
-            for head_next in head_next_l:
-                if (head_next in self._head_idx_to_node and
-                        'head' in self.sources):
-                    next_head_node = self._head_idx_to_node[head_next]
-                    break
-            for update_next in update_next_l:
-                if (update_next in self._update_idx_to_node and
-                        'update' in self.sources):
-                    next_update_node = self._update_idx_to_node[update_next]
-                    break
+            next_head_node = self._get_next_node('head', head_next_l)
+            next_update_node = self._get_next_node('update', update_next_l)
             self.graph[node_id] = BeforeNodes(next_head_node, next_update_node)
 
         return self.graph, self.node_data
