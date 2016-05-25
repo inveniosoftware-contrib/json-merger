@@ -165,7 +165,7 @@ class AuthorNameDistanceCalculator(object):
         for idx_a1, idx_a2 in indices:
             cost += dist_matrix[idx_a1][idx_a2]
             if (not isinstance(tokens_a1[idx_a1], NameInitial) or
-                    not isinstance(tokens_a1[idx_a2], NameInitial)):
+                    not isinstance(tokens_a2[idx_a2], NameInitial)):
                 matched_only_initials = False
         if matched_only_initials:
             return 1.0
