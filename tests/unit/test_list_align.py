@@ -174,6 +174,33 @@ def test_error_on_multiple_match():
     assert u.unified == [(2, 2, 2)]
 
 
+def test_multiple_match_symmetry():
+    root = []
+    l1 = [1, 2, 3, 3, 3]
+    l2 = [1, 2, 3]
+
+    u1 = ListUnifier(root, l1, l2,
+                     UnifierOps.KEEP_UPDATE_AND_HEAD_ENTITIES_HEAD_FIRST)
+    u2 = ListUnifier(root, l2, l1,
+                     UnifierOps.KEEP_UPDATE_AND_HEAD_ENTITIES_UPDATE_FIRST)
+
+    with pytest.raises(MergeError) as u1_excinfo:
+        u1.unify()
+    with pytest.raises(MergeError) as u2_excinfo:
+        u2.unify()
+
+    assert len(u1_excinfo.value.content) == 3
+    assert len(u2_excinfo.value.content) == 3
+
+    for conflict in u1_excinfo.value.content + u2_excinfo.value.content:
+        assert conflict.conflict_type == ConflictType.MANUAL_MERGE
+        assert conflict.path == ()
+        assert conflict.body == (None, 3, 3)
+
+    assert u1.unified == [(NOTHING, 1, 1), (NOTHING, 2, 2)]
+    assert u2.unified == [(NOTHING, 1, 1), (NOTHING, 2, 2)]
+
+
 def test_stats():
     root = [1, 2, 10]
     head = [1, 3, 4, 2]
