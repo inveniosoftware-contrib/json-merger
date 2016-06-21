@@ -93,7 +93,6 @@ class ListUnifier(object):
         self.pick_first = _PICK_FIRST[operation]
 
         self.unified = []
-        self.match_uids = []
 
     def unify(self):
         graph_builder = ListMatchGraphBuilder(
@@ -116,7 +115,6 @@ class ListUnifier(object):
 
         for node in node_order:
             self.unified.append(nodes[node])
-            self.match_uids.append(graph_builder.match_uids[node])
         if (self.raise_on_head_delete and
                 self.head_stats.not_in_result_not_root_match):
             removed = self.head_stats.not_in_result_not_root_match
