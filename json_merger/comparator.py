@@ -67,20 +67,55 @@ class PrimaryKeyComparator(BaseComparator):
     """Renders two objects as equal if they have the same primary key.
 
     If two objects have at least one of the configured primary_key_fields equal
-    then they are equal.
+    then they are equal. A primary key field can be any of:
+        string: Two objects are equal if the values at the given key paths
+                are equal. Example:
+                    For 'key1.key2' the objects are equal if
+                    obj1['key1']['key2'] == obj2['key1']['key2'].
+        list: Two objects are equal if all the values at the key paths
+              in the list are equal. Example:
+                    For ['key1', 'key2.key3'] the objects are equal if
+                    obj1['key1'] == obj2['key1'] and
+                    obj1['key2']['key3'] == obj2['key2']['key3'].
+
+    For normalizing the fields in the objects to be compared, one can add
+    a normalization function for each field in the normalization_functions
+    dict. Example:
+        Setting the normalization_functions field to:
+            {'key1': str.lower}
+        would normalize
+            obj1 = {'key1': 'ID123'} and obj2 = {'key1': 'id123'} to
+            obj1 = {'key1': 'id123'} and obj2 = {'key1': 'id123'}
     """
 
     primary_key_fields = ['pk']
+    normalization_functions = {}
+
+    def _have_field_equal(self, obj1, obj2, field):
+        key_path = tuple(k for k in field.split('.') if k)
+        o1 = get_obj_at_key_path(obj1, key_path, NOTHING)
+        o2 = get_obj_at_key_path(obj2, key_path, NOTHING)
+        if o1 == NOTHING or o2 == NOTHING:
+            return False
+
+        fn = self.normalization_functions.get(field, lambda x: x)
+        return fn(o1) == fn(o2)
 
     def equal(self, idx_l1, idx_l2):
-        if self.l1[idx_l1] == self.l2[idx_l2]:
+        obj1 = self.l1[idx_l1]
+        obj2 = self.l2[idx_l2]
+
+        if obj1 == obj2:
             return True
-        for field in self.primary_key_fields:
-            key_path = tuple(k for k in field.split('.') if k)
-            o1 = get_obj_at_key_path(self.l1[idx_l1], key_path, NOTHING)
-            o2 = get_obj_at_key_path(self.l2[idx_l2], key_path, NOTHING)
-            if o1 != NOTHING and o2 != NOTHING and o1 == o2:
+
+        for field_set in self.primary_key_fields:
+            if not isinstance(field_set, list):
+                field_set = [field_set]
+            checks = [self._have_field_equal(obj1, obj2, field)
+                      for field in field_set]
+            if all(checks):
                 return True
+
         return False
 
 
