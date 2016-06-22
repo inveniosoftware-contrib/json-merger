@@ -55,7 +55,7 @@ tests_require += contrib_require
 extras_require = {
     'contrib': contrib_require,
     'docs': [
-        'Sphinx>=1.3',
+        'Sphinx==1.4.0',
     ],
     'tests': tests_require
 }

@@ -54,32 +54,14 @@ class ListMatchStats(object):
         self.not_in_result_root_match_idx = set()
         self.root_matches = {}
 
-        self.next_root_match_uid = 0
-        # For a given index in the initial list retrieve the match uid.
-        self.match_uids = {}
-        # For a given index in the initial list retrieve root match uid.
-        self.lst_root_match_uids = {}
-        # For a given index in the root list retrieve root match uid.
-        self.root_root_match_uids = {}
-
-    def move_to_result(self, lst_idx, match_uid):
+    def move_to_result(self, lst_idx):
         self.in_result_idx.add(lst_idx)
         self.not_in_result_idx.remove(lst_idx)
-
-        # TODO unless we actually do a same list comparator which is hard
-        # and takes a lot we need to drop this unused feature since:
-        # * arrows are bad
-        # * we have to implement them.
-        self.match_uids[lst_idx] = match_uid
 
         if lst_idx in self.not_in_result_root_match_idx:
             self.not_in_result_root_match_idx.remove(lst_idx)
 
     def add_root_match(self, lst_idx, root_idx):
-        self.lst_root_match_uids[lst_idx] = self.next_root_match_uid
-        self.root_root_match_uids[root_idx] = self.next_root_match_uid
-        self.next_root_match_uid += 1
-
         self.root_matches[lst_idx] = root_idx
         if lst_idx in self.in_result_idx:
             return
@@ -154,7 +136,6 @@ class ListMatchGraphBuilder(object):
         self._dirty_nodes = set()
 
         self._next_node_id = 0
-        self.match_uids = {}
 
         self.multiple_match_choice_idx = set()
         self.multiple_match_choices = []
@@ -258,16 +239,13 @@ class ListMatchGraphBuilder(object):
             self.multiple_match_choices.append((r_obj, h_obj, u_obj))
 
     def _build_stats(self):
-        match_uid = 0
         for node_id, indices in self._node_src_indices.items():
             root_idx, head_idx, update_idx = indices
-            match_uid += 1
 
             if head_idx >= 0:
-                self.head_stats.move_to_result(head_idx, match_uid)
+                self.head_stats.move_to_result(head_idx)
             if update_idx >= 0:
-                self.update_stats.move_to_result(update_idx, match_uid)
-            self.match_uids[node_id] = match_uid
+                self.update_stats.move_to_result(update_idx)
 
         for idx in range(len(self.head)):
             matches = self._get_matches('root', 'head', idx)

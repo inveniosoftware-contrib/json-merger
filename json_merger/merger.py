@@ -55,7 +55,6 @@ class ListAlignMerger(object):
         self.root = copy.deepcopy(root)
         self.head = copy.deepcopy(head)
         self.update = copy.deepcopy(update)
-        self.match_uids = {}
         self.head_stats = {}
         self.update_stats = {}
 
@@ -104,7 +103,6 @@ class ListAlignMerger(object):
                                                   key_path, update_list, False)
         self.head_stats[key_path] = list_unifier.head_stats
         self.update_stats[key_path] = list_unifier.update_stats
-        self.match_uids[key_path] = list_unifier.match_uids
 
     def _unify_lists(self, root, head, update, key_path):
         dotted_key_path = get_dotted_key_path(key_path, True)
