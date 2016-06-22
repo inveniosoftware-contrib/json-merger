@@ -26,8 +26,13 @@
 
 from __future__ import absolute_import, print_function
 
+from .dict_merger import DictMergerOps
+from .list_unify import UnifierOps
 from .errors import MergeError
-from .merger import UpdateMerger
+from .merger import ListAlignMerger, UpdateMerger
 from .version import __version__
 
-__all__ = ('__version__', 'UpdateMerger', 'MergeError')
+__all__ = ('__version__',
+           'DictMergerOps', 'UnifierOps',
+           'ListAlignMerger', 'UpdateMerger',
+           'MergeError')
