@@ -29,11 +29,11 @@ from __future__ import absolute_import, print_function
 
 import pytest
 
-from json_merger import UpdateMerger, MergeError
+from json_merger import UnifierOps, UpdateMerger, MergeError
 from json_merger.contrib.inspirehep.comparators import AuthorComparator
 from json_merger.comparator import PrimaryKeyComparator
+
 from json_merger.conflict import Conflict, ConflictType
-from json_merger.list_unify import UnifierOps
 
 
 class TitleComparator(PrimaryKeyComparator):
