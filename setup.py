@@ -69,7 +69,7 @@ setup_requires = [
 ]
 
 install_requires = [
-    'dictdiffer>=0.5.0',
+    'dictdiffer>=0.6.0',
     'six>=1.10.0',
     'pyrsistent>=0.11.13'
 ]
