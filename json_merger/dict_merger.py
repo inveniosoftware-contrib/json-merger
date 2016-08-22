@@ -72,10 +72,8 @@ def patch_to_conflict_set(patch):
 
 
 _OPERATIONS = [
-    'FALLBACK_KEEP_HEAD_CONFLICT',
-    'FALLBACK_KEEP_HEAD_NO_CONFLICT',
-    'FALLBACK_KEEP_UPDATE_CONFLICT',
-    'FALLBACK_KEEP_UPDATE_NO_CONFLICT',
+    'FALLBACK_KEEP_HEAD',
+    'FALLBACK_KEEP_UPDATE',
 ]
 
 
@@ -87,13 +85,15 @@ for mode in _OPERATIONS:
 
 
 class SkipListsMerger(object):
+    """3-way Merger that ignores list fields."""
 
     def __init__(self, root, head, update, default_op,
                  data_lists=None):
         self.root = copy.deepcopy(root)
         self.head = copy.deepcopy(head)
         self.update = copy.deepcopy(update)
-        self.pick, self.raise_on_conflict = self._parse_op(default_op)
+        self.pick = {DictMergerOps.FALLBACK_KEEP_HEAD: 'f',
+                     DictMergerOps.FALLBACK_KEEP_UPDATE: 's'}[default_op]
         self.data_lists = set(data_lists or [])
 
         # We can have the same conflict appear more times because we keep only
@@ -104,14 +104,6 @@ class SkipListsMerger(object):
         self.skipped_lists = set()
         self.merged_root = None
         self.list_backups = {}
-
-    def _parse_op(self, op):
-        pick, raise_on_conflict = {
-            DictMergerOps.FALLBACK_KEEP_HEAD_CONFLICT: ('f', True),
-            DictMergerOps.FALLBACK_KEEP_HEAD_NO_CONFLICT: ('f', False),
-            DictMergerOps.FALLBACK_KEEP_UPDATE_CONFLICT: ('s', True),
-            DictMergerOps.FALLBACK_KEEP_UPDATE_NO_CONFLICT: ('s', False)}[op]
-        return pick, raise_on_conflict
 
     def _build_skipped_lists(self):
         lists = set()
@@ -185,6 +177,7 @@ class SkipListsMerger(object):
         self.merged_root = patch(non_list_merger.unified_patches, self.root)
 
     def merge(self):
+        """Perform merge of head and update starting from root."""
         if isinstance(self.head, dict) and isinstance(self.update, dict):
             if not isinstance(self.root, dict):
                 self.root = {}
@@ -192,5 +185,5 @@ class SkipListsMerger(object):
         else:
             self._merge_base_values()
 
-        if self.raise_on_conflict and self.conflict_set:
+        if self.conflict_set:
             raise MergeError('Dictdiffer Errors', self.conflicts)

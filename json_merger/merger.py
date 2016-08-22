@@ -162,6 +162,6 @@ class UpdateMerger(ListAlignMerger):
                  list_merge_ops=None, comparators=None, data_lists=None):
         super(UpdateMerger, self).__init__(
                 root, head, update,
-                DictMergerOps.FALLBACK_KEEP_HEAD_CONFLICT,
+                DictMergerOps.FALLBACK_KEEP_HEAD,
                 UnifierOps.KEEP_ONLY_UPDATE_ENTITIES,
                 list_merge_ops, comparators, data_lists)
