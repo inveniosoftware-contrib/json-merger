@@ -28,8 +28,9 @@ from __future__ import absolute_import, print_function
 
 import pytest
 
+from json_merger.config import DictMergerOps
 from json_merger.conflict import Conflict, ConflictType
-from json_merger.dict_merger import DictMergerOps, SkipListsMerger
+from json_merger.dict_merger import SkipListsMerger
 from json_merger.errors import MergeError
 from json_merger.nothing import NOTHING
 

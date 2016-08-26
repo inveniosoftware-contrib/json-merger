@@ -26,9 +26,6 @@ from __future__ import absolute_import, print_function
 
 from json_merger.comparator import BaseComparator
 
-from .author_util import (
-        simple_tokenize, AuthorIdNormalizer, AuthorNameDistanceCalculator,
-        AuthorNameNormalizer)
 from .match import distance_function_match
 
 
@@ -48,15 +45,3 @@ class DistanceFunctionComparator(BaseComparator):
 
     def equal(self, idx_l1, idx_l2):
         return (idx_l1, idx_l2) in self.matches
-
-
-class AuthorComparator(DistanceFunctionComparator):
-    norm_functions = [
-        AuthorIdNormalizer('inspire_id'),
-        AuthorIdNormalizer('orcid'),
-        AuthorNameNormalizer(simple_tokenize),
-        AuthorNameNormalizer(simple_tokenize, 1),
-        AuthorNameNormalizer(simple_tokenize, 1, True)
-    ]
-    distance_function = AuthorNameDistanceCalculator(simple_tokenize)
-    threshold = 0.12

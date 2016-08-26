@@ -29,6 +29,23 @@ from pyrsistent import freeze, thaw
 
 
 class ConflictType(object):
+    """Types of Conflict.
+
+    Attributes:
+        REORDER: The list specified by the path might need to be reordered.
+
+        MANUAL_MERGE: The triple specified as the conflict body needs to be
+            manually merged and added to the conflict path.
+
+        ADD_BACK_TO_HEAD: The object specified as the conflict body might
+            need to be added back to the list specified in the conflict's path.
+
+        SET_FIELD: The object specified as the conflict body needs to be
+            added at the path specifed in the conflict object.
+
+        REMOVE_FIELD: The value or object present at the path specified in
+            the path conflict needs to be removed.
+    """
     pass
 
 _CONFLICTS = (
@@ -43,7 +60,20 @@ for conflict_type in _CONFLICTS:
 
 
 class Conflict(tuple):
-    """Immutable representation of a conflict."""
+    """Immutable and Hashable representation of a conflict.
+
+    Attributes:
+        conflict_type: A :class:`json_merger.conflict.ConflictType` member.
+
+        path: A tuple containing the path to the conflictual field.
+
+        body: Optional value representing the body of the conflict.
+
+    Note:
+        Even if the conflict body can be any arbitrary object, this is saved
+        internally as an immutable object so that a Conflict instance can be
+        safely used in sets or as a dict key.
+    """
 
     # Based on http://stackoverflow.com/a/4828108
     # Compatible with Python<=2.6
@@ -59,7 +89,9 @@ class Conflict(tuple):
     body = property(lambda self: thaw(self[2]))
 
     def with_prefix(self, root_path):
+        """Returns a new conflict with a prepended prefix as a path."""
         return Conflict(self.conflict_type, root_path + self.path, self.body)
 
     def to_json(self):
+        """Deserializes conflict to a JSON object."""
         return json.dumps([self.conflict_type, self.path, self.body])

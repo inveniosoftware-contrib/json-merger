@@ -23,9 +23,9 @@
 # as an Intergovernmental Organization or submit itself to any jurisdiction.
 
 
-#pydocstyle json_merger && \
 isort -rc -c -df -m5  **/*.py && \
 check-manifest --ignore ".travis-*" && \
+rm -rf docs/_build/ && \
 sphinx-build -qnNW docs docs/_build/html && \
 python setup.py test && \
 sphinx-build -qnNW -b doctest docs docs/_build/doctest

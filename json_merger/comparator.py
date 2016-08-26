@@ -29,8 +29,17 @@ from .utils import get_obj_at_key_path
 
 
 class BaseComparator(object):
+    """Abstract base class for Entity Comparison."""
 
     def __init__(self, l1, l2):
+        """
+        Do not override the constructor since it will be called by the
+        json_merger logic.
+
+        Args:
+            l1: First list of entities.
+            l2: Second list of entities.
+        """
         self.l1 = l1
         self.l2 = l2
         self.process_lists()
@@ -40,6 +49,11 @@ class BaseComparator(object):
         pass
 
     def equal(self, idx_l1, idx_l2):
+        """Implementation of object equality.
+
+        This function is called using the element indices rather than their
+        values so that its results can be easily memoized.
+        """
         raise NotImplementedError()
 
     def get_matches(self, src, src_idx):
@@ -68,21 +82,24 @@ class PrimaryKeyComparator(BaseComparator):
 
     If two objects have at least one of the configured primary_key_fields equal
     then they are equal. A primary key field can be any of:
-        string: Two objects are equal if the values at the given key paths
-                are equal. Example:
-                    For 'key1.key2' the objects are equal if
-                    obj1['key1']['key2'] == obj2['key1']['key2'].
-        list: Two objects are equal if all the values at the key paths
-              in the list are equal. Example:
-                    For ['key1', 'key2.key3'] the objects are equal if
-                    obj1['key1'] == obj2['key1'] and
-                    obj1['key2']['key3'] == obj2['key2']['key3'].
+
+    string: Two objects are equal if the values at the given key paths
+            are equal. Example:
+                For 'key1.key2' the objects are equal if
+                obj1['key1']['key2'] == obj2['key1']['key2'].
+    list: Two objects are equal if all the values at the key paths
+          in the list are equal. Example:
+                For ['key1', 'key2.key3'] the objects are equal if
+                obj1['key1'] == obj2['key1'] and
+                obj1['key2']['key3'] == obj2['key2']['key3'].
 
     For normalizing the fields in the objects to be compared, one can add
     a normalization function for each field in the normalization_functions
-    dict. Example:
+    dict.
+
+    Example:
         Setting the normalization_functions field to:
-            {'key1': str.lower}
+            ``{'key1': str.lower}``
         would normalize
             obj1 = {'key1': 'ID123'} and obj2 = {'key1': 'id123'} to
             obj1 = {'key1': 'id123'} and obj2 = {'key1': 'id123'}
@@ -120,6 +137,7 @@ class PrimaryKeyComparator(BaseComparator):
 
 
 class DefaultComparator(BaseComparator):
+    """Two objects are the same entity if they are fully equal."""
 
     def equal(self, idx_l1, idx_l2):
         return self.l1[idx_l1] == self.l2[idx_l2]

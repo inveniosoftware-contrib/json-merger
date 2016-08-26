@@ -29,8 +29,13 @@ from __future__ import absolute_import, print_function
 
 import pytest
 
-from json_merger import UnifierOps, UpdateMerger, MergeError
-from json_merger.contrib.inspirehep.comparators import AuthorComparator
+from json_merger import Merger
+from json_merger.config import DictMergerOps, UnifierOps
+from json_merger.errors import MergeError
+from json_merger.contrib.inspirehep.comparators import (
+        DistanceFunctionComparator)
+from json_merger.contrib.inspirehep.author_util import (
+        simple_tokenize, AuthorNameDistanceCalculator, AuthorNameNormalizer)
 from json_merger.comparator import PrimaryKeyComparator
 
 from json_merger.conflict import Conflict, ConflictType
@@ -46,11 +51,25 @@ class AffiliationComparator(PrimaryKeyComparator):
     primary_key_fields = ['value']
 
 
+class AuthorComparator(DistanceFunctionComparator):
+    norm_functions = [
+        # Better hints can be given by normalizing by primary key,
+        # (e.g. recid, orcid, ...)
+        # but this type of normalization is not implemented in contrib.
+        AuthorNameNormalizer(simple_tokenize),
+        AuthorNameNormalizer(simple_tokenize, 1),
+        AuthorNameNormalizer(simple_tokenize, 1, True)
+    ]
+    distance_function = AuthorNameDistanceCalculator(simple_tokenize)
+    threshold = 0.12
+
+
 COMPARATORS = {
     'authors': AuthorComparator,
     'authors.affiliations': AffiliationComparator,
     'titles': TitleComparator
 }
+
 LIST_MERGE_OPS = {
     'titles': UnifierOps.KEEP_UPDATE_AND_HEAD_ENTITIES_HEAD_FIRST,
     'authors.affiliations': UnifierOps.KEEP_UPDATE_AND_HEAD_ENTITIES_HEAD_FIRST
@@ -82,9 +101,11 @@ def _deserialize_conflict(conflict_type, path, body):
     'title_change'])
 def test_author_typo_scenarios(update_fixture_loader, scenario):
     root, head, update, exp, desc = update_fixture_loader.load_test(scenario)
-    merger = UpdateMerger(root, head, update,
-                          comparators=COMPARATORS,
-                          list_merge_ops=LIST_MERGE_OPS)
+    merger = Merger(root, head, update,
+                    DictMergerOps.FALLBACK_KEEP_HEAD,
+                    UnifierOps.KEEP_ONLY_UPDATE_ENTITIES,
+                    comparators=COMPARATORS,
+                    list_merge_ops=LIST_MERGE_OPS)
     if exp.get('conflicts'):
         with pytest.raises(MergeError) as excinfo:
             merger.merge()

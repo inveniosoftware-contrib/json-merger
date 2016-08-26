@@ -28,11 +28,13 @@ import six
 
 from .comparator import DefaultComparator
 from .nothing import NOTHING
+from .stats import ListMatchStats
 
 FIRST = 'first'
 
 
 class BeforeNodes(object):
+    """Edge in the match graph."""
 
     def __init__(self, head_node=None, update_node=None):
         self.head_node = head_node
@@ -41,64 +43,6 @@ class BeforeNodes(object):
     def __repr__(self):
         return 'BeforeNodes <head_node: {}, update_node: {}>'.format(
             self.head_node, self.update_node)
-
-
-class ListMatchStats(object):
-
-    def __init__(self, lst, root):
-        self.lst = lst
-        self.root = root
-
-        self.in_result_idx = set()
-        self.not_in_result_idx = set(range(len(lst)))
-        self.not_in_result_root_match_idx = set()
-        self.root_matches = {}
-
-    def move_to_result(self, lst_idx):
-        self.in_result_idx.add(lst_idx)
-        self.not_in_result_idx.remove(lst_idx)
-
-        if lst_idx in self.not_in_result_root_match_idx:
-            self.not_in_result_root_match_idx.remove(lst_idx)
-
-    def add_root_match(self, lst_idx, root_idx):
-        self.root_matches[lst_idx] = root_idx
-        if lst_idx in self.in_result_idx:
-            return
-
-        self.not_in_result_root_match_idx.add(lst_idx)
-
-    @property
-    def not_in_result_not_root_match_idx(self):
-        return self.not_in_result_idx.difference(
-            self.not_in_result_root_match_idx)
-
-    @property
-    def in_result(self):
-        return [self.lst[e] for e in self.in_result_idx]
-
-    @property
-    def not_in_result(self):
-        return [self.lst[e] for e in self.not_in_result_idx]
-
-    @property
-    def not_in_result_root_match(self):
-        return [self.lst[e] for e in self.not_in_result_root_match_idx]
-
-    @property
-    def not_in_result_not_root_match(self):
-        return [self.lst[e] for e in self.not_in_result_not_root_match_idx]
-
-    @property
-    def not_in_result_root_match_pairs(self):
-        return [(self.lst[e], self.root[self.root_matches[e]])
-                for e in self.not_in_result_root_match_idx]
-
-    @property
-    def not_matched_root_objects(self):
-        matched_root_idx = set(self.root_matches.values())
-        return [o for idx, o in enumerate(self.root)
-                if idx not in matched_root_idx]
 
 
 class ListMatchGraphBuilder(object):

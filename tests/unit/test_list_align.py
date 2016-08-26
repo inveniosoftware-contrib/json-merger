@@ -29,9 +29,10 @@ from __future__ import absolute_import, print_function
 
 import pytest
 
+from json_merger.config import UnifierOps
 from json_merger.conflict import ConflictType
 from json_merger.errors import MergeError
-from json_merger.list_unify import ListUnifier, UnifierOps
+from json_merger.list_unify import ListUnifier
 from json_merger.nothing import NOTHING
 
 

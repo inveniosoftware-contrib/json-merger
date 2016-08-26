@@ -77,16 +77,6 @@ def simple_tokenize(name):
             'nonlastnames': first_names}
 
 
-class AuthorIdNormalizer(object):
-    """Callable that normalizes an author by extracting an UID field."""
-
-    def __init__(self, id_field):
-        self.id_field = id_field
-
-    def __call__(self, author):
-        return author.get(self.id_field)
-
-
 class AuthorNameNormalizer(object):
     """Callable that normalizes an author name given a tokenizer function."""
 
@@ -125,35 +115,45 @@ class AuthorNameNormalizer(object):
 class AuthorNameDistanceCalculator(object):
     """Callable that calculates a distance between two author's names."""
 
-    def __init__(self, tokenize_function, match_on_initial_penalization=0.05):
+    def __init__(self, tokenize_function, match_on_initial_penalization=0.05,
+                 full_name_field='full_name'):
         """Initialize the distance calculator.
 
-        :param tokenize_function:
-            A function that receives an author name and parses it out in the
-            following format:
-                {'lastnames': NameToken instance list,
-                 'nonlastnames': NameToken instance list}
-        :param match_on_initial_penalization:
-            The cost value of a match between an initial and a full name
-            starting with the same letter.
+        Args:
+            tokenize_function: A function that receives an author name and
+                parses it out in the following format:
+                  {'lastnames': NameToken instance list,
+                   'nonlastnames': NameToken instance list}
+            match_on_initial_penalization:
+                The cost value of a match between an initial and a full name
+                starting with the same letter.
+            name_field:
+                The field in which an author record keeps the full name.
+        Note:
+            The default match_on_initial_penalization had the best results
+            on a test suite based on production data.
         """
         self.tokenize_function = tokenize_function
         self.match_on_initial_penalization = match_on_initial_penalization
+        self.name_field = full_name_field
 
     def __call__(self, author1, author2):
-        if 'full_name' not in author1:
+        # Return 1.0 on missing features.
+        if self.name_field not in author1:
             return 1.0
-        if 'full_name' not in author2:
+        if self.name_field not in author2:
             return 1.0
 
-        name_a1 = unidecode(author1['full_name'])
-        name_a2 = unidecode(author2['full_name'])
+        # Normalize to ASCII
+        name_a1 = unidecode(author1[self.name_field])
+        name_a2 = unidecode(author2[self.name_field])
 
         tokens_a1 = self.tokenize_function(name_a1)
         tokens_a2 = self.tokenize_function(name_a2)
         tokens_a1 = tokens_a1['lastnames'] + tokens_a1['nonlastnames']
         tokens_a2 = tokens_a2['lastnames'] + tokens_a2['nonlastnames']
 
+        # Match all names by editdistance.
         dist_matrix = [
             [token_distance(t1, t2, self.match_on_initial_penalization)
              for t2 in tokens_a2] for t1 in tokens_a1]
@@ -167,6 +167,8 @@ class AuthorNameDistanceCalculator(object):
             if (not isinstance(tokens_a1[idx_a1], NameInitial) or
                     not isinstance(tokens_a2[idx_a2], NameInitial)):
                 matched_only_initials = False
+
+        # Johnny, D will not be equal with Donny, J
         if matched_only_initials:
             return 1.0
 

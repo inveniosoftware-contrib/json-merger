@@ -31,11 +31,10 @@ from __future__ import absolute_import, print_function
 import pytest
 
 
+from json_merger.config import DictMergerOps, UnifierOps
 from json_merger.conflict import Conflict, ConflictType
-from json_merger.dict_merger import DictMergerOps
 from json_merger.errors import MergeError
-from json_merger.list_unify import UnifierOps
-from json_merger.merger import ListAlignMerger
+from json_merger.merger import Merger
 
 
 def test_merge_bare_int_lists():
@@ -43,9 +42,9 @@ def test_merge_bare_int_lists():
     h = [1, 2, 3, 4]
     u = [1, 2, 5]
 
-    m = ListAlignMerger(r, h, u,
-                        DictMergerOps.FALLBACK_KEEP_HEAD,
-                        UnifierOps.KEEP_ONLY_UPDATE_ENTITIES)
+    m = Merger(r, h, u,
+               DictMergerOps.FALLBACK_KEEP_HEAD,
+               UnifierOps.KEEP_ONLY_UPDATE_ENTITIES)
     m.merge()
     assert m.merged_root == [1, 2, 5]
 
@@ -55,9 +54,9 @@ def test_merge_bare_str_lists():
     h = ['1', '2', '3', '4']
     u = ['1', '2', '5']
 
-    m = ListAlignMerger(r, h, u,
-                        DictMergerOps.FALLBACK_KEEP_HEAD,
-                        UnifierOps.KEEP_ONLY_UPDATE_ENTITIES)
+    m = Merger(r, h, u,
+               DictMergerOps.FALLBACK_KEEP_HEAD,
+               UnifierOps.KEEP_ONLY_UPDATE_ENTITIES)
     m.merge()
     assert m.merged_root == ['1', '2', '5']
 
@@ -67,9 +66,9 @@ def test_merge_nested_lists():
     h = [[1], [2], [3], [4]]
     u = [[1], [2], [5]]
 
-    m = ListAlignMerger(r, h, u,
-                        DictMergerOps.FALLBACK_KEEP_HEAD,
-                        UnifierOps.KEEP_ONLY_UPDATE_ENTITIES)
+    m = Merger(r, h, u,
+               DictMergerOps.FALLBACK_KEEP_HEAD,
+               UnifierOps.KEEP_ONLY_UPDATE_ENTITIES)
     m.merge()
 
     assert m.merged_root == [[1], [2], [5]]
@@ -80,9 +79,9 @@ def test_merge_root_is_not_list():
     h = [[1], [2, 3], [5]]
     u = [[1], [2, 3], [5]]
 
-    m = ListAlignMerger(r, h, u,
-                        DictMergerOps.FALLBACK_KEEP_HEAD,
-                        UnifierOps.KEEP_ONLY_UPDATE_ENTITIES)
+    m = Merger(r, h, u,
+               DictMergerOps.FALLBACK_KEEP_HEAD,
+               UnifierOps.KEEP_ONLY_UPDATE_ENTITIES)
     m.merge()
     # Here the lists are aligned as entities and lists of entities.
     assert m.merged_root == [[1], [2, 3], [5]]
@@ -93,9 +92,9 @@ def test_merge_list_with_string():
     h = [1, 2, 3]
     u = 'a given string'
 
-    m = ListAlignMerger(r, h, u,
-                        DictMergerOps.FALLBACK_KEEP_HEAD,
-                        UnifierOps.KEEP_ONLY_UPDATE_ENTITIES)
+    m = Merger(r, h, u,
+               DictMergerOps.FALLBACK_KEEP_HEAD,
+               UnifierOps.KEEP_ONLY_UPDATE_ENTITIES)
     with pytest.raises(MergeError) as excinfo:
         m.merge()
 

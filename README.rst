@@ -41,9 +41,7 @@
         :target: https://github.com/inspirehep/json-merger/blob/master/LICENSE
 
 
-Invenio module that is able to merge json record objects.
-
-*This is an experimental developer preview release.*
+Module for merging JSON Objects.
 
 * Free software: GPLv2 license
 * Documentation: https://pythonhosted.org/json-merger/
