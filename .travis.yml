@@ -62,3 +62,14 @@ script:
 
 after_success:
   - coveralls
+
+deploy:
+  provider: pypi
+  user: inspirehep
+  password:
+    secure: jSL+Kao66nunlID2pW2UrvURDsZWCg05GNVuFO5Rqzrn0Jgwe9h5lRYZISvlDXCZFUHVjubSyjoGSf8XqN+AYoTmbDKjPQtTxxnOSvl1oeCyCwTR0LR5A7l7We33gdrCHqqjClE5L1ziivXVlCh27W1HN1JBP3lEEKYJ4wcWF97QWrJTTmwIYekNEf29BVYnOGNThbOwEn/9wVWhJNcrj7yvn/83og7JhFGjx3naLXwL33P8xmXcNe1+7rmrPQIInp18oRCZPAnvkV93Dr0yaFZ3MVBOigIvLHeZuK4977YRPB0H4NETcLyiQ7eHZKl4x036TMrZ8XikB37TAaHLkj1Xm9ZAQ0rNFxakpFzcdUVFZBTiLmn6S1ezmXyL/oFqiuqZaEjt/mxPzI6CTYsdatyRFo09fjUf6FOdLGVMSrmyfyGD2eRjwwcEo9OQh6C22D7o04hcsd5qcKTOnF/9WSpcDAFnScRujPux3Dl26cef766Dxs0NMrganohMi+LJ450Lb8RkqAyEvS1sujgqvnzPOI0TxOWCuWOZbxJMZ4/ldj6LTrMky+/1LMgA4+6slzundES4rDibMUn6B8IrRpeIfeCr9UGQ7+o1fQ/8XEfIoLXF9IySTO4FLKAeeiQWT8cF+gZLbB7SKxwmMYHN3PhPBDSkDFWpsI91icbsKKw=
+  on:
+    tags: true
+    distributions: sdist bdist_wheel
+    repo: inspirehep/json-merger
+
