@@ -66,14 +66,12 @@ class ListMatchStats(object):
         self.root = root
 
         self.in_result_idx = set()
-        self.not_in_result_idx = set(range(len(lst)))
         self.not_in_result_root_match_idx = set()
         self.root_matches = {}
 
     def move_to_result(self, lst_idx):
         """Moves element from lst available at lst_idx."""
         self.in_result_idx.add(lst_idx)
-        self.not_in_result_idx.remove(lst_idx)
 
         if lst_idx in self.not_in_result_root_match_idx:
             self.not_in_result_root_match_idx.remove(lst_idx)
@@ -85,6 +83,10 @@ class ListMatchStats(object):
             return
 
         self.not_in_result_root_match_idx.add(lst_idx)
+
+    @property
+    def not_in_result_idx(self):
+        return set(range(len(self.lst))).difference(self.in_result_idx)
 
     @property
     def not_in_result_not_root_match_idx(self):

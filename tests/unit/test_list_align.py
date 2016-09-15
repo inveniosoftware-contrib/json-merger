@@ -31,6 +31,7 @@ import pytest
 
 from json_merger.config import UnifierOps
 from json_merger.conflict import ConflictType
+from json_merger.comparator import PrimaryKeyComparator
 from json_merger.errors import MergeError
 from json_merger.list_unify import ListUnifier
 from json_merger.nothing import NOTHING
@@ -224,3 +225,27 @@ def test_stats():
     assert sorted(u.update_stats.not_in_result_root_match) == []
     assert sorted(u.update_stats.not_in_result_not_root_match) == []
     assert sorted(u.update_stats.not_matched_root_objects) == [2, 10]
+
+
+def test_transitive_equality():
+    class Comp(PrimaryKeyComparator):
+        primary_key_fields = ['id0', 'id1']
+
+    only0 = {'id0': 0}
+    only1 = {'id1': 1}
+    both = {'id0': 0, 'id1': 1}
+
+    u = ListUnifier([only0], [both], [only1],
+                    UnifierOps.KEEP_ONLY_UPDATE_ENTITIES, Comp)
+    u.unify()
+    assert u.unified == [(only0, both, only1)]
+
+    u = ListUnifier([only0], [only1], [both],
+                    UnifierOps.KEEP_ONLY_HEAD_ENTITIES, Comp)
+    u.unify()
+    assert u.unified == [(only0, only1, both)]
+
+    u = ListUnifier([only0], [only1], [both],
+                    UnifierOps.KEEP_UPDATE_AND_HEAD_ENTITIES_HEAD_FIRST, Comp)
+    u.unify()
+    assert u.unified == [(only0, only1, both)]

@@ -24,6 +24,8 @@
 
 from __future__ import absolute_import, print_function
 
+from collections import deque
+
 import six
 
 from .comparator import DefaultComparator
@@ -103,34 +105,35 @@ class ListMatchGraphBuilder(object):
         if update_idx >= 0:
             self._update_idx_to_node[update_idx] = node_id
 
-    def _get_nodes(self, head_elem, update_elem):
-        """Get nodes to which either head_elem or update_elem point to."""
-        head_idx, head_obj = head_elem
-        update_idx, update_obj = update_elem
-        res = set()
+    def _get_matches(self, source, source_idx, source_obj):
+        other_two = {'head': ['root', 'update'],
+                     'update': ['root', 'head'],
+                     'root': ['head', 'update']}
+        indices = {'root': {}, 'head': {}, 'update': {}}
+        indices[source][source_idx] = source_obj
 
-        if head_idx in self._head_idx_to_node:
-            res.add(self._head_idx_to_node[head_idx])
-        if update_idx in self._update_idx_to_node:
-            res.add(self._update_idx_to_node[update_idx])
+        # Start a BFS of matching elements.
+        q = deque([(source, source_idx)])
+        while q:
+            curr_src, curr_idx = q.popleft()
+            for target in other_two[curr_src]:
+                comparator, cmp_list = self.comparators[(target, curr_src)]
+                # cmp_list is either 'l1' or 'l2'
+                # (the paremeter for the comparator class convetion)
+                matches = comparator.get_matches(cmp_list, curr_idx)
+                for target_idx, target_obj in matches:
+                    if target_idx in indices[target]:
+                        continue
+                    indices[target][target_idx] = target_obj
+                    q.append((target, target_idx))
+        result = {}
+        for lst, res_indices in indices.items():
+            if not res_indices:
+                result[lst] = [(-1, NOTHING)]
+            else:
+                result[lst] = sorted(res_indices.items())
 
-        return res
-
-    def _pop_node(self, node_id):
-        """Remove a node from the graph."""
-        root_idx, head_idx, update_idx = self._node_src_indices[node_id]
-        del self._node_src_indices[node_id]
-        del self.node_data[node_id]
-
-        if head_idx in self._head_idx_to_node:
-            del self._head_idx_to_node[head_idx]
-        if update_idx in self._update_idx_to_node:
-            del self._update_idx_to_node[update_idx]
-
-    def _get_matches(self, target, source, source_idx):
-        comparator, src_list = self.comparators[(target, source)]
-        matches = comparator.get_matches(src_list, source_idx)
-        return matches if matches else [(-1, NOTHING)]
+        return result['root'], result['head'], result['update']
 
     def _add_matches(self, root_elems, head_elems, update_elems):
         matches = [(r, h, u)
@@ -138,69 +141,41 @@ class ListMatchGraphBuilder(object):
                    for h in head_elems
                    for u in update_elems]
         if len(matches) == 1:
-            root_elem, head_elem, update_elem = matches[0]
-            node_ids = self._get_nodes(head_elem, update_elem)
-            # If this single match overrides a previous node entry we remove
-            # add this match as a multiple_match_choice and mark the node
-            # for removal. We will later remove the node from the graph so
-            # that future collisions with this node will be caught.
-            if not node_ids:
-                self._push_node(root_elem, head_elem, update_elem)
-            else:
-                self._dirty_nodes.update(node_ids)
-                self.multiple_match_choice_idx.add(
-                    (root_elem[0], head_elem[0], update_elem[0]))
+            self._push_node(*matches[0])
         else:
-            match_indices = [(r[0], h[0], u[0]) for r, h, u in matches]
-            self.multiple_match_choice_idx.update(match_indices)
+            self.multiple_match_choice_idx.update([(r[0], h[0], u[0])
+                                                   for r, h, u in matches])
 
     def _populate_nodes(self):
-        if 'head' in self.sources:
-            for head_idx, head_obj in enumerate(self.head):
-                head_elems = [(head_idx, head_obj)]
-                root_elems = self._get_matches('root', 'head', head_idx)
-                update_elems = self._get_matches('update', 'head', head_idx)
-                self._add_matches(root_elems, head_elems, update_elems)
+        for idx, obj in enumerate(self.head):
+            r_elems, h_elems, u_elems = self._get_matches('head', idx, obj)
+            if 'head' in self.sources:
+                self._add_matches(r_elems, h_elems, u_elems)
+            if len(r_elems) == 1 and r_elems[0][0] >= 0:
+                self.head_stats.add_root_match(idx, r_elems[0][0])
 
-        if 'update' in self.sources:
-            for update_idx, update_obj in enumerate(self.update):
-                # Already added this node in the graph, continue.
-                if update_idx in self._update_idx_to_node:
-                    continue
+        for idx, obj in enumerate(self.update):
+            r_elems, h_elems, u_elems = self._get_matches('update', idx, obj)
+            # Only add the node to the graph only if not already added.
+            if ('update' in self.sources and
+                    idx not in self._update_idx_to_node):
+                self._add_matches(r_elems, h_elems, u_elems)
+            if len(r_elems) == 1 and r_elems[0][0] >= 0:
+                self.update_stats.add_root_match(idx, r_elems[0][0])
 
-                update_elems = [(update_idx, update_obj)]
-                root_elems = self._get_matches('root', 'update', update_idx)
-                head_elems = self._get_matches('head', 'update', update_idx)
-                self._add_matches(root_elems, head_elems, update_elems)
-
-        for node_id in self._dirty_nodes:
-            self.multiple_match_choice_idx.add(self._node_src_indices[node_id])
-            self._pop_node(node_id)
-        for r_idx, h_idx, u_idx in self.multiple_match_choice_idx:
-            r_obj = self.root[r_idx] if r_idx >= 0 else None
-            h_obj = self.head[h_idx] if h_idx >= 0 else None
-            u_obj = self.update[u_idx] if u_idx >= 0 else None
-            self.multiple_match_choices.append((r_obj, h_obj, u_obj))
-
-    def _build_stats(self):
-        for node_id, indices in self._node_src_indices.items():
-            root_idx, head_idx, update_idx = indices
-
+        # Add stats from built nodes.
+        for root_idx, head_idx, update_idx in self._node_src_indices.values():
             if head_idx >= 0:
                 self.head_stats.move_to_result(head_idx)
             if update_idx >= 0:
                 self.update_stats.move_to_result(update_idx)
 
-        for idx in range(len(self.head)):
-            matches = self._get_matches('root', 'head', idx)
-            # Matches[0][0] is the index in the root list of the first match.
-            if len(matches) == 1 and matches[0][0] >= 0:
-                self.head_stats.add_root_match(idx, matches[0][0])
-
-        for idx in range(len(self.update)):
-            matches = self._get_matches('root', 'update', idx)
-            if len(matches) == 1 and matches[0][0] >= 0:
-                self.update_stats.add_root_match(idx, matches[0][0])
+        # Move the unique multiple match indices to conflicts.
+        for r_idx, h_idx, u_idx in self.multiple_match_choice_idx:
+            r_obj = self.root[r_idx] if r_idx >= 0 else None
+            h_obj = self.head[h_idx] if h_idx >= 0 else None
+            u_obj = self.update[u_idx] if u_idx >= 0 else None
+            self.multiple_match_choices.append((r_obj, h_obj, u_obj))
 
     def _get_next_node(self, source, indices):
         if source not in self.sources:
@@ -216,7 +191,6 @@ class ListMatchGraphBuilder(object):
 
     def build_graph(self):
         self._populate_nodes()
-        self._build_stats()
 
         # Link a dummy first node before the first element of the sources
         # lists.
