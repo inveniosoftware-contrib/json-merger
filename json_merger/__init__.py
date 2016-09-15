@@ -208,7 +208,7 @@ can also contain nested lists.
 >>> root = {
 ...     'people': [
 ...         {'name': 'John', 'age': 13},
-...         {'name': 'Peter'}
+...         {'name': 'Peter'},
 ...         {'name': 'Max'}
 ...     ]}
 >>> head = {
@@ -217,7 +217,7 @@ can also contain nested lists.
 ...          'group': {'id': 'grp01'},
 ...          'person_id': '42',
 ...          'badges': [{'t': 'b0', 'e': True}, {'t': 'b1'}, {'t': 'b2'}]},
-...         {'name': 'Peter', 'age': 15},
+...         {'name': 'Peter', 'age': 15,
 ...          'badges': [{'t': 'b0'}, {'t': 'b1'}, {'t': 'b2'}]},
 ...         {'name': 'Max', 'age': 16}
 ...     ]}
@@ -265,8 +265,8 @@ Next we would like to define how to do the merging:
   * For the badges list keep both entities with priority to the ``update``
     values.
 
->>> comparatrs = {'people': PersonComparator,
-...               'people.badges': BadgesComparator}
+>>> comparators = {'people': PersonComparator,
+...                'people.badges': BadgesComparator}
 >>> list_merge_ops = {
 ...     'people.badges': UnifierOps.KEEP_UPDATE_AND_HEAD_ENTITIES_UPDATE_FIRST
 ... }
@@ -281,15 +281,17 @@ Next we would like to define how to do the merging:
 ...     pass
 >>> m.merged_root == {
 ...     'people': [
-...         {'name': 'Johnnie', 'address': 'home',
+...         {'name': 'Max', 'address': 'work', 'age': 16},
+...         {'name': 'Johnnie', # Only update edited it.
+...          'address': 'home',
 ...          'group': {'id': 'grp01'}, # From KEEP_HEAD
 ...          'person_id': '42',
 ...          'age': 14, # From KEEP_HEAD
 ...          'badges': [{'t': 'b1'}, {'t': 'b2'},
-...                     {'t': 'b0', 'e': True}, # From KEEP_HEAD
-...                     ]},
-...         {'name': 'Max', 'address': 'work', 'age': 16}
+...                     {'t': 'b0', 'e': True}], # From KEEP_HEAD
+...         },
 ...     ]}
+True
 
 Extending Comparators
 ---------------------
