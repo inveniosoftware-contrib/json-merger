@@ -38,7 +38,9 @@ class DistanceFunctionComparator(BaseComparator):
         if self.distance_function is None:
             raise NotImplementedError('You need to provide a distance '
                                       'function')
+        # Get the unbound version of the distance function.
+        dist_fn = self.__class__.__dict__['distance_function']
         self.matches = set(distance_function_match(self.l1, self.l2,
                                                    self.threshold,
-                                                   self.distance_function,
+                                                   dist_fn,
                                                    self.norm_functions))

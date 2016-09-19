@@ -33,9 +33,6 @@ class BaseComparator(object):
 
     def __init__(self, l1, l2):
         """
-        Do not override the constructor since it will be called by the
-        json_merger logic.
-
         Args:
             l1: First list of entities.
             l2: Second list of entities.
@@ -78,7 +75,7 @@ class BaseComparator(object):
 
 
 class PrimaryKeyComparator(BaseComparator):
-    """Renders two objects as equal if they have the same primary key.
+    """Considers two objects as equal if they have the same primary key.
 
     If two objects have at least one of the configured primary_key_fields equal
     then they are equal. A primary key field can be any of:

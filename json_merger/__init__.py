@@ -24,7 +24,7 @@
 
 """Module for merging JSON objects.
 
-To use this module, first import the main class:
+To use this module you need to first import the main class:
 
 >>> from json_merger import Merger
 
@@ -35,7 +35,7 @@ Then, import the configuration options:
 The Basic Use Case
 ------------------
 
-Let's assume we have JSON records in which don't have any list fields --
+Let's assume we have JSON records that don't have any list fields --
 They have string keys and as values other objects or primitive types.
 In order to perform a merge we assume we have a lowest common ancestor
 (``root``), a current version (``head``) and another version wich we want to
@@ -86,9 +86,12 @@ use ``FALLBACK_KEEP_UPDATE``:
 ... }
 True
 
-If this type of conflict occurs, the merger will also populate a conflicts
+If this type of conflict occurs, the merger will also populate a ``conflicts``
 field. In this case the conflict holds the alternative name for our record.
 Also, because a conflict occurred, the merge method also raised a MergeError.
+
+For all the types of conflict that can be raised by the ``merge`` method
+also check the :class:`json_merger.conflict.ConflictType` documentation.
 
 >>> from json_merger.conflict import Conflict, ConflictType
 >>> m.conflicts[0] == Conflict(ConflictType.SET_FIELD, ('name', ), 'Johnny')
@@ -293,9 +296,127 @@ Next we would like to define how to do the merging:
 ...     ]}
 True
 
+Merging Data Lists
+------------------
+
+If you want to merge arrays of raw data (that do not encode any entities),
+you can use the ``data_lists`` keyword argument. This argument treats
+list indices as dictionary keys.
+
+>>> root = {'f': {'matrix': [[0, 0], [0, 0]]}}
+>>> head = {'f': {'matrix': [[1, 1], [0, 0]]}}
+>>> update = {'f': {'matrix': [[0, 0], [1, 1]]}}
+>>> m = Merger(root, head, update,
+...            DictMergerOps.FALLBACK_KEEP_HEAD,
+...            UnifierOps.KEEP_ONLY_UPDATE_ENTITIES,
+...            data_lists=['f.matrix'])
+>>> m.merge()
+>>> m.merged_root == {'f': {'matrix': [[1, 1], [1, 1]]}}
+True
+
 Extending Comparators
 ---------------------
 
+The internal API uses classes that extend
+:class:`json_merger.comparator.BaseComparator` in order to check the semantic
+equality of JSON objects. The interals call the ``get_matches`` method which
+is implemented in terms of the ``equals`` method.  The most simple method to
+extend this class is to override the ``equals`` method.
+
+>>> from json_merger.comparator import BaseComparator
+>>> class CustomComparator(BaseComparator):
+...     def equal(self, obj1, obj2):
+...         return abs(obj1 - obj2) < 0.2
+>>> comp = CustomComparator([1, 2], [1, 2, 1.1])
+>>> comp.get_matches('l1', 0) # elements matching l1[0] from l2
+[(0, 1), (2, 1.1)]
+
+If you want to implement another type of asignment you an compute all the
+mathes and store them in the ``matches`` set by overriding the
+``process_lists`` method. You need to put pairs of matching indices between
+l1 and l2.
+
+>>> from json_merger.comparator import BaseComparator
+>>> class CustomComparator(BaseComparator):
+...     def process_lists(self):
+...         self.matches.add((0, 0))
+...         self.matches.add((0, 1))
+>>> comp = CustomComparator(['foo', 'bar'], ['bar', 'foo'])
+>>> comp.get_matches('l1', 0) # elements matching l1[0] from l2
+[(0, 'bar'), (1, 'foo')]
+
+[contrib] Distance Function Matching
+------------------------------------
+
+To implement fuzzy matching we also allow matching by using a distane
+function. This ensures a 1:1 mapping betwen the entities by minimizing
+the total distance between all linked entities. To mark two of them
+as equal you can provide a threshold for that distance. (This is why
+it's best to normalize it between 0 and 1). Also, for speeding
+up the matching you also can hint possible matches by bucketing matching
+elements using a normalization function. In the next example we would
+match some points in the coordinate system, each of them lying in a specific
+square. The distance that we are going to use is the euclidean distance.
+We will normalize the points to their integer counterpart.
+
+>>> from json_merger.contrib.inspirehep.comparators import (
+...     DistanceFunctionComparator)
+>>> from math import sqrt
+>>> class PointComparator(DistanceFunctionComparator):
+...     distance_function = lambda p1, p2: sqrt((p1[0] - p2[0]) ** 2 +
+...                                             (p1[1] - p2[1]) ** 2)
+...     normalization_functions = [lambda p: (int(p[0]), int(p[1]))]
+...     threshold = 0.5
+>>> l1 = [(1.1, 1.1), (1.2, 1.2), (2.1, 2.1)]
+>>> l2 = [(1.11, 1.11), (1.25, 1.25), (2.15, 2.15)]
+>>> comp = PointComparator(l1, l2)
+>>> comp.get_matches('l1', 0) # elements matching l1[0] from l2
+[(0, (1.11, 1.11))]
+>>> # match only the closest element, not everything under threshold.
+>>> comp.get_matches('l1', 1)
+[(1, (1.25, 1.25))]
+>>> comp.get_matches('l1', 2)
+[(2, (2.15, 2.15))]
+
+[contrib] Custom Person Name Distance
+-------------------------------------
+
+We also provide a person name distance based on edit distance normalized
+between 0 and 1. You just need to provide a function for tokenizing a full
+name into NameToken or NameInitial - check ``simple_tokenize`` in the
+contrib directory. This distance function matches initials with full
+regular tokens and works with any name permutation. Also, this distance
+calculator assumes the full name is inside the ``full_name`` field of a
+dictionary. If you have the name in a different field you can just override
+the class and call ``super`` on objects having the name in the ``full_name``
+field.
+
+>>> from json_merger.contrib.inspirehep.author_util import (
+...     AuthorNameDistanceCalculator, simple_tokenize)
+>>> dst = AuthorNameDistanceCalculator(tokenize_function=simple_tokenize)
+>>> dst({'full_name': u'Doe, J.'}, {'full_name': u'John, Doe'}) < 0.1
+True
+
+Also we have functions for normalizing an author name with different
+heuristics to speed up the distance function matching.
+
+>>> from json_merger.contrib.inspirehep.author_util import (
+...     AuthorNameNormalizer)
+>>> identity = AuthorNameNormalizer(simple_tokenize)
+>>> identity({'full_name': 'Doe, Johnny Peter'})
+('doe', 'johnny', 'peter')
+>>> one_fst_name = AuthorNameNormalizer(simple_tokenize,
+...                                     first_names_number=1)
+>>> one_fst_name({'full_name': 'Doe, Johnny Peter'})
+('doe', 'johnny')
+>>> last_name_one_initial = AuthorNameNormalizer(simple_tokenize,
+...                                              first_names_number=1,
+...                                              first_name_to_initial=True)
+>>> last_name_one_initial({'full_name': 'Doe, Johnny Peter'})
+('doe', 'j')
+
+These instances can be used as class parameters for
+``DistanceFunctionComparator``
 """
 
 from __future__ import absolute_import, print_function

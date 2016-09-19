@@ -85,16 +85,18 @@ class AuthorNameNormalizer(object):
                  first_name_to_initial=False):
         """Initialize the normalizer.
 
-        :param tokenize_function:
-            A function that receives an author name and parses it out in the
-            following format:
-                {'lastnames': NameToken instance list,
-                 'nonlastnames': NameToken instance list}
-        :param first_names_number:
-            Max number of first names too keep in the normalized name.
-            If None, keep all first names
-        :param first_name_to_initial:
-            If set to True, all first names will be transformed into initials.
+        Args:
+            tokenize_function:
+                A function that receives an author name and parses it out in
+                the following format:
+                    {'lastnames': NameToken instance list,
+                     'nonlastnames': NameToken instance list}
+            first_names_number:
+                Max number of first names too keep in the normalized name.
+                If None, keep all first names
+            first_name_to_initial:
+                If set to True, all first names will be transformed into
+                initials.
         """
 
         self.tokenize_function = tokenize_function

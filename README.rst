@@ -45,3 +45,6 @@ Module for merging JSON Objects.
 
 * Free software: GPLv2 license
 * Documentation: https://pythonhosted.org/json-merger/
+
+* For the simple use-case: ``pip install json-merger``
+* To install contrib dependencies: ``pip install json-merger[contrib]``

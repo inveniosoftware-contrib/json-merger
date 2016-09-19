@@ -27,8 +27,7 @@ API Docs
 
 json_merger
 -----------
-.. automodule:: json_merger
-    :members: Merger
+.. autoclass:: json_merger.Merger
 
 json_merger.config
 ------------------
