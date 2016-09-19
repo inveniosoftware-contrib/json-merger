@@ -42,18 +42,18 @@ class BaseComparator(object):
         """
         self.l1 = l1
         self.l2 = l2
+        self.matches = set()
         self.process_lists()
 
     def process_lists(self):
         """Do any preprocessing of the lists."""
-        pass
+        for l1_idx, obj1 in enumerate(self.l1):
+            for l2_idx, obj2 in enumerate(self.l2):
+                if self.equal(obj1, obj2):
+                    self.matches.add((l1_idx, l2_idx))
 
-    def equal(self, idx_l1, idx_l2):
-        """Implementation of object equality.
-
-        This function is called using the element indices rather than their
-        values so that its results can be easily memoized.
-        """
+    def equal(self, obj1, obj2):
+        """Implementation of object equality."""
         raise NotImplementedError()
 
     def get_matches(self, src, src_idx):
@@ -69,8 +69,8 @@ class BaseComparator(object):
         else:
             target_list = self.l1
         comparator = {
-            'l1': lambda s_idx, t_idx: self.equal(s_idx, t_idx),
-            'l2': lambda s_idx, t_idx: self.equal(t_idx, s_idx)
+            'l1': lambda s_idx, t_idx: (s_idx, t_idx) in self.matches,
+            'l2': lambda s_idx, t_idx: (t_idx, s_idx) in self.matches,
         }[src]
 
         return [(trg_idx, obj) for trg_idx, obj in enumerate(target_list)
@@ -118,10 +118,7 @@ class PrimaryKeyComparator(BaseComparator):
         fn = self.normalization_functions.get(field, lambda x: x)
         return fn(o1) == fn(o2)
 
-    def equal(self, idx_l1, idx_l2):
-        obj1 = self.l1[idx_l1]
-        obj2 = self.l2[idx_l2]
-
+    def equal(self, obj1, obj2):
         if obj1 == obj2:
             return True
 
@@ -139,5 +136,5 @@ class PrimaryKeyComparator(BaseComparator):
 class DefaultComparator(BaseComparator):
     """Two objects are the same entity if they are fully equal."""
 
-    def equal(self, idx_l1, idx_l2):
-        return self.l1[idx_l1] == self.l2[idx_l2]
+    def equal(self, obj1, obj2):
+        return obj1 == obj2

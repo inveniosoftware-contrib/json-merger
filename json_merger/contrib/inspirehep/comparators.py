@@ -42,6 +42,3 @@ class DistanceFunctionComparator(BaseComparator):
                                                    self.threshold,
                                                    self.distance_function,
                                                    self.norm_functions))
-
-    def equal(self, idx_l1, idx_l2):
-        return (idx_l1, idx_l2) in self.matches
