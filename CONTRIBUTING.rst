@@ -53,9 +53,9 @@ If you are proposing a feature:
 Get Started!
 ------------
 
-Ready to contribute? Here's how to set up `invenio` for local development.
+Ready to contribute? Here's how to set up `json-merger` for local development.
 
-1. Fork the `invenio` repo on GitHub.
+1. Fork the `json-merger` repo on GitHub.
 2. Clone your fork locally:
 
    .. code-block:: console
