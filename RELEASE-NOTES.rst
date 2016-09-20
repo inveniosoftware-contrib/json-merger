@@ -1,13 +1,13 @@
 ====================
- json-merger v0.1.0
+ json-merger v0.2.0
 ====================
 
-json-merger v0.1.0 was released on TBD, 2016.
+json-merger v0.2.0 was released on September 20, 2016.
 
 About
 -----
 
-Invenio module that is able to merge json record objects.
+Python module that is able to merge json record objects.
 
 *This is an experimental developer preview release.*
 
@@ -19,7 +19,7 @@ What's new
 Installation
 ------------
 
-   $ pip install json-merger==0.1.0
+   $ pip install json-merger==0.2.0
 
 Documentation
 -------------
@@ -29,8 +29,7 @@ Documentation
 Happy hacking and thanks for flying json-merger.
 
 | Invenio Development Team
-|   Email: info@invenio-software.org
-|   IRC: #invenio on irc.freenode.net
-|   Twitter: http://twitter.com/inveniosoftware
+|   Email: admin@inspirehep.net
+|   Twitter: http://twitter.com/inspirehep
 |   GitHub: https://github.com/inspirehep/json-merger
-|   URL: http://invenio-software.org
+|   URL: http://inspirehep.org
