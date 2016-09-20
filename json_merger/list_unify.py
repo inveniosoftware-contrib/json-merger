@@ -27,26 +27,12 @@
 from __future__ import absolute_import, print_function
 
 from .comparator import DefaultComparator
+from .config import UnifierOps
 from .conflict import Conflict, ConflictType
 from .errors import MergeError
 from .graph_builder import (
     ListMatchGraphBuilder, sort_cyclic_graph_best_effort, toposort
 )
-
-_OPERATIONS = [
-    'KEEP_ONLY_HEAD_ENTITIES',
-    'KEEP_ONLY_UPDATE_ENTITIES',
-    'KEEP_UPDATE_AND_HEAD_ENTITIES_HEAD_FIRST',
-    'KEEP_UPDATE_AND_HEAD_ENTITIES_UPDATE_FIRST',
-    'KEEP_UPDATE_ENTITIES_CONFLICT_ON_HEAD_DELETE',
-]
-
-
-class UnifierOps(object):
-    pass
-
-for mode in _OPERATIONS:
-    setattr(UnifierOps, mode, mode)
 
 _SOURCES = {
     UnifierOps.KEEP_ONLY_UPDATE_ENTITIES: ['update'],
@@ -73,7 +59,7 @@ class ListUnifier(object):
 
     def __init__(self, root, head, update, operation,
                  comparator_cls=DefaultComparator):
-        if operation not in _OPERATIONS:
+        if operation not in UnifierOps.allowed_ops:
             raise ValueError('Operation %r not permitted' % operation)
 
         self.root = root

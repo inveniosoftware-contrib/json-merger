@@ -37,12 +37,9 @@ def test_multiple_primary_keys():
     lst = [{'id': 0}, {'id': 1}, {'f': {'id': 0}}, {'f': {'id': 1}}]
     inst = MyComp(lst, lst)
 
-    for idx1 in range(len(lst)):
-        for idx2 in range(len(lst)):
-            if idx1 == idx2:
-                assert inst.equal(idx1, idx2)
-            else:
-                assert not inst.equal(idx1, idx2)
+    for i, obj in enumerate(lst):
+        assert inst.get_matches('l1', i) == [(i, obj)]
+        assert inst.get_matches('l2', i) == [(i, obj)]
 
 
 def test_list_of_primary_keys():
@@ -59,11 +56,14 @@ def test_list_of_primary_keys():
 
     inst = MyComp(lst1, lst2)
 
-    assert not inst.equal(0, 0)
-    assert not inst.equal(1, 1)
-    assert not inst.equal(2, 3)
+    assert not inst.get_matches('l1', 0)
+    assert not inst.get_matches('l1', 1)
+    assert not inst.get_matches('l2', 0)
+    assert not inst.get_matches('l2', 1)
+    assert not inst.get_matches('l2', 3)
 
-    assert inst.equal(2, 2)
+    assert inst.get_matches('l1', 2) == [(2, lst2[2])]
+    assert inst.get_matches('l2', 2) == [(2, lst1[2])]
 
 
 def test_list_of_primary_keys_normalization():
@@ -81,8 +81,11 @@ def test_list_of_primary_keys_normalization():
 
     inst = MyComp(lst1, lst2)
 
-    assert not inst.equal(0, 0)
-    assert not inst.equal(1, 1)
-    assert not inst.equal(2, 3)
+    assert not inst.get_matches('l1', 0)
+    assert not inst.get_matches('l1', 1)
+    assert not inst.get_matches('l2', 0)
+    assert not inst.get_matches('l2', 1)
+    assert not inst.get_matches('l2', 3)
 
-    assert inst.equal(2, 2)
+    assert inst.get_matches('l1', 2) == [(2, lst2[2])]
+    assert inst.get_matches('l2', 2) == [(2, lst1[2])]

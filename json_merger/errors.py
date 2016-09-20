@@ -26,8 +26,14 @@ from __future__ import absolute_import, print_function
 
 
 class MergeError(Exception):
+    """Merging Error."""
 
     def __init__(self, message, content):
+        """
+        Attributes:
+            message: Error message.
+            content: List of conflicts that occured when merging.
+        """
         super(MergeError, self).__init__(message)
         self.message = message
         self.content = content

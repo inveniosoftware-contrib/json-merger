@@ -27,4 +27,29 @@ API Docs
 
 json_merger
 -----------
+.. autoclass:: json_merger.Merger
 
+json_merger.config
+------------------
+.. automodule:: json_merger.config
+    :members:
+
+json_merger.comparator
+----------------------
+.. automodule:: json_merger.comparator
+    :members:
+
+json_merger.stats
+-----------------
+.. automodule:: json_merger.stats
+    :members:
+
+json_merger.errors
+------------------
+.. automodule:: json_merger.errors
+    :members:
+
+json_merger.conflict
+--------------------
+.. automodule:: json_merger.conflict
+    :members:

@@ -30,6 +30,7 @@ import six
 from dictdiffer import ADD, CHANGE, REMOVE, patch
 from dictdiffer.merge import Merger, UnresolvedConflictsException
 
+from .config import DictMergerOps
 from .conflict import Conflict, ConflictType
 from .errors import MergeError
 from .nothing import NOTHING
@@ -50,7 +51,7 @@ def _get_list_fields(obj, res, key_path=()):
 
 
 def patch_to_conflict_set(patch):
-    """Translate a dictdiffer conflict into a json_merger one."""
+    """Translates a dictdiffer conflict into a json_merger one."""
     patch_type, dotted_key, value = patch
     key_path = tuple(k for k in dotted_key.split('.') if k)
 
@@ -69,19 +70,6 @@ def patch_to_conflict_set(patch):
             conflicts.add(Conflict(conflict_type, key_path + (key, ), obj))
 
     return conflicts
-
-
-_OPERATIONS = [
-    'FALLBACK_KEEP_HEAD',
-    'FALLBACK_KEEP_UPDATE',
-]
-
-
-class DictMergerOps(object):
-    pass
-
-for mode in _OPERATIONS:
-    setattr(DictMergerOps, mode, mode)
 
 
 class SkipListsMerger(object):

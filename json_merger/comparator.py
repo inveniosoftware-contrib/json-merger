@@ -29,17 +29,28 @@ from .utils import get_obj_at_key_path
 
 
 class BaseComparator(object):
+    """Abstract base class for Entity Comparison."""
 
     def __init__(self, l1, l2):
+        """
+        Args:
+            l1: First list of entities.
+            l2: Second list of entities.
+        """
         self.l1 = l1
         self.l2 = l2
+        self.matches = set()
         self.process_lists()
 
     def process_lists(self):
         """Do any preprocessing of the lists."""
-        pass
+        for l1_idx, obj1 in enumerate(self.l1):
+            for l2_idx, obj2 in enumerate(self.l2):
+                if self.equal(obj1, obj2):
+                    self.matches.add((l1_idx, l2_idx))
 
-    def equal(self, idx_l1, idx_l2):
+    def equal(self, obj1, obj2):
+        """Implementation of object equality."""
         raise NotImplementedError()
 
     def get_matches(self, src, src_idx):
@@ -55,8 +66,8 @@ class BaseComparator(object):
         else:
             target_list = self.l1
         comparator = {
-            'l1': lambda s_idx, t_idx: self.equal(s_idx, t_idx),
-            'l2': lambda s_idx, t_idx: self.equal(t_idx, s_idx)
+            'l1': lambda s_idx, t_idx: (s_idx, t_idx) in self.matches,
+            'l2': lambda s_idx, t_idx: (t_idx, s_idx) in self.matches,
         }[src]
 
         return [(trg_idx, obj) for trg_idx, obj in enumerate(target_list)
@@ -64,25 +75,28 @@ class BaseComparator(object):
 
 
 class PrimaryKeyComparator(BaseComparator):
-    """Renders two objects as equal if they have the same primary key.
+    """Considers two objects as equal if they have the same primary key.
 
     If two objects have at least one of the configured primary_key_fields equal
     then they are equal. A primary key field can be any of:
-        string: Two objects are equal if the values at the given key paths
-                are equal. Example:
-                    For 'key1.key2' the objects are equal if
-                    obj1['key1']['key2'] == obj2['key1']['key2'].
-        list: Two objects are equal if all the values at the key paths
-              in the list are equal. Example:
-                    For ['key1', 'key2.key3'] the objects are equal if
-                    obj1['key1'] == obj2['key1'] and
-                    obj1['key2']['key3'] == obj2['key2']['key3'].
+
+    string: Two objects are equal if the values at the given key paths
+            are equal. Example:
+                For 'key1.key2' the objects are equal if
+                obj1['key1']['key2'] == obj2['key1']['key2'].
+    list: Two objects are equal if all the values at the key paths
+          in the list are equal. Example:
+                For ['key1', 'key2.key3'] the objects are equal if
+                obj1['key1'] == obj2['key1'] and
+                obj1['key2']['key3'] == obj2['key2']['key3'].
 
     For normalizing the fields in the objects to be compared, one can add
     a normalization function for each field in the normalization_functions
-    dict. Example:
+    dict.
+
+    Example:
         Setting the normalization_functions field to:
-            {'key1': str.lower}
+            ``{'key1': str.lower}``
         would normalize
             obj1 = {'key1': 'ID123'} and obj2 = {'key1': 'id123'} to
             obj1 = {'key1': 'id123'} and obj2 = {'key1': 'id123'}
@@ -101,10 +115,7 @@ class PrimaryKeyComparator(BaseComparator):
         fn = self.normalization_functions.get(field, lambda x: x)
         return fn(o1) == fn(o2)
 
-    def equal(self, idx_l1, idx_l2):
-        obj1 = self.l1[idx_l1]
-        obj2 = self.l2[idx_l2]
-
+    def equal(self, obj1, obj2):
         if obj1 == obj2:
             return True
 
@@ -120,6 +131,7 @@ class PrimaryKeyComparator(BaseComparator):
 
 
 class DefaultComparator(BaseComparator):
+    """Two objects are the same entity if they are fully equal."""
 
-    def equal(self, idx_l1, idx_l2):
-        return self.l1[idx_l1] == self.l2[idx_l2]
+    def equal(self, obj1, obj2):
+        return obj1 == obj2

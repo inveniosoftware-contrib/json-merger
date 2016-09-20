@@ -52,6 +52,7 @@ extensions = [
     'sphinx.ext.doctest',
     'sphinx.ext.intersphinx',
     'sphinx.ext.viewcode',
+    'sphinx.ext.napoleon',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -137,8 +138,8 @@ todo_include_todos = False
 html_theme = 'alabaster'
 
 html_theme_options = {
-    'description': 'Invenio module that is able to merge json record objects.',
-    'github_user': 'inveniosoftware',
+    'description': 'Module for merging JSON objects.',
+    'github_user': 'inspirehep',
     'github_repo': 'json-merger',
     'github_button': False,
     'github_banner': True,
@@ -336,3 +337,6 @@ texinfo_documents = [
 
 # Example configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {'https://docs.python.org/': None}
+
+# Also document __init__
+autoclass_content = 'both'
