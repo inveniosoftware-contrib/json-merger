@@ -25,10 +25,8 @@
 """Python module that is able to merge json record objects."""
 
 import os
-import sys
 
 from setuptools import find_packages, setup
-from setuptools.command.test import test as TestCommand
 
 readme = open('README.rst').read()
 history = open('CHANGES.rst').read()
@@ -55,7 +53,7 @@ tests_require += contrib_require
 extras_require = {
     'contrib': contrib_require,
     'docs': [
-        'Sphinx==1.4.0',
+        'Sphinx>=1.4.2',
     ],
     'tests': tests_require
 }
@@ -98,12 +96,6 @@ setup(
     include_package_data=True,
     platforms='any',
     entry_points={
-        'invenio_base.apps': [
-            'json_merger = json_merger:JsonMerger',
-        ],
-        'invenio_i18n.translations': [
-            'messages = json_merger',
-        ],
     },
     extras_require=extras_require,
     install_requires=install_requires,
@@ -120,8 +112,6 @@ setup(
         'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.3',
-        'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
         'Development Status :: 4 - Beta',
     ],
