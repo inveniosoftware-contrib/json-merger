@@ -98,12 +98,6 @@ setup(
     include_package_data=True,
     platforms='any',
     entry_points={
-        'invenio_base.apps': [
-            'json_merger = json_merger:JsonMerger',
-        ],
-        'invenio_i18n.translations': [
-            'messages = json_merger',
-        ],
     },
     extras_require=extras_require,
     install_requires=install_requires,
