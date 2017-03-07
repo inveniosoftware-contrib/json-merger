@@ -48,6 +48,7 @@ class ConflictType(object):
     """
     pass
 
+
 _CONFLICTS = (
     'REORDER',
     'MANUAL_MERGE',
@@ -93,5 +94,33 @@ class Conflict(tuple):
         return Conflict(self.conflict_type, root_path + self.path, self.body)
 
     def to_json(self):
-        """Deserializes conflict to a JSON object."""
-        return json.dumps([self.conflict_type, self.path, self.body])
+        """Deserializes conflict to a JSON object.
+
+        It returns `json-patch <https://tools.ietf.org/html/rfc6902>`_ format.
+
+        - REORDER, SET_FIELD become "op": "replace"
+        - MANUAL_MERGE, ADD_BACK_TO_HEAD become "op": "add"
+        - Path becomes `json-pointer <https://tools.ietf.org/html/rfc6901>`_
+        - Original conflict type is added to "$type"
+        """
+        # map ConflictType to json-patch operator
+        if self.conflict_type in ('REORDER', 'SET_FIELD'):
+            op = 'replace'
+        elif self.conflict_type in ('MANUAL_MERGE', 'ADD_BACK_TO_HEAD'):
+            op = 'add'
+        elif self.conflict_type == 'REMOVE_FIELD':
+            op = 'remove'
+        else:
+            raise ValueError(
+                'Conflict Type %s can not be mapped to a json-patch operation'
+                % conflict_type
+            )
+
+        # stringify path array
+        path = '/' + '/'.join(str(el) for el in self.path)
+        return json.dumps({
+            'path': path,
+            'op': op,
+            'value': self.body,
+            '$type': self.conflict_type
+        })
