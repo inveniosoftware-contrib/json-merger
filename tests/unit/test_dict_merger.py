@@ -28,8 +28,11 @@ from __future__ import absolute_import, print_function
 
 import pytest
 
+from dictdiffer.merge import Merger, UnresolvedConflictsException
+
 from json_merger.config import DictMergerOps
 from json_merger.conflict import Conflict, ConflictType
+from dictdiffer.conflict import Conflict as Dictdiffer_Conflict
 from json_merger.dict_merger import SkipListsMerger
 from json_merger.errors import MergeError
 from json_merger.nothing import NOTHING
@@ -133,7 +136,186 @@ def test_simple_remove_conflict():
     assert Conflict(ConflictType.REMOVE_FIELD, ('foo2', ), None) in m.conflicts
 
 
-def test_simple_change_conflict():
+# custom ops tests
+
+def test_conflict_with_custom_ops_update():
+    r = {'r': {'foo': 'baa', 'spam': 'eg'},
+         'p': {'foo': 'baa', 'spam': 'eg'}}
+    h = {'r': {'foo': 'bab', 'spam': 'egg'},
+         'p': {'foo': 'bab', 'spam': 'egg'}}
+    u = {'r': {'foo': 'bac', 'spam': 'eggs'},
+         'p': {'foo': 'bac', 'spam': 'eggs'}}
+
+    # set different strategies compare to the default one
+    custom_ops = {
+        'r': DictMergerOps.FALLBACK_KEEP_UPDATE,
+        'p': DictMergerOps.FALLBACK_KEEP_UPDATE
+    }
+    expected = {
+        'r': {'foo': 'bac', 'spam': 'eggs'},
+        'p': {'foo': 'bac', 'spam': 'eggs'}
+    }
+
+    m = SkipListsMerger(
+        r, h, u,
+        DictMergerOps.FALLBACK_KEEP_HEAD,
+        custom_ops=custom_ops
+    )
+
+    with pytest.raises(MergeError) as excinfo:
+        m.merge()
+
+    assert m.merged_root == expected
+    assert m.conflicts == excinfo.value.content
+    assert len(m.conflicts) == 4
+    assert Conflict(
+        ConflictType.SET_FIELD, ('p', 'foo'), 'bab'
+    ) in m.conflicts
+    assert Conflict(
+        ConflictType.SET_FIELD, ('p', 'foo'), 'bab'
+    ) in m.conflicts
+    assert Conflict(
+        ConflictType.SET_FIELD, ('p', 'foo'), 'bab'
+    ) in m.conflicts
+    assert Conflict(
+        ConflictType.SET_FIELD, ('p', 'foo'), 'bab'
+    ) in m.conflicts
+
+
+def test_conflict_with_custom_ops_update_and_head():
+    r = {'r': {'foo': 'baa', 'spam': 'eg'},
+         'p': {'foo': 'baa', 'spam': 'eg'}}
+    h = {'r': {'foo': 'bab', 'spam': 'egg'},
+         'p': {'foo': 'bab', 'spam': 'egg'}}
+    u = {'r': {'foo': 'bac', 'spam': 'eggs'},
+         'p': {'foo': 'bac', 'spam': 'eggs'}}
+
+    # set custom mixed strategies
+    custom_ops = {
+        'r': DictMergerOps.FALLBACK_KEEP_UPDATE,
+        'p': DictMergerOps.FALLBACK_KEEP_HEAD,
+    }
+    expected = {
+        'r': {'foo': 'bac', 'spam': 'eggs'},
+        'p': {'foo': 'bab', 'spam': 'egg'}
+    }
+
+    m = SkipListsMerger(
+        r, h, u,
+        DictMergerOps.FALLBACK_KEEP_HEAD,
+        custom_ops=custom_ops
+    )
+    with pytest.raises(MergeError) as excinfo:
+        m.merge()
+
+    assert m.merged_root == expected
+    assert m.conflicts == excinfo.value.content
+    assert len(m.conflicts) == 4
+    assert Conflict(
+        ConflictType.SET_FIELD, ('p', 'spam'), 'eggs'
+    ) in m.conflicts
+    assert Conflict(
+        ConflictType.SET_FIELD, ('r', 'spam'), 'egg'
+    ) in m.conflicts
+    assert Conflict(
+        ConflictType.SET_FIELD, ('r', 'foo'), 'bab'
+    ) in m.conflicts
+    assert Conflict(
+        ConflictType.SET_FIELD, ('p', 'foo'), 'bac'
+    ) in m.conflicts
+
+
+def test_conflict_with_custom_ops_update_and_head_mixed():
+    r = {'r': {'foo': 'baa', 'spam': 'eg'},
+         'p': {'foo': 'baa', 'spam': 'eg'}}
+    h = {'r': {'foo': 'bab', 'spam': 'egg'},
+         'p': {'foo': 'bab', 'spam': 'egg'}}
+    u = {'r': {'foo': 'bac', 'spam': 'eggs'},
+         'p': {'foo': 'bac', 'spam': 'eggs'}}
+
+    # set custom mixed strategies with same root
+    custom_ops = {
+        'r': DictMergerOps.FALLBACK_KEEP_UPDATE,
+        'p': DictMergerOps.FALLBACK_KEEP_UPDATE,
+        'p.foo': DictMergerOps.FALLBACK_KEEP_HEAD,
+    }
+    expected = {
+        'r': {'foo': 'bac', 'spam': 'eggs'},
+        'p': {'foo': 'bab', 'spam': 'eggs'}
+    }
+
+    m = SkipListsMerger(
+        r, h, u,
+        DictMergerOps.FALLBACK_KEEP_HEAD,
+        custom_ops=custom_ops
+    )
+    with pytest.raises(MergeError) as excinfo:
+        m.merge()
+
+    assert m.merged_root == expected
+
+    assert m.conflicts == excinfo.value.content
+    assert len(m.conflicts) == 4
+    assert Conflict(
+        ConflictType.SET_FIELD, ('r', 'spam'), 'egg'
+    ) in m.conflicts
+    assert Conflict(
+        ConflictType.SET_FIELD, ('p', 'spam'), 'egg'
+    ) in m.conflicts
+    assert Conflict(
+        ConflictType.SET_FIELD, ('r', 'foo'), 'bab'
+    ) in m.conflicts
+    assert Conflict(
+        ConflictType.SET_FIELD, ('p', 'foo'), 'bac'
+    ) in m.conflicts
+
+
+def test_conflict_with_custom_ops_update_and_head_with_nested_rules():
+    r = {'r': {'foo': 'baa', 'spam': 'eg'},
+         'p': {'foo': 'baa', 'spam': 'eg'}}
+    h = {'r': {'foo': 'bab', 'spam': 'egg'},
+         'p': {'foo': 'bab', 'spam': 'egg'}}
+    u = {'r': {'foo': 'bac', 'spam': 'eggs'},
+         'p': {'foo': 'bac', 'spam': 'eggs'}}
+
+    custom_ops = {
+        'r': DictMergerOps.FALLBACK_KEEP_UPDATE,
+        'p': DictMergerOps.FALLBACK_KEEP_HEAD,
+        'r.foo': DictMergerOps.FALLBACK_KEEP_HEAD,
+        'p.spam': DictMergerOps.FALLBACK_KEEP_UPDATE
+    }
+    expected = {
+        'r': {'foo': 'bab', 'spam': 'eggs'},
+        'p': {'foo': 'bab', 'spam': 'eggs'}
+    }
+
+    m = SkipListsMerger(
+        r, h, u,
+        DictMergerOps.FALLBACK_KEEP_HEAD,
+        custom_ops=custom_ops
+    )
+    with pytest.raises(MergeError) as excinfo:
+        m.merge()
+
+    assert m.merged_root == expected
+
+    assert m.conflicts == excinfo.value.content
+    assert len(m.conflicts) == 4
+    assert Conflict(
+        ConflictType.SET_FIELD, ('r', 'spam'), 'egg'
+    ) in m.conflicts
+    assert Conflict(
+        ConflictType.SET_FIELD, ('p', 'spam'), 'egg'
+    ) in m.conflicts
+    assert Conflict(
+        ConflictType.SET_FIELD, ('r', 'foo'), 'bac'
+    ) in m.conflicts
+    assert Conflict(
+        ConflictType.SET_FIELD, ('p', 'foo'), 'bac'
+    ) in m.conflicts
+
+
+def test_custom_fallback():
     r = {'r': {'foo': 'baa'}}
     h = {'r': {'foo': 'bab'}}
     u = {'r': {'foo': 'bac'}}
@@ -145,7 +327,9 @@ def test_simple_change_conflict():
     assert m.merged_root == {'r': {'foo': 'bab'}}
     assert m.conflicts == excinfo.value.content
     assert len(m.conflicts) == 1
-    assert Conflict(ConflictType.SET_FIELD, ('r', 'foo'), 'bac') in m.conflicts
+    assert Conflict(
+        ConflictType.SET_FIELD, ('r', 'foo'), 'bac'
+    ) in m.conflicts
 
 
 # Tests for all the list cases.
@@ -244,3 +428,95 @@ def test_data_lists_bare_lists():
     m.merge()
     assert m.merged_root == u
     assert not m.skipped_lists
+
+
+def test_get_custom_strategies():
+    patches = [
+        Dictdiffer_Conflict(
+            ('change', 'p.foo', ('baa', 'bab')),
+            ('change', 'p.foo', ('baa', 'bac'))
+        ),
+        Dictdiffer_Conflict(
+            ('change', 'p.spam', ('eg', 'egg')),
+            ('change', 'p.spam', ('eg', 'eggs'))
+        ),
+        Dictdiffer_Conflict(
+            ('change', 'r.foo', ('baa', 'bab')),
+            ('change', 'r.foo', ('baa', 'bac'))
+        ),
+        Dictdiffer_Conflict(
+            ('change', 'r.spam', ('eg', 'egg')),
+            ('change', 'r.spam', ('eg', 'eggs'))
+        )
+    ]
+
+    custom_ops = {
+        'r': DictMergerOps.FALLBACK_KEEP_UPDATE,
+        'p': DictMergerOps.FALLBACK_KEEP_UPDATE
+    }
+
+    expected_strategies = ['s', 's', 's', 's']
+
+    m = SkipListsMerger(
+        {}, {}, {},
+        DictMergerOps.FALLBACK_KEEP_HEAD,
+        custom_ops=custom_ops
+    )
+
+    strategies = m._get_custom_strategies(patches)
+
+    assert expected_strategies == strategies
+
+
+def test_get_all_the_related_path_perfect_match():
+    custom_ops = {
+        'a.b.c.d': DictMergerOps.FALLBACK_KEEP_UPDATE
+    }
+
+    m = SkipListsMerger(
+        {}, {}, {},
+        DictMergerOps.FALLBACK_KEEP_HEAD,
+        custom_ops=custom_ops
+    )
+
+    expected = 's'
+
+    output = m._get_related_path('a.b.c.d')
+
+    assert expected == output
+
+
+def test_get_all_the_related_path_gerarchy_match():
+    custom_ops = {
+        'a.b': DictMergerOps.FALLBACK_KEEP_UPDATE
+    }
+
+    m = SkipListsMerger(
+        {}, {}, {},
+        DictMergerOps.FALLBACK_KEEP_HEAD,
+        custom_ops=custom_ops
+    )
+
+    expected = 's'
+
+    output = m._get_related_path('a.b.c.d')
+
+    assert expected == output
+
+
+def test_get_all_the_related_path_no_match():
+    custom_ops = {
+        'a.b': DictMergerOps.FALLBACK_KEEP_UPDATE
+    }
+
+    m = SkipListsMerger(
+        {}, {}, {},
+        DictMergerOps.FALLBACK_KEEP_HEAD,
+        custom_ops=custom_ops
+    )
+
+    expected = 'f'
+
+    output = m._get_related_path('a.l.c.d')
+
+    assert expected == output

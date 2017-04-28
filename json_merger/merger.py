@@ -33,8 +33,8 @@ from .dict_merger import SkipListsMerger
 from .errors import MergeError
 from .list_unify import ListUnifier
 from .utils import (
-    get_conf_set_for_key_path, get_dotted_key_path, get_obj_at_key_path,
-    set_obj_at_key_path
+    get_conf_set_for_key_path, get_dotted_key_path,
+    get_obj_at_key_path, set_obj_at_key_path
 )
 
 PLACEHOLDER_STR = '#$PLACEHOLDER$#'
@@ -50,7 +50,8 @@ class Merger(object):
 
     def __init__(self, root, head, update,
                  default_dict_merge_op, default_list_merge_op,
-                 list_merge_ops=None, comparators=None, data_lists=None):
+                 list_dict_ops=None, list_merge_ops=None,
+                 comparators=None, data_lists=None):
         """
         Args:
             root: A common ancestor of the two objects being merged.
@@ -70,6 +71,14 @@ class Merger(object):
             default_list_merge_op
               (:class:`json_merger.config.UnifierOps` class attribute):
                 Default strategy for merging two lists of entities.
+
+            dict_merge_ops: Defines custom strategies for merging dict of
+                entities.
+
+                Dict formatted as:
+                    * keys -- a config string
+                    * values -- a class attribute of
+                      :class:`json_merger.config.DictMergerOps`
 
             list_merge_ops: Defines custom strategies for merging lists of
                 entities.
@@ -104,6 +113,7 @@ class Merger(object):
         """
         self.comparators = comparators or {}
         self.data_lists = set(data_lists or [])
+        self.list_dict_ops = list_dict_ops or {}
         self.list_merge_ops = list_merge_ops or {}
 
         self.default_dict_merge_op = default_dict_merge_op
@@ -252,8 +262,10 @@ class Merger(object):
 
     def _merge_objects(self, root, head, update, key_path):
         data_lists = get_conf_set_for_key_path(self.data_lists, key_path)
+
         object_merger = SkipListsMerger(root, head, update,
-                                        self.default_dict_merge_op, data_lists)
+                                        self.default_dict_merge_op,
+                                        data_lists, self.list_dict_ops)
         try:
             object_merger.merge()
         except MergeError as e:
