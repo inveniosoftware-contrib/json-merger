@@ -265,11 +265,14 @@ class Merger(object):
 
         object_merger = SkipListsMerger(root, head, update,
                                         self.default_dict_merge_op,
-                                        data_lists, self.list_dict_ops)
+                                        data_lists, self.list_dict_ops,
+                                        key_path)
+
         try:
             object_merger.merge()
         except MergeError as e:
             self.conflicts.extend(c.with_prefix(key_path) for c in e.content)
+
         return object_merger
 
     def _unify_lists(self, root, head, update, key_path):
