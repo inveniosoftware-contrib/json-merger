@@ -90,7 +90,7 @@ setup(
     license='GPLv2',
     author='CERN',
     author_email='admin@inspirehep.net',
-    url='https://github.com/inspirehep/json-merger',
+    url='https://github.com/inveniosoftware-contrib/json-merger',
     packages=packages,
     zip_safe=False,
     include_package_data=True,
