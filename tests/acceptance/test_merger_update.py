@@ -98,7 +98,8 @@ def _deserialize_conflict(conflict_type, path, body):
     'author_affiliation_addition',
     'author_double_match_conflict',
     'title_addition',
-    'title_change'])
+    'title_change'
+])
 def test_author_typo_scenarios(update_fixture_loader, scenario):
     root, head, update, exp, desc = update_fixture_loader.load_test(scenario)
     merger = Merger(root, head, update,
