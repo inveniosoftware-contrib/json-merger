@@ -233,7 +233,7 @@ class SkipListsMerger(object):
 
              return ['authors','affiliations', 'value']
          """
-        curr_path = [item for i, item in enumerate(key_path) if i % 2 == 0]
+        curr_path = [item for item in key_path if isinstance(item, six.string_types)]
         curr_path.append(path)
         return curr_path
 
