@@ -182,9 +182,17 @@ class SkipListsMerger(object):
 
             field = ''
             if head[1]:
-                field = head[1]
-            elif head[2][0][0]:
-                field = head[2][0][0]
+                if isinstance(head[1], list):
+                    field += '.'.join(
+                        item for item in head[1]
+                        if isinstance(item, six.string_types)
+                    )
+                else:
+                    field = head[1]
+
+            if isinstance(head[2], list):
+                if isinstance(head[2][0][0], six.string_types):
+                    field += '.' + head[2][0][0] if field else head[2][0][0]
 
             strategies.append(
                 self._get_related_path(field)
