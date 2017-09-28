@@ -60,7 +60,7 @@ def test_to_json_with_manual_merge():
     assert json.loads(conflict_json) == {
         '$type': 'MANUAL_MERGE',
         'op': 'add',
-        'path': '/foo/bar',
+        'path': '/foo/bar/-',
         'value': {}
     }
 
@@ -71,7 +71,7 @@ def test_to_json_with_add_back_to_head():
     assert json.loads(conflict_json) == {
         '$type': 'ADD_BACK_TO_HEAD',
         'op': 'add',
-        'path': '/foo/bar',
+        'path': '/foo/bar/-',
         'value': {}
     }
 
