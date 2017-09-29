@@ -33,8 +33,8 @@ from .dict_merger import SkipListsMerger
 from .errors import MergeError
 from .list_unify import ListUnifier
 from .utils import (
-    get_conf_set_for_key_path, get_dotted_key_path,
-    get_obj_at_key_path, set_obj_at_key_path
+    get_conf_set_for_key_path, get_dotted_key_path, get_obj_at_key_path,
+    set_obj_at_key_path
 )
 
 PLACEHOLDER_STR = '#$PLACEHOLDER$#'

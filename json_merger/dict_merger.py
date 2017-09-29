@@ -25,8 +25,8 @@
 from __future__ import absolute_import, print_function
 
 import copy
-import six
 
+import six
 from dictdiffer import ADD, CHANGE, REMOVE, patch
 from dictdiffer.merge import Merger, UnresolvedConflictsException
 
