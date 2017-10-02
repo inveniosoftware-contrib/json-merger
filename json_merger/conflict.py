@@ -105,10 +105,12 @@ class Conflict(tuple):
         - Original conflict type is added to "$type"
         """
         # map ConflictType to json-patch operator
+        path = self.path
         if self.conflict_type in ('REORDER', 'SET_FIELD'):
             op = 'replace'
         elif self.conflict_type in ('MANUAL_MERGE', 'ADD_BACK_TO_HEAD'):
             op = 'add'
+            path.append('-')
         elif self.conflict_type == 'REMOVE_FIELD':
             op = 'remove'
         else:
@@ -118,9 +120,9 @@ class Conflict(tuple):
             )
 
         # stringify path array
-        path = '/' + '/'.join(str(el) for el in self.path)
+        json_pointer = '/' + '/'.join(str(el) for el in path)
         return json.dumps({
-            'path': path,
+            'path': json_pointer,
             'op': op,
             'value': self.body,
             '$type': self.conflict_type
