@@ -33,7 +33,7 @@ from json_merger.conflict import Conflict
 
 
 def test_to_json_with_reorder():
-    conflict = Conflict('REORDER', ['foo', 'bar'], {})
+    conflict = Conflict('REORDER', ('foo', 'bar'), {})
     conflict_json = conflict.to_json()
     assert json.loads(conflict_json) == {
         '$type': 'REORDER',
@@ -44,7 +44,7 @@ def test_to_json_with_reorder():
 
 
 def test_to_json_with_set_field():
-    conflict = Conflict('SET_FIELD', ['foo', 'bar'], {})
+    conflict = Conflict('SET_FIELD', ('foo', 'bar'), {})
     conflict_json = conflict.to_json()
     assert json.loads(conflict_json) == {
         '$type': 'SET_FIELD',
@@ -55,7 +55,7 @@ def test_to_json_with_set_field():
 
 
 def test_to_json_with_manual_merge():
-    conflict = Conflict('MANUAL_MERGE', ['foo', 'bar'], {})
+    conflict = Conflict('MANUAL_MERGE', ('foo', 'bar'), {})
     conflict_json = conflict.to_json()
     assert json.loads(conflict_json) == {
         '$type': 'MANUAL_MERGE',
@@ -66,7 +66,7 @@ def test_to_json_with_manual_merge():
 
 
 def test_to_json_with_add_back_to_head():
-    conflict = Conflict('ADD_BACK_TO_HEAD', ['foo', 'bar'], {})
+    conflict = Conflict('ADD_BACK_TO_HEAD', ('foo', 'bar'), {})
     conflict_json = conflict.to_json()
     assert json.loads(conflict_json) == {
         '$type': 'ADD_BACK_TO_HEAD',
@@ -77,7 +77,7 @@ def test_to_json_with_add_back_to_head():
 
 
 def test_to_json_with_remove_field():
-    conflict = Conflict('REMOVE_FIELD', ['foo', 'bar'], None)
+    conflict = Conflict('REMOVE_FIELD', ('foo', 'bar'), None)
     conflict_json = conflict.to_json()
     assert json.loads(conflict_json) == {
         '$type': 'REMOVE_FIELD',
@@ -88,7 +88,7 @@ def test_to_json_with_remove_field():
 
 
 def test_to_json_when_path_has_integers():
-    conflict = Conflict('REMOVE_FIELD', ['foo', 0, 'bar', 1], None)
+    conflict = Conflict('REMOVE_FIELD', ('foo', 0, 'bar', 1), None)
     conflict_json = conflict.to_json()
     assert json.loads(conflict_json) == {
         '$type': 'REMOVE_FIELD',
