@@ -110,7 +110,7 @@ class Conflict(tuple):
             op = 'replace'
         elif self.conflict_type in ('MANUAL_MERGE', 'ADD_BACK_TO_HEAD'):
             op = 'add'
-            path.append('-')
+            path += ('-',)
         elif self.conflict_type == 'REMOVE_FIELD':
             op = 'remove'
         else:
