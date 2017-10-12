@@ -26,9 +26,9 @@ from __future__ import absolute_import, print_function
 
 import re
 import editdistance
+import six
 
 from munkres import Munkres
-from unidecode import unidecode
 
 
 def _normalized_edit_dist(s1, s2):
@@ -146,9 +146,9 @@ class AuthorNameDistanceCalculator(object):
         if self.name_field not in author2:
             return 1.0
 
-        # Normalize to ASCII
-        name_a1 = unidecode(author1[self.name_field])
-        name_a2 = unidecode(author2[self.name_field])
+        # Normalize to unicode
+        name_a1 = _decode_if_not_unicode(author1[self.name_field])
+        name_a2 = _decode_if_not_unicode(author2[self.name_field])
 
         tokens_a1 = self.tokenize_function(name_a1)
         tokens_a2 = self.tokenize_function(name_a2)
@@ -175,3 +175,12 @@ class AuthorNameDistanceCalculator(object):
             return 1.0
 
         return cost / max(min(len(tokens_a1), len(tokens_a2)), 1.0)
+
+
+def _decode_if_not_unicode(value):
+    to_return = value
+
+    if not isinstance(value, six.text_type):
+        to_return = value.decode('utf-8')
+
+    return to_return
