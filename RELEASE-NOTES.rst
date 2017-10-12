@@ -19,7 +19,7 @@ What's new
 Installation
 ------------
 
-   $ pip install json-merger==0.3.1
+   $ pip install json-merger==0.3.2
 
 Documentation
 -------------
