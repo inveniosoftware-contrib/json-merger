@@ -430,7 +430,7 @@ def test_data_lists_bare_lists():
     assert not m.skipped_lists
 
 
-def test_get_custom_strategies():
+def test_get_custom_strategy():
     patches = [
         Dictdiffer_Conflict(
             ('change', 'p.foo', ('baa', 'bab')),
@@ -463,12 +463,12 @@ def test_get_custom_strategies():
         custom_ops=custom_ops
     )
 
-    strategies = m._get_custom_strategies(patches)
+    strategies = [m._get_custom_strategy(patch) for patch in patches]
 
     assert expected_strategies == strategies
 
 
-def test_get_custom_strategies_mixed_patches():
+def test_get_custom_strategy_mixed_patches():
     patches = [
         Dictdiffer_Conflict(
             ('change', 'b', ('1', '2')),
@@ -493,24 +493,22 @@ def test_get_custom_strategies_mixed_patches():
         custom_ops=custom_ops
     )
 
-    strategies = m._get_custom_strategies(patches)
+    strategies = [m._get_custom_strategy(patch) for patch in patches]
 
     assert expected_strategies == strategies
 
 
-def test_get_custom_strategies_mixed_patches_with_nested_changes():
-    patches = [
-        Dictdiffer_Conflict(
-            ('change', 'a.b', ('1', '2')),
-            ('change', 'a.b', ('1', '3'))
-        )
-    ]
+def test_get_custom_strategy_mixed_patches_with_nested_changes():
+    patch = Dictdiffer_Conflict(
+        ('change', 'a.b', ('1', '2')),
+        ('change', 'a.b', ('1', '3'))
+    )
 
     custom_ops = {
         'a.b': DictMergerOps.FALLBACK_KEEP_UPDATE,
     }
 
-    expected_strategies = ['s']
+    expected_strategy = 's'
 
     m = SkipListsMerger(
         {}, {}, {},
@@ -518,24 +516,22 @@ def test_get_custom_strategies_mixed_patches_with_nested_changes():
         custom_ops=custom_ops
     )
 
-    strategies = m._get_custom_strategies(patches)
+    strategy = m._get_custom_strategy(patch)
 
-    assert expected_strategies == strategies
+    assert expected_strategy == strategy
 
 
-def test_get_custom_strategies_change_remove_patch():
-    patches = [
-        Dictdiffer_Conflict(
-            ('change', 'a.b', ('1', '2')),
-            ('remove', '', [('a', {'b': '1'})])
-        )
-    ]
+def test_get_custom_strategy_change_remove_patch():
+    patch = Dictdiffer_Conflict(
+        ('change', 'a.b', ('1', '2')),
+        ('remove', '', [('a', {'b': '1'})])
+    )
 
     custom_ops = {
         'a.b': DictMergerOps.FALLBACK_KEEP_UPDATE
     }
 
-    expected_strategies = ['s']
+    expected_strategy = 's'
 
     m = SkipListsMerger(
         {}, {}, {},
@@ -543,12 +539,12 @@ def test_get_custom_strategies_change_remove_patch():
         custom_ops=custom_ops
     )
 
-    strategies = m._get_custom_strategies(patches)
+    strategy = m._get_custom_strategy(patch)
 
-    assert expected_strategies == strategies
+    assert expected_strategy == strategy
 
 
-def test_get_custom_strategies_change_remove_add_patches_multiple_changes():
+def test_get_custom_strategy_change_remove_add_patches_multiple_changes():
     patches = [
         Dictdiffer_Conflict(
             ('change', 'a.c', ('2', '4')),
@@ -580,24 +576,22 @@ def test_get_custom_strategies_change_remove_add_patches_multiple_changes():
         custom_ops=custom_ops
     )
 
-    strategies = m._get_custom_strategies(patches)
+    strategies = [m._get_custom_strategy(patch) for patch in patches]
 
     assert expected_strategies == strategies
 
 
-def test_get_custom_strategies_add_patches_very_nested():
-    patches = [
-        Dictdiffer_Conflict(
-            ('add', 'a.b.c', [('e', '2')]),
-            ('add', 'a.b.c', [('e', '3')]))
-    ]
+def test_get_custom_strategy_add_patch_very_nested():
+    patch = Dictdiffer_Conflict(
+        ('add', 'a.b.c', [('e', '2')]),
+        ('add', 'a.b.c', [('e', '3')]))
 
     custom_ops = {
         'b': DictMergerOps.FALLBACK_KEEP_UPDATE,
         'a': DictMergerOps.FALLBACK_KEEP_UPDATE
     }
 
-    expected_strategies = ['s']
+    expected_strategy = 's'
 
     m = SkipListsMerger(
         {}, {}, {},
@@ -605,12 +599,12 @@ def test_get_custom_strategies_add_patches_very_nested():
         custom_ops=custom_ops
     )
 
-    strategies = m._get_custom_strategies(patches)
+    strategy = m._get_custom_strategy(patch)
 
-    assert expected_strategies == strategies
+    assert expected_strategy == strategy
 
 
-def test_get_custom_strategies_add_change_patches_very_nested():
+def test_get_custom_strategy_add_change_patches_very_nested():
     patches = [
         Dictdiffer_Conflict(
             ('change', 'a.b.c.d', ('1', '4')),
@@ -635,24 +629,22 @@ def test_get_custom_strategies_add_change_patches_very_nested():
         custom_ops=custom_ops
     )
 
-    strategies = m._get_custom_strategies(patches)
+    strategies = [m._get_custom_strategy(patch) for patch in patches]
 
     assert expected_strategies == strategies
 
 
-def test_get_custom_strategies_add_patches_in_the_root():
-    patches = [
-        Dictdiffer_Conflict(
-            ('add', '', [('a', '1')]),
-            ('add', '', [('a', '2')])
-        )
-    ]
+def test_get_custom_strategy_add_patch_in_the_root():
+    patch = Dictdiffer_Conflict(
+        ('add', '', [('a', '1')]),
+        ('add', '', [('a', '2')])
+    )
 
     custom_ops = {
         'a': DictMergerOps.FALLBACK_KEEP_UPDATE
     }
 
-    expected_strategies = ['s']
+    expected_strategy = 's'
 
     m = SkipListsMerger(
         {}, {}, {},
@@ -660,25 +652,23 @@ def test_get_custom_strategies_add_patches_in_the_root():
         custom_ops=custom_ops
     )
 
-    strategies = m._get_custom_strategies(patches)
+    strategy = m._get_custom_strategy(patch)
 
-    assert expected_strategies == strategies
+    assert expected_strategy == strategy
 
 
-def test_get_custom_strategies_mixed_patches_9():
-    patches = [
-        Dictdiffer_Conflict(
-            ('add', 'a', [('b', '1')]),
-            ('add', 'a', [('b', '2')])
-        )
-    ]
+def test_get_custom_strategy_mixed_patch_9():
+    patch = Dictdiffer_Conflict(
+        ('add', 'a', [('b', '1')]),
+        ('add', 'a', [('b', '2')])
+    )
 
     custom_ops = {
         'a': DictMergerOps.FALLBACK_KEEP_UPDATE,
         'a.b': DictMergerOps.FALLBACK_KEEP_HEAD
     }
 
-    expected_strategies = ['f']
+    expected_strategy = 'f'
 
     m = SkipListsMerger(
         {}, {}, {},
@@ -686,25 +676,23 @@ def test_get_custom_strategies_mixed_patches_9():
         custom_ops=custom_ops
     )
 
-    strategies = m._get_custom_strategies(patches)
+    strategy = m._get_custom_strategy(patch)
 
-    assert expected_strategies == strategies
+    assert expected_strategy == strategy
 
 
-def test_get_custom_strategies_mixed_patches_with_list():
-    patches = [
-        Dictdiffer_Conflict(
-            ('add', ['a', 'c', 0], [('b', '1')]),
-            ('add', ['a', 'c', 0], [('b', '2')])
-        )
-    ]
+def test_get_custom_strategy_mixed_patch_with_list():
+    patch = Dictdiffer_Conflict(
+        ('add', ['a', 'c', 0], [('b', '1')]),
+        ('add', ['a', 'c', 0], [('b', '2')])
+    )
 
     custom_ops = {
         'a': DictMergerOps.FALLBACK_KEEP_UPDATE,
         'a.c.b': DictMergerOps.FALLBACK_KEEP_HEAD
     }
 
-    expected_strategies = ['f']
+    expected_strategy = 'f'
 
     m = SkipListsMerger(
         {}, {}, {},
@@ -712,12 +700,12 @@ def test_get_custom_strategies_mixed_patches_with_list():
         custom_ops=custom_ops
     )
 
-    strategies = m._get_custom_strategies(patches)
+    strategy = m._get_custom_strategy(patch)
 
-    assert expected_strategies == strategies
+    assert expected_strategy == strategy
 
 
-def test_get_custom_strategies_mixed_patches_multiple_changes_with_list():
+def test_get_custom_strategy_mixed_patches_multiple_changes_with_list():
     patches = [
         Dictdiffer_Conflict(
             ('add', ['a', 'c', 0], [('b', '1')]),
@@ -742,12 +730,12 @@ def test_get_custom_strategies_mixed_patches_multiple_changes_with_list():
         custom_ops=custom_ops
     )
 
-    strategies = m._get_custom_strategies(patches)
+    strategies = [m._get_custom_strategy(patch) for patch in patches]
 
     assert expected_strategies == strategies
 
 
-def test_get_custom_strategies_mixed_patches_with_nesting_after_list():
+def test_get_custom_strategy_mixed_patches_with_nesting_after_list():
     patches = [
         Dictdiffer_Conflict(
             ('add', ['a', 'c', 0], [('d', '3')]),
@@ -772,12 +760,12 @@ def test_get_custom_strategies_mixed_patches_with_nesting_after_list():
         custom_ops=custom_ops
     )
 
-    strategies = m._get_custom_strategies(patches)
+    strategies = [m._get_custom_strategy(patch) for patch in patches]
 
     assert expected_strategies == strategies
 
 
-def test_get_all_the_related_path_perfect_match():
+def test_get_rule_for_field_perfect_match():
     custom_ops = {
         'a.b.c.d': DictMergerOps.FALLBACK_KEEP_UPDATE
     }
@@ -790,12 +778,12 @@ def test_get_all_the_related_path_perfect_match():
 
     expected = 's'
 
-    output = m._get_related_path('a.b.c.d')
+    output = m._get_rule_for_field(['a', 'b', 'c', 'd'])
 
     assert expected == output
 
 
-def test_get_all_the_related_path_gerarchy_match():
+def test_get_rule_for_field_hierarchy_match():
     custom_ops = {
         'a.b': DictMergerOps.FALLBACK_KEEP_UPDATE
     }
@@ -808,12 +796,12 @@ def test_get_all_the_related_path_gerarchy_match():
 
     expected = 's'
 
-    output = m._get_related_path('a.b.c.d')
+    output = m._get_rule_for_field(['a', 'b', 'c', 'd'])
 
     assert expected == output
 
 
-def test_get_all_the_related_path_no_match():
+def test_get_rule_for_field_no_match():
     custom_ops = {
         'a.b': DictMergerOps.FALLBACK_KEEP_UPDATE
     }
@@ -826,6 +814,24 @@ def test_get_all_the_related_path_no_match():
 
     expected = 'f'
 
-    output = m._get_related_path('a.l.c.d')
+    output = m._get_rule_for_field(['a', 'l', 'c', 'd'])
+
+    assert expected == output
+
+
+def test_get_rule_for_field_uses_key_path():
+    custom_ops = {
+        'a.b.c': DictMergerOps.FALLBACK_KEEP_UPDATE,
+    }
+
+    m = SkipListsMerger(
+        {}, {}, {},
+        DictMergerOps.FALLBACK_KEEP_HEAD,
+        custom_ops=custom_ops, key_path=['a', 0]
+    )
+
+    expected = 's'
+
+    output = m._get_rule_for_field(['b', 'c'])
 
     assert expected == output
