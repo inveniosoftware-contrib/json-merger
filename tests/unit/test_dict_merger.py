@@ -835,3 +835,45 @@ def test_get_rule_for_field_uses_key_path():
     output = m._get_rule_for_field(['b', 'c'])
 
     assert expected == output
+
+
+def test_merge_uses_custom_rules_for_dicts():
+    custom_ops = {
+        'a': DictMergerOps.FALLBACK_KEEP_UPDATE
+    }
+
+    m = SkipListsMerger(
+        {}, {'a': 'head'}, {'a': 'update'},
+        DictMergerOps.FALLBACK_KEEP_HEAD,
+        custom_ops=custom_ops,
+    )
+    try:
+        m.merge()
+    except MergeError:
+        pass
+
+    expected = {'a': 'update'}
+    result = m.merged_root
+
+    assert expected == result
+
+
+def test_merge_uses_custom_rules_for_base_values():
+    custom_ops = {
+        'a': DictMergerOps.FALLBACK_KEEP_UPDATE
+    }
+
+    m = SkipListsMerger(
+        '', 'head', 'update',
+        DictMergerOps.FALLBACK_KEEP_HEAD,
+        custom_ops=custom_ops, key_path=['a'],
+    )
+    try:
+        m.merge()
+    except MergeError:
+        pass
+
+    expected = 'update'
+    result = m.merged_root
+
+    assert expected == result

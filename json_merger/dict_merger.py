@@ -145,9 +145,10 @@ class SkipListsMerger(object):
         elif self.update == self.root:
             self.merged_root = self.head
         else:
+            strategy = self._get_rule_for_field(self.key_path)
             self.merged_root, conflict = {
                 'f': (self.head, self.update),
-                's': (self.update, self.head)}[self.pick]
+                's': (self.update, self.head)}[strategy]
             self.conflict_set.add(
                 Conflict(ConflictType.SET_FIELD, (), conflict))
 
