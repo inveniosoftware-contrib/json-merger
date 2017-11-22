@@ -837,6 +837,44 @@ def test_get_rule_for_field_uses_key_path():
     assert expected == output
 
 
+def test_get_rule_for_field_looks_at_correct_path():
+    def keep_spam(head, update, down_path):
+        return 's' if update == 'spam' else 'f'
+
+    custom_ops = {
+        'a.b': keep_spam
+    }
+    head = {
+        'a': {
+            'b': [
+                'egg',
+                'bacon',
+            ],
+            'c': 'egg',
+        },
+    }
+    update = {
+        'a': {
+            'b': [
+                'spam',
+                'bread',
+            ],
+        },
+    }
+
+    m = SkipListsMerger(
+        {}, head, update,
+        DictMergerOps.FALLBACK_KEEP_HEAD,
+        custom_ops=custom_ops, data_lists='a.b'
+    )
+
+    expected = 's'
+
+    output = m._get_rule_for_field(['a', 'b', 0])
+
+    assert expected == output
+
+
 def test_merge_uses_custom_rules_for_dicts():
     custom_ops = {
         'a': DictMergerOps.FALLBACK_KEEP_UPDATE

@@ -25,7 +25,6 @@
 from __future__ import absolute_import, print_function
 
 import copy
-
 from itertools import chain
 
 import six
@@ -83,8 +82,7 @@ class SkipListsMerger(object):
         self.head = copy.deepcopy(head)
         self.update = copy.deepcopy(update)
         self.custom_ops = custom_ops
-        self.pick = {DictMergerOps.FALLBACK_KEEP_HEAD: 'f',
-                     DictMergerOps.FALLBACK_KEEP_UPDATE: 's'}[default_op]
+        self.default_op = self._operation_to_function(default_op)
         self.data_lists = set(data_lists or [])
         self.key_path = key_path or []
 
@@ -179,7 +177,8 @@ class SkipListsMerger(object):
         full_path = self._get_path_from_patch(patch)
         return self._get_rule_for_field(full_path)
 
-    def _get_path_from_patch(self, patch):
+    @staticmethod
+    def _get_path_from_patch(patch):
         _, field, modification = patch.first_patch
 
         full_path = []
@@ -193,13 +192,16 @@ class SkipListsMerger(object):
 
         return full_path
 
-    def _get_rule_at_path(self, custom_path):
-        if self.custom_ops.get(custom_path, None):
-            return {
-                DictMergerOps.FALLBACK_KEEP_HEAD: 'f',
-                DictMergerOps.FALLBACK_KEEP_UPDATE: 's'
-            }[self.custom_ops[custom_path]]
-        return None
+    @staticmethod
+    def _operation_to_function(operation):
+        if callable(operation):
+            return operation
+        elif operation == DictMergerOps.FALLBACK_KEEP_HEAD:
+            return lambda head, update, down_path: 'f'
+        elif operation == DictMergerOps.FALLBACK_KEEP_UPDATE:
+            return lambda head, update, down_path: 's'
+        else:
+            return lambda head, update, down_path: None
 
     def _absolute_path(self, field_path):
         full_path = list(self.key_path) + field_path
@@ -207,15 +209,23 @@ class SkipListsMerger(object):
 
     def _get_rule_for_field(self, field_path):
         current_path = self._absolute_path(field_path)
+        head = get_obj_at_key_path(self.head, field_path)
+        update = get_obj_at_key_path(self.update, field_path)
+        down_path = []
         rule = None
 
         while current_path:
-            rule = self._get_rule_at_path(current_path)
+            operation = self._operation_to_function(
+                self.custom_ops.get(current_path)
+            )
+            rule = operation(head, update, down_path)
             if rule:
                 break
-            current_path = '.'.join(current_path.split('.')[:-1])
+            current_path_parts = current_path.split('.')
+            current_path = '.'.join(current_path_parts[:-1])
+            down_path.append(current_path_parts[-1])
 
-        return rule or self.pick
+        return rule or self.default_op(head, update, field_path)
 
     def merge(self):
         """Perform merge of head and update starting from root."""

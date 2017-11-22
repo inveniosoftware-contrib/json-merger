@@ -102,3 +102,46 @@ def test_merge_list_with_string():
     assert len(excinfo.value.content) == 1
     assert excinfo.value.content[0] == Conflict(ConflictType.SET_FIELD, (),
                                                 'a given string')
+
+
+def test_merge_str_with_keep_longest():
+    r = {}
+    h = 'A short string'
+    u = 'A much longer string'
+
+    m = Merger(r, h, u,
+               DictMergerOps.keep_longest,
+               UnifierOps.KEEP_ONLY_UPDATE_ENTITIES)
+
+    with pytest.raises(MergeError):
+        m.merge()
+
+    assert m.merged_root == 'A much longer string'
+
+
+def test_merge_dict_with_keep_longest():
+    r = {}
+    h = {
+        'a': 'A short string',
+        'b': 'An extremely long string',
+    }
+    u = {
+        'a': 'A much longer string',
+        'b': 'Another short string',
+        'c': 'Other string',
+    }
+
+    m = Merger(r, h, u,
+               DictMergerOps.keep_longest,
+               UnifierOps.KEEP_ONLY_UPDATE_ENTITIES)
+
+    expected = {
+        'a': 'A much longer string',
+        'b': 'An extremely long string',
+        'c': 'Other string',
+    }
+
+    with pytest.raises(MergeError):
+        m.merge()
+
+    assert m.merged_root == expected
