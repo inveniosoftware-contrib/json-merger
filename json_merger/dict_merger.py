@@ -25,6 +25,7 @@
 from __future__ import absolute_import, print_function
 
 import copy
+from itertools import chain
 
 import six
 from dictdiffer import ADD, CHANGE, REMOVE, patch
@@ -81,10 +82,9 @@ class SkipListsMerger(object):
         self.head = copy.deepcopy(head)
         self.update = copy.deepcopy(update)
         self.custom_ops = custom_ops
-        self.pick = {DictMergerOps.FALLBACK_KEEP_HEAD: 'f',
-                     DictMergerOps.FALLBACK_KEEP_UPDATE: 's'}[default_op]
+        self.default_op = self._operation_to_function(default_op)
         self.data_lists = set(data_lists or [])
-        self.key_path = key_path
+        self.key_path = key_path or []
 
         # We can have the same conflict appear more times because we keep only
         # one of the possible resolutions as a conflict while we apply the
@@ -143,9 +143,10 @@ class SkipListsMerger(object):
         elif self.update == self.root:
             self.merged_root = self.head
         else:
+            strategy = self._get_rule_for_field(self.key_path)
             self.merged_root, conflict = {
                 'f': (self.head, self.update),
-                's': (self.update, self.head)}[self.pick]
+                's': (self.update, self.head)}[strategy]
             self.conflict_set.add(
                 Conflict(ConflictType.SET_FIELD, (), conflict))
 
@@ -156,120 +157,75 @@ class SkipListsMerger(object):
         try:
             non_list_merger.run()
         except UnresolvedConflictsException as e:
-            self._solve_dict_conflict(non_list_merger, e)
+            self._solve_dict_conflicts(non_list_merger, e.content)
 
         self._restore_lists()
         self.merged_root = patch(non_list_merger.unified_patches, self.root)
 
-    def _solve_dict_conflict(self, non_list_merger, e):
-        continue_list = self._get_custom_strategies(
-            e.content
-        )
-        non_list_merger.continue_run(continue_list)
-        for i in range(len(e.content)):
-            conflict = e.content[i]
-            strategy = continue_list[i]
+    def _solve_dict_conflicts(self, non_list_merger, conflicts):
+        strategies = [self._get_custom_strategy(conflict)
+                      for conflict in conflicts]
+        non_list_merger.continue_run(strategies)
 
+        for conflict, strategy in zip(conflicts, strategies):
             conflict_patch = {'f': conflict.second_patch,
                               's': conflict.first_patch}[strategy]
 
             self.conflict_set.update(patch_to_conflict_set(conflict_patch))
 
-    def _get_custom_strategies(self, patches):
-        strategies = []
-        for patch in patches:
-            head = patch.first_patch
+    def _get_custom_strategy(self, patch):
+        full_path = self._get_path_from_patch(patch)
+        return self._get_rule_for_field(full_path)
 
-            field = ''
-            if head[1]:
-                if isinstance(head[1], list):
-                    field += '.'.join(
-                        item for item in head[1]
-                        if isinstance(item, six.string_types)
-                    )
-                else:
-                    field = head[1]
+    @staticmethod
+    def _get_path_from_patch(patch):
+        _, field, modification = patch.first_patch
 
-            if isinstance(head[2], list):
-                if isinstance(head[2][0][0], six.string_types):
-                    field += '.' + head[2][0][0] if field else head[2][0][0]
+        full_path = []
+        if isinstance(field, list):
+            full_path.extend(field)
+        elif field:
+            full_path.append(field)
 
-            strategies.append(
-                self._get_related_path(field)
-            )
+        if (isinstance(modification, list) and modification[0][0]):
+            full_path.append(modification[0][0])
 
-        return strategies
+        return full_path
 
-    def _get_path(self, custom_path):
-        if self.custom_ops.get(custom_path, None):
-            return {
-                DictMergerOps.FALLBACK_KEEP_HEAD: 'f',
-                DictMergerOps.FALLBACK_KEEP_UPDATE: 's'
-            }[self.custom_ops[custom_path]]
-        return None
-
-    def _composed_rule_extract(self, list_path):
-        """This functions extracts custom rules for nested objects.
-
-        Example:
-            'authors': 1,
-            'authors.affiliations': 2,
-            'authors.affiliations.value': 3,
-
-            >>> _composed_rule_extract(['authors','affiliation', 'value']) == 3
-            >>> True
-            >>> _composed_rule_extract(['authors']) == 1
-            >>> True
-
-        """
-        while list_path:
-            curr_dotted_path = '.'.join(list_path)
-            rule = self._get_path(curr_dotted_path)
-            if rule:
-                return rule
-            list_path.pop()
-        return None
-
-    def _obj_from_keypath(self, key_path, path):
-        """
-        Given a key_path list object, returns a list
-        representing the object structure
-
-         Example:
-             path = 'value'
-             key_path = ['authors', 0, 'affiliations', 0]
-
-             return ['authors','affiliations', 'value']
-         """
-        curr_path = [
-            item for item in key_path if isinstance(item, six.string_types)
-        ]
-        curr_path.append(path)
-        return curr_path
-
-    def _get_related_path(self, path):
-        """
-            Transform `path` object, which can be a string or a list, into a
-            list that will be used to retrieve custom rules for the given path.
-        """
-        if isinstance(path, list):
-            list_path = path[:-1]
+    @staticmethod
+    def _operation_to_function(operation):
+        if callable(operation):
+            return operation
+        elif operation == DictMergerOps.FALLBACK_KEEP_HEAD:
+            return lambda head, update, down_path: 'f'
+        elif operation == DictMergerOps.FALLBACK_KEEP_UPDATE:
+            return lambda head, update, down_path: 's'
         else:
-            list_path = path.split('.')
+            return lambda head, update, down_path: None
 
-        # handling objects without lists
-        rule = self._composed_rule_extract(list_path)
-        if rule:
-            return rule
+    def _absolute_path(self, field_path):
+        full_path = list(self.key_path) + field_path
+        return get_dotted_key_path(full_path, filter_int_keys=True)
 
-        # handling objects with lists
-        if self.key_path:
-            rule = self._composed_rule_extract(
-                self._obj_from_keypath(self.key_path, path)
+    def _get_rule_for_field(self, field_path):
+        current_path = self._absolute_path(field_path)
+        head = get_obj_at_key_path(self.head, field_path)
+        update = get_obj_at_key_path(self.update, field_path)
+        down_path = []
+        rule = None
+
+        while current_path:
+            operation = self._operation_to_function(
+                self.custom_ops.get(current_path)
             )
+            rule = operation(head, update, down_path)
+            if rule:
+                break
+            current_path_parts = current_path.split('.')
+            current_path = '.'.join(current_path_parts[:-1])
+            down_path.append(current_path_parts[-1])
 
-        # in case of no match, keep default rule
-        return rule if rule else self.pick
+        return rule or self.default_op(head, update, field_path)
 
     def merge(self):
         """Perform merge of head and update starting from root."""

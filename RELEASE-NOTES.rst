@@ -1,8 +1,8 @@
 ====================
- json-merger v0.3.1
+ json-merger v0.4.0
 ====================
 
-json-merger v0.3.1 was released on October 10 2017.
+json-merger v0.4.0 was released on November 22 2017.
 
 About
 -----
@@ -14,12 +14,12 @@ Python module that is able to merge json record objects.
 What's new
 ----------
 
-- Initial public release.
+- It's now possible to have field- and content- dependent merger operations.
 
 Installation
 ------------
 
-   $ pip install json-merger==0.3.2
+   $ pip install json-merger==0.4.0
 
 Documentation
 -------------

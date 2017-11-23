@@ -25,6 +25,11 @@
 Changes
 =======
 
+Version 0.4.0:
+--------------
+
+- It's now possible to have field- and content- dependent merger operations.
+
 Version 0.3.2:
 --------------
 

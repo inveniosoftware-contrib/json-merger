@@ -36,6 +36,13 @@ class DictMergerOps(object):
         'FALLBACK_KEEP_UPDATE'
     ]
 
+    @staticmethod
+    def keep_longest(head, update, down_path):
+        """Keep longest field among `head` and `update`.
+        """
+        return 'f' if len(head) >= len(update) else 's'
+
+
 for mode in DictMergerOps.allowed_ops:
     setattr(DictMergerOps, mode, mode)
 
