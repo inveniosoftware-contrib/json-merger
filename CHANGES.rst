@@ -1,6 +1,6 @@
 ..
     This file is part of Inspirehep.
-    Copyright (C) 2016, 2017 CERN.
+    Copyright (C) 2016, 2017, 2018 CERN.
 
     Inspirehep is free software; you can redistribute it
     and/or modify it under the terms of the GNU General Public License as
@@ -24,6 +24,11 @@
 
 Changes
 =======
+
+Version 0.5.0:
+--------------
+
+- Conflict method ``to_json`` it returns a list of patches conflicts of a single one.
 
 Version 0.4.0:
 --------------
