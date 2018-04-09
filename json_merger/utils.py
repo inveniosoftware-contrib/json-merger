@@ -94,3 +94,11 @@ def get_conf_set_for_key_path(conf_set, key_path):
     prefix = get_dotted_key_path(key_path, True)
     return set(remove_prefix(k, prefix).lstrip('.')
                for k in conf_set if has_prefix(k, prefix))
+
+
+def force_list(data):
+    if not isinstance(data, (list, tuple, set)):
+        return [data]
+    elif isinstance(data, (tuple, set)):
+        return list(data)
+    return data

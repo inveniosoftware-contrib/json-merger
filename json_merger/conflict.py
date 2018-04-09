@@ -28,6 +28,8 @@ import json
 
 from pyrsistent import freeze, thaw
 
+from .utils import force_list
+
 
 class ConflictType(object):
     """Types of Conflict.
@@ -97,7 +99,8 @@ class Conflict(tuple):
     def to_json(self):
         """Deserializes conflict to a JSON object.
 
-        It returns `json-patch <https://tools.ietf.org/html/rfc6902>`_ format.
+        It returns list of:
+            `json-patch <https://tools.ietf.org/html/rfc6902>`_ format.
 
         - REORDER, SET_FIELD become "op": "replace"
         - MANUAL_MERGE, ADD_BACK_TO_HEAD become "op": "add"
@@ -121,9 +124,16 @@ class Conflict(tuple):
 
         # stringify path array
         json_pointer = '/' + '/'.join(str(el) for el in path)
-        return json.dumps({
-            'path': json_pointer,
-            'op': op,
-            'value': self.body,
-            '$type': self.conflict_type
-        })
+
+        conflict_values = force_list(self.body)
+        conflicts = []
+        for value in conflict_values:
+            if value is not None or self.conflict_type == 'REMOVE_FIELD':
+                conflicts.append({
+                    'path': json_pointer,
+                    'op': op,
+                    'value': value,
+                    '$type': self.conflict_type
+                })
+
+        return json.dumps(conflicts)

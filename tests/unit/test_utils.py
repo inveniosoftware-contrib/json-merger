@@ -30,7 +30,7 @@ import pytest
 
 from json_merger.utils import (
     del_obj_at_key_path, get_obj_at_key_path, set_obj_at_key_path,
-    get_conf_set_for_key_path, remove_prefix)
+    get_conf_set_for_key_path, remove_prefix, force_list)
 
 
 def test_del_obj_at_key_path():
@@ -118,3 +118,14 @@ def test_get_conf_set_for_key_path():
 def test_remove_prefix_value_error():
     with pytest.raises(ValueError):
         remove_prefix('a.b.c.d.e', 'a.b.c.e')
+
+
+@pytest.mark.parametrize('value, expected', [
+    (None, [None]),
+    ('foo', ['foo']),
+    (('foo', 'bar'), ['foo', 'bar']),
+    (['foo', 'bar'], ['foo', 'bar'])
+])
+def test_force_list(value, expected):
+    result = force_list(value)
+    assert result == expected
