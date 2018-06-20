@@ -53,8 +53,11 @@ def _get_list_fields(obj, res, key_path=()):
 
 def patch_to_conflict_set(patch):
     """Translates a dictdiffer conflict into a json_merger one."""
-    patch_type, dotted_key, value = patch
-    key_path = tuple(k for k in dotted_key.split('.') if k)
+    patch_type, patched_key, value = patch
+    if isinstance(patched_key, list):
+        key_path = tuple(patched_key)
+    else:
+        key_path = tuple(k for k in patched_key.split('.') if k)
 
     conflicts = set()
     if patch_type == REMOVE:

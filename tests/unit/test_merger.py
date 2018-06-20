@@ -35,6 +35,7 @@ from json_merger.config import DictMergerOps, UnifierOps
 from json_merger.conflict import Conflict, ConflictType
 from json_merger.errors import MergeError
 from json_merger.merger import Merger
+from json_merger.dict_merger import patch_to_conflict_set
 
 
 def test_merge_bare_int_lists():
@@ -145,3 +146,27 @@ def test_merge_dict_with_keep_longest():
         m.merge()
 
     assert m.merged_root == expected
+
+
+def test_patch_to_conflict_set_handles_change_patch_with_dotted_key():
+    patch = ('change', 'a.b', ('1', '2'))
+
+    conflicts = patch_to_conflict_set(patch)
+
+    expected_conflicts = {
+        ('SET_FIELD', ('a', 'b'), '2'),
+    }
+
+    assert conflicts == expected_conflicts
+
+
+def test_patch_to_conflict_set_handles_change_patch_with_list_key():
+    patch = ('change', ['a', 0, 'b'], ('1', '2'))
+
+    conflicts = patch_to_conflict_set(patch)
+
+    expected_conflicts = {
+        ('SET_FIELD', ('a', 0, 'b'), '2'),
+    }
+
+    assert conflicts == expected_conflicts
