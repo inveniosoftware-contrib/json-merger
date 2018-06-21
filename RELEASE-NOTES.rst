@@ -1,8 +1,8 @@
 ====================
- json-merger v0.5.0
+ json-merger v0.5.1
 ====================
 
-json-merger v0.5.0 was released on April 09 2018.
+json-merger v0.5.1 was released on June 21 2018.
 
 About
 -----
@@ -19,7 +19,7 @@ What's new
 Installation
 ------------
 
-   $ pip install json-merger==0.5.0
+   $ pip install json-merger==0.5.1
 
 Documentation
 -------------

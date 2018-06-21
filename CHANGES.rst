@@ -25,6 +25,11 @@
 Changes
 =======
 
+Version 0.5.1:
+--------------
+
+- Fix ``patch_to_conflict_set`` for list patches.
+
 Version 0.5.0:
 --------------
 
