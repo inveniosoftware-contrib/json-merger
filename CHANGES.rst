@@ -25,6 +25,11 @@
 Changes
 =======
 
+Version 0.5.2:
+--------------
+
+- Fix duplicate patches.
+
 Version 0.5.1:
 --------------
 

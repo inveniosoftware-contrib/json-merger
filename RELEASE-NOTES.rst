@@ -1,8 +1,8 @@
 ====================
- json-merger v0.5.1
+ json-merger v0.5.2
 ====================
 
-json-merger v0.5.1 was released on June 21 2018.
+json-merger v0.5.2 was released on June 22 2018.
 
 About
 -----
