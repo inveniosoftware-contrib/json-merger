@@ -36,7 +36,7 @@ from .conflict import Conflict, ConflictType
 from .errors import MergeError
 from .nothing import NOTHING
 from .utils import (
-    del_obj_at_key_path, get_dotted_key_path, get_obj_at_key_path,
+    dedupe_list, del_obj_at_key_path, get_dotted_key_path, get_obj_at_key_path,
     set_obj_at_key_path
 )
 
@@ -163,7 +163,10 @@ class SkipListsMerger(object):
             self._solve_dict_conflicts(non_list_merger, e.content)
 
         self._restore_lists()
-        self.merged_root = patch(non_list_merger.unified_patches, self.root)
+        self.merged_root = patch(
+            dedupe_list(non_list_merger.unified_patches),
+            self.root
+        )
 
     def _solve_dict_conflicts(self, non_list_merger, conflicts):
         strategies = [self._get_custom_strategy(conflict)

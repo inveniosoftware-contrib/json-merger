@@ -915,3 +915,14 @@ def test_merge_uses_custom_rules_for_base_values():
     result = m.merged_root
 
     assert expected == result
+
+
+def test_merge_handles_duplicated_remove_patches():
+    root = {'foo': 'bar', 'baz': 'spam'}
+    head = {'foo': 'bar'}
+    update = {'foo': 'bar'}
+
+    m = SkipListsMerger(root, head, update, DictMergerOps.FALLBACK_KEEP_HEAD)
+    m.merge()
+
+    assert m.merged_root == {'foo': 'bar'}

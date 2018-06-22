@@ -102,3 +102,19 @@ def force_list(data):
     elif isinstance(data, (tuple, set)):
         return list(data)
     return data
+
+
+def dedupe_list(l):
+    """Remove duplicates from a list preserving the order.
+
+    We might be tempted to use the list(set(l)) idiom, but it doesn't preserve
+    the order, which hinders testability and does not work for lists with
+    unhashable elements.
+    """
+    result = []
+
+    for el in l:
+        if el not in result:
+            result.append(el)
+
+    return result
