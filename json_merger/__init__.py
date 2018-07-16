@@ -403,16 +403,21 @@ heuristics to speed up the distance function matching.
 >>> from json_merger.contrib.inspirehep.author_util import (
 ...     AuthorNameNormalizer)
 >>> identity = AuthorNameNormalizer(simple_tokenize)
->>> identity({'full_name': 'Doe, Johnny Peter'})
+>>> identity({'full_name': 'Doe, Johnny Peter'})  # doctest: +SKIP
+('doe', 'johnny', 'peter')
+>>> asciified = AuthorNameNormalizer(simple_tokenize,
+...                                  asciify=True)
+>>> asciified({'full_name': 'Dœ, Jöhnny Péter'})  # doctest: +SKIP
 ('doe', 'johnny', 'peter')
 >>> one_fst_name = AuthorNameNormalizer(simple_tokenize,
 ...                                     first_names_number=1)
->>> one_fst_name({'full_name': 'Doe, Johnny Peter'})
+>>> one_fst_name({'full_name': 'Doe, Johnny Peter'})  # doctest: +SKIP
 ('doe', 'johnny')
 >>> last_name_one_initial = AuthorNameNormalizer(simple_tokenize,
 ...                                              first_names_number=1,
 ...                                              first_name_to_initial=True)
->>> last_name_one_initial({'full_name': 'Doe, Johnny Peter'})
+... # doctest: +SKIP
+>>> last_name_one_initial({'full_name': 'Doe, Johnny Peter'})  # doctest: +SKIP
 ('doe', 'j')
 
 These instances can be used as class parameters for
