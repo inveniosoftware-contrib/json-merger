@@ -25,10 +25,15 @@
 from __future__ import absolute_import, print_function
 
 import re
+import unicodedata
+
 import editdistance
 import six
 
 from munkres import Munkres
+from unidecode import unidecode
+
+_RE_NAME_TOKEN_SEPARATOR = re.compile(r'[^\w\'-]+', re.UNICODE)
 
 
 def _normalized_edit_dist(s1, s2):
@@ -37,14 +42,14 @@ def _normalized_edit_dist(s1, s2):
 
 class NameToken(object):
     def __init__(self, token):
-        self.token = re.sub(r'[^a-z\'-]', '', token.lower())
+        self.token = token.lower()
 
     def __eq__(self, other):
         return self.token == other.token
 
     def __repr__(self):
-        return repr('{}: {}'.format(self.__class__.__name__,
-                                    self.token))
+        return repr(u'{}: {}'.format(self.__class__.__name__,
+                                     self.token))
 
 
 class NameInitial(NameToken):
@@ -66,8 +71,8 @@ def token_distance(t1, t2, initial_match_penalization):
 def simple_tokenize(name):
     """Simple tokenizer function to be used with the normalizers."""
     last_names, first_names = name.split(',')
-    last_names = re.split(r'[^\w\'-]+', last_names)
-    first_names = re.split(r'[^\w\'-]+', first_names)
+    last_names = _RE_NAME_TOKEN_SEPARATOR.split(last_names)
+    first_names = _RE_NAME_TOKEN_SEPARATOR.split(first_names)
 
     first_names = [NameToken(n) if len(n) > 1 else NameInitial(n)
                    for n in first_names if n]
@@ -82,7 +87,8 @@ class AuthorNameNormalizer(object):
 
     def __init__(self, tokenize_function,
                  first_names_number=None,
-                 first_name_to_initial=False):
+                 first_name_to_initial=False,
+                 asciify=False):
         """Initialize the normalizer.
 
         Args:
@@ -97,14 +103,20 @@ class AuthorNameNormalizer(object):
             first_name_to_initial:
                 If set to True, all first names will be transformed into
                 initials.
+            asciify:
+                If set to True, all non-ASCII characters will be replaced by
+                the closest ASCII character, e.g. 'é' -> 'e'.
         """
 
         self.tokenize_function = tokenize_function
         self.first_names_number = first_names_number
         self.first_name_to_initial = first_name_to_initial
+        self.normalize_chars = lambda x: _asciify(x) if asciify else x
 
     def __call__(self, author):
         name = author.get('full_name', '')
+        name = _decode_if_not_unicode(name)
+        name = self.normalize_chars(name)
         tokens = self.tokenize_function(name)
         last_fn_char = 1 if self.first_name_to_initial else None
         last_fn_idx = self.first_names_number
@@ -147,8 +159,8 @@ class AuthorNameDistanceCalculator(object):
             return 1.0
 
         # Normalize to unicode
-        name_a1 = _decode_if_not_unicode(author1[self.name_field])
-        name_a2 = _decode_if_not_unicode(author2[self.name_field])
+        name_a1 = _asciify(_decode_if_not_unicode(author1[self.name_field]))
+        name_a2 = _asciify(_decode_if_not_unicode(author2[self.name_field]))
 
         tokens_a1 = self.tokenize_function(name_a1)
         tokens_a2 = self.tokenize_function(name_a2)
@@ -184,3 +196,7 @@ def _decode_if_not_unicode(value):
         to_return = value.decode('utf-8')
 
     return to_return
+
+
+def _asciify(value):
+    return six.text_type(unidecode(value))
