@@ -2,7 +2,7 @@
  json-merger v0.5.2
 ====================
 
-json-merger v0.5.2 was released on June 22 2018.
+json-merger v0.6.0 was released on July 19 2018.
 
 About
 -----
@@ -14,7 +14,7 @@ Python module that is able to merge json record objects.
 What's new
 ----------
 
-- Conflict method ``to_json`` it returns a list of patches conflicts of a single one.
+- Correctly handle unicode in author names (contrib).
 
 Installation
 ------------
