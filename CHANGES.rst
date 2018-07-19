@@ -25,6 +25,11 @@
 Changes
 =======
 
+Version 0.6.0
+--------------
+
+- Correctly handle unicode in author names (contrib).
+
 Version 0.5.2:
 --------------
 
