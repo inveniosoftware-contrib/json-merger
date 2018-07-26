@@ -97,6 +97,7 @@ def _deserialize_conflict(conflict_type, path, body):
     'author_curator_collab_addition',
     'author_affiliation_addition',
     'author_double_match_conflict',
+    'author_double_match_unambiguous_fix',
     'title_addition',
     'title_change'
 ])

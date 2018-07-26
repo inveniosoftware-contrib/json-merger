@@ -1,0 +1,1 @@
+Two authors share the same name, but in the update they are strictly identical. Handle this without manual merge conflict.
