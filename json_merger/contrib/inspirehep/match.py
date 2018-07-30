@@ -113,15 +113,24 @@ def _match_by_norm_func(l1, l2, norm_fn, dist_fn, thresh):
 
     for normed, l1_elements in buckets_l1.items():
         l2_elements = buckets_l2.get(normed, [])
-        if len(l1_elements) != 1 or len(l2_elements) != 1:
+        if not l1_elements or not l2_elements:
             continue
-        e1_idx, e1 = l1_elements[0]
-        e2_idx, e2 = l2_elements[0]
-        if dist_fn(e1, e2) > thresh:
+        _, (_, e1_first) = l1_elements[0]
+        _, (_, e2_first) = l2_elements[0]
+        match_is_ambiguous = not (
+            len(l1_elements) == len(l2_elements) and (
+                all(e2 == e2_first for (_, (_, e2)) in l2_elements) or
+                all(e1 == e1_first for (_, (_, e1)) in l1_elements)
+            )
+        )
+        if match_is_ambiguous:
             continue
-        l1_only_idx.remove(e1_idx)
-        l2_only_idx.remove(e2_idx)
-        common.append((e1, e2))
+        for (e1_idx, e1), (e2_idx, e2) in zip(l1_elements, l2_elements):
+            if dist_fn(e1, e2) > thresh:
+                continue
+            l1_only_idx.remove(e1_idx)
+            l2_only_idx.remove(e2_idx)
+            common.append((e1, e2))
 
     l1_only = [l1[i] for i in l1_only_idx]
     l2_only = [l2[i] for i in l2_only_idx]
