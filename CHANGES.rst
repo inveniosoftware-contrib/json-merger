@@ -25,6 +25,11 @@
 Changes
 =======
 
+Version 0.6.1
+--------------
+
+- Smarter handling of conflicts in case of authors with the same name (contrib).
+
 Version 0.6.0
 --------------
 
