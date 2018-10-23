@@ -25,6 +25,11 @@
 Changes
 =======
 
+Version 0.7.0
+--------------
+
+- Add a new strategy for conflicts on head delete (contrib).
+
 Version 0.6.1
 --------------
 
