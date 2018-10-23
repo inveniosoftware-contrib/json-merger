@@ -1,0 +1,2 @@
+Curator adds an author in Inspire, the incoming update is older than the
+curator information. Merger does not raise a conflict.

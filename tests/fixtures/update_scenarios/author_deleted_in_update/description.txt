@@ -1,0 +1,2 @@
+Update deletes an author that was curated in Inspire. Merger raises a
+conflict.

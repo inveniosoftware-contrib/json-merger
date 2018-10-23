@@ -1,0 +1,32 @@
+{
+    "conflicts": [
+        ["ADD_BACK_TO_HEAD", ["authors"], [
+            null,
+            {
+                "full_name": "Removed, Soon",
+                "inspire_id": "INSPIRE-00113241"
+            }
+        ]]
+    ],
+    "authors": [
+        {
+            "affiliations": [
+                {
+                    "value": "UC, Santa Barbara"
+                }
+            ],
+            "full_name": "O Brien, Dara",
+            "inspire_id": "INSPIRE-00113241"
+
+        },
+        {
+            "affiliations": [
+                {
+                    "value": "Roman Empire"
+                }
+            ] ,
+            "full_name": "Caio, T.",
+            "inspire_id": "INSPIRE-00113242"
+        }
+    ]
+}

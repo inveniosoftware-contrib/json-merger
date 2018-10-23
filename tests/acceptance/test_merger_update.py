@@ -118,3 +118,41 @@ def test_author_typo_scenarios(update_fixture_loader, scenario):
         merger.merge()
 
     assert merger.merged_root == exp, desc
+
+
+def test_add_author_in_head(update_fixture_loader):
+
+    root, head, update, exp, desc = update_fixture_loader.load_test(
+        'author_added_only_in_head'
+    )
+    list_config = {
+        'authors':
+            UnifierOps.KEEP_UPDATE_AND_HEAD_ENTITIES_CONFLICT_ON_HEAD_DELETE
+    }
+
+    merger = Merger(root, head, update,
+                    DictMergerOps.FALLBACK_KEEP_HEAD,
+                    UnifierOps.KEEP_ONLY_UPDATE_ENTITIES,
+                    comparators=COMPARATORS,
+                    list_merge_ops=list_config)
+    merger.merge()
+    assert merger.merged_root == exp, desc
+
+
+def test_author_deleted_in_update(update_fixture_loader):
+
+    root, head, update, exp, desc = update_fixture_loader.load_test(
+        'author_added_only_in_head'
+    )
+    list_config = {
+        'authors':
+            UnifierOps.KEEP_UPDATE_AND_HEAD_ENTITIES_CONFLICT_ON_HEAD_DELETE
+    }
+
+    merger = Merger(root, head, update,
+                    DictMergerOps.FALLBACK_KEEP_HEAD,
+                    UnifierOps.KEEP_ONLY_UPDATE_ENTITIES,
+                    comparators=COMPARATORS,
+                    list_merge_ops=list_config)
+    merger.merge()
+    assert merger.merged_root == exp, desc
