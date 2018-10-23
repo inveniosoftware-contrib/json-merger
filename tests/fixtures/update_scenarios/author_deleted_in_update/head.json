@@ -1,0 +1,30 @@
+{
+    "authors": [
+        {
+            "affiliations": [
+                {
+                    "value": "UC, Santa Barbara"
+                }
+             ],
+            "full_name": "O Brien, Dara",
+            "inspire_id": "INSPIRE-00113241"
+
+        },
+        {
+            "affiliations": [
+                {
+                    "value": "Roman Empire"
+                }
+            ] ,
+            "full_name": "Caio, T.",
+          "inspire_id": "INSPIRE-00113242"
+
+
+        },
+        {
+            "full_name": "Removed, Soon",
+            "inspire_id": "INSPIRE-00113241",
+
+        }
+    ]
+}
