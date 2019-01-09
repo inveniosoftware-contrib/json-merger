@@ -1,8 +1,8 @@
 ====================
- json-merger v0.7.0
+ json-merger v0.7.1
 ====================
 
-json-merger v0.7.0 was released on October 23 2018.
+json-merger v0.7.1 was released on January 9 2019.
 
 About
 -----
@@ -14,12 +14,12 @@ Python module that is able to merge json record objects.
 What's new
 ----------
 
-- Add a new strategy for conflicts on head delete (contrib).
+- Fix bug when DictMergeOps.keep_longest is used inside lists.
 
 Installation
 ------------
 
-   $ pip install json-merger==0.7.0
+   $ pip install json-merger==0.7.1
 
 Documentation
 -------------
