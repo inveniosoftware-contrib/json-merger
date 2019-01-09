@@ -40,6 +40,11 @@ class DictMergerOps(object):
     def keep_longest(head, update, down_path):
         """Keep longest field among `head` and `update`.
         """
+        if update is None:
+            return 'f'
+        if head is None:
+            return 's'
+
         return 'f' if len(head) >= len(update) else 's'
 
 

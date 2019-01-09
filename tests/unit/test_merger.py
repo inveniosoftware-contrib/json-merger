@@ -148,6 +148,41 @@ def test_merge_dict_with_keep_longest():
     assert m.merged_root == expected
 
 
+def test_merge_list_with_keep_longest():
+    r = {
+        'a': [
+            {
+                'b': 'One string',
+            },
+        ],
+    }
+    h = {
+        'a': [
+            {
+                'b': 'A different string',
+            },
+        ],
+    }
+    u = {}
+
+    m = Merger(r, h, u,
+               DictMergerOps.keep_longest,
+               UnifierOps.KEEP_ONLY_UPDATE_ENTITIES)
+
+    expected = {
+        'a': [
+            {
+                'b': 'A different string',
+            },
+        ],
+    }  # as len(h['a']) > len(u['a']) and strategy is keep_longest
+
+    with pytest.raises(MergeError):
+        m.merge()
+
+    assert m.merged_root == expected
+
+
 def test_patch_to_conflict_set_handles_change_patch_with_dotted_key():
     patch = ('change', 'a.b', ('1', '2'))
 
