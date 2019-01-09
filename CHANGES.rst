@@ -25,6 +25,11 @@
 Changes
 =======
 
+Version 0.7.1
+--------------
+
+- Fix bug when DictMergeOps.keep_longest is used inside lists.
+
 Version 0.7.0
 --------------
 
