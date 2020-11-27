@@ -33,6 +33,7 @@ from .errors import MergeError
 from .graph_builder import (
     ListMatchGraphBuilder, sort_cyclic_graph_best_effort, toposort
 )
+from .nothing import Nothing
 
 _SOURCES = {
     UnifierOps.KEEP_ONLY_UPDATE_ENTITIES: ['update'],
@@ -42,6 +43,7 @@ _SOURCES = {
     UnifierOps.KEEP_UPDATE_ENTITIES_CONFLICT_ON_HEAD_DELETE: ['update'],
     UnifierOps.KEEP_UPDATE_AND_HEAD_ENTITIES_CONFLICT_ON_HEAD_DELETE:
         ['update', 'head'],
+    UnifierOps.KEEP_HEAD_ENTITIES_CONFLICT_ON_NEW_UPDATE: ['head', 'update'],
 }
 
 _PICK_FIRST = {
@@ -51,11 +53,16 @@ _PICK_FIRST = {
     UnifierOps.KEEP_UPDATE_AND_HEAD_ENTITIES_UPDATE_FIRST: 'update',
     UnifierOps.KEEP_UPDATE_ENTITIES_CONFLICT_ON_HEAD_DELETE: 'update',
     UnifierOps.KEEP_UPDATE_AND_HEAD_ENTITIES_CONFLICT_ON_HEAD_DELETE: 'update',
+    UnifierOps.KEEP_HEAD_ENTITIES_CONFLICT_ON_NEW_UPDATE: 'update',
 }
 
 _RAISE_ERROR_OPS = [
     UnifierOps.KEEP_UPDATE_ENTITIES_CONFLICT_ON_HEAD_DELETE,
     UnifierOps.KEEP_UPDATE_AND_HEAD_ENTITIES_CONFLICT_ON_HEAD_DELETE,
+]
+
+_RAISE_ON_UPDATE_CHANGED = [
+    UnifierOps.KEEP_HEAD_ENTITIES_CONFLICT_ON_NEW_UPDATE
 ]
 
 
@@ -74,8 +81,10 @@ class ListUnifier(object):
         self.head_stats = None
         self.update_stats = None
 
-        # Wether to raise error on deleting a head entity.
+        # Whether to raise error on deleting a head entity.
         self.raise_on_head_delete = operation in _RAISE_ERROR_OPS
+        # Whether to raise on new entity in update
+        self.raise_on_new_update = operation in _RAISE_ON_UPDATE_CHANGED
         # Sources from which to keep entities.
         self.sources = _SOURCES[operation]
         # Source from which to pick the first element when they can be
@@ -110,5 +119,13 @@ class ListUnifier(object):
             removed = self.head_stats.not_in_result_not_root_match
             conflicts.extend([Conflict(ConflictType.ADD_BACK_TO_HEAD, (), r)
                               for r in removed])
+        if self.raise_on_new_update:
+            for idx, (root, head, update) in enumerate(self.unified):
+                if isinstance(root, Nothing) and \
+                        isinstance(head, Nothing) and \
+                        not isinstance(update, Nothing):
+                    conflicts.append(
+                        Conflict(ConflictType.REMOVE_FIELD, (idx,), update)
+                    )
         if conflicts:
             raise MergeError('Errors in list unifier', conflicts)

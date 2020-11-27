@@ -205,3 +205,20 @@ def test_patch_to_conflict_set_handles_change_patch_with_list_key():
     }
 
     assert conflicts == expected_conflicts
+
+
+def test_keep_head_conflict_on_new_update():
+    r = [1]
+    h = [1, 2]
+    u = [3]
+
+    m = Merger(r, h, u,
+               DictMergerOps.keep_longest,
+               UnifierOps.KEEP_HEAD_ENTITIES_CONFLICT_ON_NEW_UPDATE)
+    with pytest.raises(MergeError):
+        m.merge()
+
+    expected_merge = [3, 1, 2]
+    expected_conflict = [('REMOVE_FIELD', (0,), 3)]
+    assert m.merged_root == expected_merge
+    assert m.conflicts == expected_conflict
