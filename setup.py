@@ -44,7 +44,7 @@ tests_require = [
 
 contrib_require = [
     'editdistance>=0.3.1',
-    'munkres>=1.0.7',
+    'munkres<=1.0.12',
     'Unidecode>=0.4.19'
 ]
 
