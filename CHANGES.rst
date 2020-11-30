@@ -25,6 +25,11 @@
 Changes
 =======
 
+Version 0.7.2
+--------------
+
+- Add new strategy `KEEP_HEAD_ENTITIES_CONFLICT_ON_NEW_UPDATE` which will create conflict when there is a new value in update.
+
 Version 0.7.1
 --------------
 
