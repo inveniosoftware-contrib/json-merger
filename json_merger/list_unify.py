@@ -120,7 +120,7 @@ class ListUnifier(object):
             conflicts.extend([Conflict(ConflictType.ADD_BACK_TO_HEAD, (), r)
                               for r in removed])
         if self.raise_on_new_update:
-            idx_to_remove =[]
+            idx_to_remove = []
             for idx, (root, head, update) in enumerate(self.unified):
                 if isinstance(root, Nothing) and \
                         isinstance(head, Nothing) and \
