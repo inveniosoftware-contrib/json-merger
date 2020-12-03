@@ -25,6 +25,12 @@
 Changes
 =======
 
+Version 0.7.3
+--------------
+
+- Add new typoe of conflict `INSERT`.
+- `KEEP_HEAD_ENTITIES_CONFLICT_ON_NEW_UPDATE` will create INSERT conflict instead of REMOVE one.
+
 Version 0.7.2
 --------------
 

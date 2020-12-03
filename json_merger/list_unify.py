@@ -120,12 +120,16 @@ class ListUnifier(object):
             conflicts.extend([Conflict(ConflictType.ADD_BACK_TO_HEAD, (), r)
                               for r in removed])
         if self.raise_on_new_update:
+            idx_to_remove = []
             for idx, (root, head, update) in enumerate(self.unified):
                 if isinstance(root, Nothing) and \
                         isinstance(head, Nothing) and \
                         not isinstance(update, Nothing):
                     conflicts.append(
-                        Conflict(ConflictType.REMOVE_FIELD, (idx,), update)
+                        Conflict(ConflictType.INSERT, (idx,), update)
                     )
+                    idx_to_remove.append(idx)
+            for idx in sorted(idx_to_remove, reverse=True):
+                del self.unified[idx]
         if conflicts:
             raise MergeError('Errors in list unifier', conflicts)

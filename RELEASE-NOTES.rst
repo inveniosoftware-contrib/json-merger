@@ -1,8 +1,8 @@
 ====================
- json-merger v0.7.2
+ json-merger v0.7.3
 ====================
 
-json-merger v0.7.2 was released on November 30 2020.
+json-merger v0.7.3 was released on December 2 2020.
 
 About
 -----
@@ -14,12 +14,13 @@ Python module that is able to merge json record objects.
 What's new
 ----------
 
-- Add new strategy `KEEP_HEAD_ENTITIES_CONFLICT_ON_NEW_UPDATE` which will create conflict when there is a new value in update.
+- Add new typoe of conflict `INSERT`.
+- `KEEP_HEAD_ENTITIES_CONFLICT_ON_NEW_UPDATE` will create INSERT conflict instead of REMOVE one.
 
 Installation
 ------------
 
-   $ pip install json-merger==0.7.2
+   $ pip install json-merger==0.7.3
 
 Documentation
 -------------

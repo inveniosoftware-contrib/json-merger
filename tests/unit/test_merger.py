@@ -218,7 +218,7 @@ def test_keep_head_conflict_on_new_update():
     with pytest.raises(MergeError):
         m.merge()
 
-    expected_merge = [3, 1, 2]
-    expected_conflict = [('REMOVE_FIELD', (0,), 3)]
+    expected_merge = [1, 2]
+    expected_conflict = [('INSERT', (0,), 3)]
     assert m.merged_root == expected_merge
     assert m.conflicts == expected_conflict

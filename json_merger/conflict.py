@@ -44,10 +44,12 @@ class ConflictType(object):
             need to be added back to the list specified in the conflict's path.
 
         SET_FIELD: The object specified as the conflict body needs to be
-            added at the path specifed in the conflict object.
+            added at the path specified in the conflict object.
 
         REMOVE_FIELD: The value or object present at the path specified in
             the path conflict needs to be removed.
+        INSERT: The object specified as the conflict body needs to be
+            inserted at the path specified in the conflict object.
     """
     pass
 
@@ -57,7 +59,8 @@ _CONFLICTS = (
     'MANUAL_MERGE',
     'ADD_BACK_TO_HEAD',
     'SET_FIELD',
-    'REMOVE_FIELD'
+    'REMOVE_FIELD',
+    'INSERT',
 )
 for conflict_type in _CONFLICTS:
     setattr(ConflictType, conflict_type, conflict_type)
@@ -116,6 +119,8 @@ class Conflict(tuple):
             path += ('-',)
         elif self.conflict_type == 'REMOVE_FIELD':
             op = 'remove'
+        elif self.conflict_type == "INSERT":
+            op = "add"
         else:
             raise ValueError(
                 'Conflict Type %s can not be mapped to a json-patch operation'
