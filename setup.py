@@ -38,8 +38,8 @@ tests_require = [
     'pydocstyle>=1.0.0',
     'pytest-cache>=1.0',
     'pytest-cov>=1.8.0',
-    'pytest-pep8>=1.0.6',
-    'pytest>=2.8.0',
+    'pytest>=4.6.11',
+    'flake8>=3.9.0',
 ]
 
 contrib_require = [
@@ -61,10 +61,6 @@ extras_require = {
 extras_require['all'] = []
 for reqs in extras_require.values():
     extras_require['all'].extend(reqs)
-
-setup_requires = [
-    'pytest-runner>=2.6.2',
-]
 
 install_requires = [
     'dictdiffer>=0.6.0',
@@ -99,8 +95,6 @@ setup(
     },
     extras_require=extras_require,
     install_requires=install_requires,
-    setup_requires=setup_requires,
-    tests_require=tests_require,
     classifiers=[
         'Environment :: Web Environment',
         'Intended Audience :: Developers',

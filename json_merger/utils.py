@@ -104,7 +104,7 @@ def force_list(data):
     return data
 
 
-def dedupe_list(l):
+def dedupe_list(list_):
     """Remove duplicates from a list preserving the order.
 
     We might be tempted to use the list(set(l)) idiom, but it doesn't preserve
@@ -113,7 +113,7 @@ def dedupe_list(l):
     """
     result = []
 
-    for el in l:
+    for el in list_:
         if el not in result:
             result.append(el)
 

@@ -85,5 +85,6 @@ class UnifierOps(object):
         'KEEP_HEAD_ENTITIES_CONFLICT_ON_NEW_UPDATE'
     ]
 
+
 for mode in UnifierOps.allowed_ops:
     setattr(UnifierOps, mode, mode)

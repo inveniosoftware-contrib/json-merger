@@ -26,7 +26,6 @@ from __future__ import absolute_import, print_function
 
 import copy
 import logging
-from itertools import chain
 
 import six
 from dictdiffer import ADD, CHANGE, REMOVE, patch
@@ -105,30 +104,30 @@ class SkipListsMerger(object):
         lists = set()
         lists.update(_get_list_fields(self.head, []))
         lists.intersection_update(_get_list_fields(self.update, []))
-        for l in lists:
-            dotted = get_dotted_key_path(l, True)
+        for list_ in lists:
+            dotted = get_dotted_key_path(list_, True)
             if dotted not in self.data_lists:
-                self.skipped_lists.add(l)
+                self.skipped_lists.add(list_)
 
     def _backup_lists(self):
         self._build_skipped_lists()
-        for l in self.skipped_lists:
-            self.list_backups[l] = (
-                get_obj_at_key_path(self.root, l),
-                get_obj_at_key_path(self.head, l),
-                get_obj_at_key_path(self.update, l))
+        for list_ in self.skipped_lists:
+            self.list_backups[list_] = (
+                get_obj_at_key_path(self.root, list_),
+                get_obj_at_key_path(self.head, list_),
+                get_obj_at_key_path(self.update, list_))
             # The root is the only one that may not be there. Head and update
             # are retrieved using list intersection.
-            del_obj_at_key_path(self.root, l, False)
-            del_obj_at_key_path(self.head, l)
-            del_obj_at_key_path(self.update, l)
+            del_obj_at_key_path(self.root, list_, False)
+            del_obj_at_key_path(self.head, list_)
+            del_obj_at_key_path(self.update, list_)
 
     def _restore_lists(self):
-        for l, (bak_r, bak_h, bak_u) in six.iteritems(self.list_backups):
+        for list_, (bak_r, bak_h, bak_u) in six.iteritems(self.list_backups):
             if bak_r is not None:
-                set_obj_at_key_path(self.root, l, bak_r)
-            set_obj_at_key_path(self.head, l, bak_h)
-            set_obj_at_key_path(self.update, l, bak_u)
+                set_obj_at_key_path(self.root, list_, bak_r)
+            set_obj_at_key_path(self.head, list_, bak_h)
+            set_obj_at_key_path(self.update, list_, bak_u)
 
     @property
     def conflicts(self):
