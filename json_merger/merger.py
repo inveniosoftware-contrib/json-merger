@@ -27,6 +27,7 @@
 from __future__ import absolute_import, print_function
 
 import copy
+import logging
 
 from .comparator import DefaultComparator
 from .dict_merger import SkipListsMerger
@@ -38,6 +39,7 @@ from .utils import (
 )
 
 PLACEHOLDER_STR = '#$PLACEHOLDER$#'
+LOGGER = logging.getLogger(__name__)
 
 
 class Merger(object):
@@ -251,6 +253,12 @@ class Merger(object):
             new_list = []
             for idx, objects in enumerate(unifier.unified):
                 root_obj, head_obj, update_obj = objects
+                LOGGER.debug(
+                    "Merging matched elements: root=%s, head=%s, update=%s",
+                    root_obj,
+                    head_obj,
+                    update_obj
+                )
                 new_obj = self._recursive_merge(root_obj, head_obj, update_obj,
                                                 absolute_key_path + (idx, ))
                 new_list.append(new_obj)
@@ -262,6 +270,8 @@ class Merger(object):
 
     def _merge_objects(self, root, head, update, key_path):
         data_lists = get_conf_set_for_key_path(self.data_lists, key_path)
+
+        LOGGER.debug("Merging non-lists at %s", key_path)
 
         object_merger = SkipListsMerger(root, head, update,
                                         self.default_dict_merge_op,
@@ -282,6 +292,13 @@ class Merger(object):
                                             self.default_list_merge_op)
         comparator_cls = self.comparators.get(dotted_key_path,
                                               DefaultComparator)
+
+        LOGGER.debug(
+            "Unifying lists at %s using operation %s and comparator %s",
+            key_path,
+            operation,
+            comparator_cls,
+        )
         list_unifier = ListUnifier(root, head, update,
                                    operation, comparator_cls)
         try:

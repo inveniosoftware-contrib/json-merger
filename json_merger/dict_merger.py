@@ -25,6 +25,7 @@
 from __future__ import absolute_import, print_function
 
 import copy
+import logging
 from itertools import chain
 
 import six
@@ -39,6 +40,8 @@ from .utils import (
     dedupe_list, del_obj_at_key_path, get_dotted_key_path, get_obj_at_key_path,
     set_obj_at_key_path
 )
+
+LOGGER = logging.getLogger(__name__)
 
 
 def _get_list_fields(obj, res, key_path=()):
@@ -156,6 +159,12 @@ class SkipListsMerger(object):
     def _merge_dicts(self):
         self._backup_lists()
 
+        LOGGER.debug(
+            "Merging dicts with root=%s, head=%s, update=%s",
+            self.root,
+            self.head,
+            self.update,
+        )
         non_list_merger = Merger(self.root, self.head, self.update, {})
         try:
             non_list_merger.run()
@@ -176,8 +185,13 @@ class SkipListsMerger(object):
         for conflict, strategy in zip(conflicts, strategies):
             conflict_patch = {'f': conflict.second_patch,
                               's': conflict.first_patch}[strategy]
-
-            self.conflict_set.update(patch_to_conflict_set(conflict_patch))
+            conflict_set = patch_to_conflict_set(conflict_patch)
+            LOGGER.debug(
+                "Solved conflict using strategy %s, conflicts=%s",
+                strategy,
+                conflict_set,
+            )
+            self.conflict_set.update(conflict_set)
 
     def _get_custom_strategy(self, patch):
         full_path = self._get_path_from_patch(patch)
