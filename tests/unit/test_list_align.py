@@ -143,14 +143,26 @@ def test_error_on_head_delete():
     assert u.unified == [(1, 1, 1), (2, 2, 2), (NOTHING, NOTHING, 4)]
 
 
-def test_no_error_on_head_delete_from_root():
+def test_error_on_head_delete_from_root():
     root = [1, 2]
     head = [1, 2]
     update = [1, 4]
 
     u = ListUnifier(root, head, update,
                     UnifierOps.KEEP_UPDATE_ENTITIES_CONFLICT_ON_HEAD_DELETE)
-    u.unify()
+
+    with pytest.raises(MergeError) as excinfo:
+        u.unify()
+    assert len(excinfo.value.content) == 1
+
+    expect_removed = {2}
+    removed = set()
+    for conflict in excinfo.value.content:
+        assert conflict.conflict_type == ConflictType.ADD_BACK_TO_HEAD
+        assert conflict.path == ()
+        removed.add(conflict.body)
+    assert removed == expect_removed
+
     assert u.unified == [(1, 1, 1), (NOTHING, NOTHING, 4)]
 
 

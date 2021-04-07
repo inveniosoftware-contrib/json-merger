@@ -179,21 +179,21 @@ True
 In the case in which ``root`` is represented by the latest automatic update
 of a record (e.g. crawling some metadata source),
 ``head`` by manual edits of ``root`` and ``update`` by a new automatic
-update, we might want to preserve only the entities in ``update`` but
-notify the user in case some manual addition was removed.
+update, we might want to preserve only the entities in ``update`` and
+notify the user in case some entry from ``head`` was removed.
 
   * ``UnifierOps.KEEP_UPDATE_ENTITIES_CONFLICT_ON_HEAD_DELETE``
 
 >>> root = {'badges': ['bad', 'random']}
 >>> head = {'badges': ['cool', 'nice', 'random']}
->>> update = {'badges': ['fun', 'nice', 'healthy']}
+>>> update = {'badges': ['fun', 'nice', 'random', 'healthy']}
 >>> m = Merger(root, head, update, DictMergerOps.FALLBACK_KEEP_HEAD,
 ...            UnifierOps.KEEP_UPDATE_ENTITIES_CONFLICT_ON_HEAD_DELETE)
 >>> try:
 ...     m.merge()
 ... except MergeError:
 ...     pass
->>> m.merged_root['badges'] == ['fun', 'nice', 'healthy']
+>>> m.merged_root['badges'] == ['fun', 'nice', 'random', 'healthy']
 True
 >>> m.conflicts == [Conflict(ConflictType.ADD_BACK_TO_HEAD,
 ...                          ('badges', ), 'cool')]

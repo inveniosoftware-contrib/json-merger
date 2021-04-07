@@ -25,7 +25,7 @@
 from __future__ import absolute_import, print_function
 
 import copy
-from itertools import chain
+import logging
 
 import six
 from dictdiffer import ADD, CHANGE, REMOVE, patch
@@ -39,6 +39,8 @@ from .utils import (
     dedupe_list, del_obj_at_key_path, get_dotted_key_path, get_obj_at_key_path,
     set_obj_at_key_path
 )
+
+LOGGER = logging.getLogger(__name__)
 
 
 def _get_list_fields(obj, res, key_path=()):
@@ -102,30 +104,30 @@ class SkipListsMerger(object):
         lists = set()
         lists.update(_get_list_fields(self.head, []))
         lists.intersection_update(_get_list_fields(self.update, []))
-        for l in lists:
-            dotted = get_dotted_key_path(l, True)
+        for list_ in lists:
+            dotted = get_dotted_key_path(list_, True)
             if dotted not in self.data_lists:
-                self.skipped_lists.add(l)
+                self.skipped_lists.add(list_)
 
     def _backup_lists(self):
         self._build_skipped_lists()
-        for l in self.skipped_lists:
-            self.list_backups[l] = (
-                get_obj_at_key_path(self.root, l),
-                get_obj_at_key_path(self.head, l),
-                get_obj_at_key_path(self.update, l))
+        for list_ in self.skipped_lists:
+            self.list_backups[list_] = (
+                get_obj_at_key_path(self.root, list_),
+                get_obj_at_key_path(self.head, list_),
+                get_obj_at_key_path(self.update, list_))
             # The root is the only one that may not be there. Head and update
             # are retrieved using list intersection.
-            del_obj_at_key_path(self.root, l, False)
-            del_obj_at_key_path(self.head, l)
-            del_obj_at_key_path(self.update, l)
+            del_obj_at_key_path(self.root, list_, False)
+            del_obj_at_key_path(self.head, list_)
+            del_obj_at_key_path(self.update, list_)
 
     def _restore_lists(self):
-        for l, (bak_r, bak_h, bak_u) in six.iteritems(self.list_backups):
+        for list_, (bak_r, bak_h, bak_u) in six.iteritems(self.list_backups):
             if bak_r is not None:
-                set_obj_at_key_path(self.root, l, bak_r)
-            set_obj_at_key_path(self.head, l, bak_h)
-            set_obj_at_key_path(self.update, l, bak_u)
+                set_obj_at_key_path(self.root, list_, bak_r)
+            set_obj_at_key_path(self.head, list_, bak_h)
+            set_obj_at_key_path(self.update, list_, bak_u)
 
     @property
     def conflicts(self):
@@ -156,6 +158,12 @@ class SkipListsMerger(object):
     def _merge_dicts(self):
         self._backup_lists()
 
+        LOGGER.debug(
+            "Merging dicts with root=%s, head=%s, update=%s",
+            self.root,
+            self.head,
+            self.update,
+        )
         non_list_merger = Merger(self.root, self.head, self.update, {})
         try:
             non_list_merger.run()
@@ -176,8 +184,13 @@ class SkipListsMerger(object):
         for conflict, strategy in zip(conflicts, strategies):
             conflict_patch = {'f': conflict.second_patch,
                               's': conflict.first_patch}[strategy]
-
-            self.conflict_set.update(patch_to_conflict_set(conflict_patch))
+            conflict_set = patch_to_conflict_set(conflict_patch)
+            LOGGER.debug(
+                "Solved conflict using strategy %s, conflicts=%s",
+                strategy,
+                conflict_set,
+            )
+            self.conflict_set.update(conflict_set)
 
     def _get_custom_strategy(self, patch):
         full_path = self._get_path_from_patch(patch)

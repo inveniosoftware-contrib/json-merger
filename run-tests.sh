@@ -24,8 +24,9 @@
 
 
 isort -rc -c -df -m5  **/*.py && \
+flake8 json_merger/ tests/ && \
 check-manifest --ignore ".travis-*" && \
 rm -rf docs/_build/ && \
 sphinx-build -qnNW docs docs/_build/html && \
-python setup.py test && \
+py.test && \
 sphinx-build -qnNW -b doctest docs docs/_build/doctest

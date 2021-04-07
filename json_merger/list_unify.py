@@ -115,8 +115,8 @@ class ListUnifier(object):
         for node in node_order:
             self.unified.append(nodes[node])
         if (self.raise_on_head_delete and
-                self.head_stats.not_in_result_not_root_match):
-            removed = self.head_stats.not_in_result_not_root_match
+                self.head_stats.not_in_result):
+            removed = self.head_stats.not_in_result
             conflicts.extend([Conflict(ConflictType.ADD_BACK_TO_HEAD, (), r)
                               for r in removed])
         if self.raise_on_new_update:

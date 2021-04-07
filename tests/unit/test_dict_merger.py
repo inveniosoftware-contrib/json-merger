@@ -28,8 +28,6 @@ from __future__ import absolute_import, print_function
 
 import pytest
 
-from dictdiffer.merge import Merger, UnresolvedConflictsException
-
 from json_merger.config import DictMergerOps
 from json_merger.conflict import Conflict, ConflictType
 from dictdiffer.conflict import Conflict as Dictdiffer_Conflict
