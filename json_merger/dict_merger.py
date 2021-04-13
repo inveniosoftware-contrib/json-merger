@@ -139,13 +139,13 @@ class SkipListsMerger(object):
     def _merge_base_values(self):
         if self.head == self.update:
             self.merged_root = self.head
-        elif self.head == NOTHING:
-            self.merged_root = self.update
-        elif self.update == NOTHING:
-            self.merged_root = self.head
         elif self.head == self.root:
             self.merged_root = self.update
         elif self.update == self.root:
+            self.merged_root = self.head
+        elif self.head == NOTHING:
+            self.merged_root = self.update
+        elif self.update == NOTHING:
             self.merged_root = self.head
         else:
             strategy = self._get_rule_for_field(self.key_path)
