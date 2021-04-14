@@ -1,8 +1,8 @@
 ====================
- json-merger v0.7.4
+ json-merger v0.7.5
 ====================
 
-json-merger v0.7.4 was released on April 1 2021.
+json-merger v0.7.5 was released on April 14 2021.
 
 About
 -----
@@ -14,12 +14,13 @@ Python module that is able to merge json record objects.
 What's new
 ----------
 
-- ``KEEP_UPDATE_CONFLICT_ON_HEAD_DELETE`` doesn't take the root into account any longer.
+- In dict_merger head is always kept if root matches update.
+- In dict_merger update is always kept if root matches head.
 
 Installation
 ------------
 
-   $ pip install json-merger==0.7.4
+   $ pip install json-merger==0.7.5
 
 Documentation
 -------------
