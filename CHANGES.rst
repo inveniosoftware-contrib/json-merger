@@ -25,9 +25,13 @@
 Changes
 =======
 
+Version 0.7.5
+--------------
+- In dict_merger head is always kept if root matches update.
+- In dict_merger update is always kept if root matches head.
+
 Version 0.7.4
 --------------
-
 - ``KEEP_UPDATE_CONFLICT_ON_HEAD_DELETE`` doesn't take the root into account any longer.
 
 Version 0.7.3
