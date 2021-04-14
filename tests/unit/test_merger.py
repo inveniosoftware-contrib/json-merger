@@ -218,7 +218,38 @@ def test_keep_head_conflict_on_new_update():
     with pytest.raises(MergeError):
         m.merge()
 
-    expected_merge = [1, 2]
+    expected_merge = [2]
     expected_conflict = [('INSERT', (0,), 3)]
     assert m.merged_root == expected_merge
     assert m.conflicts == expected_conflict
+
+
+def test_merger_doesnt_add_elements_removed_in_head_when_root_matches_update():
+    update = {
+        'ids': [
+            {'schema': 'INSPIRE ID', 'value': 'INSPIRE-00231894'},
+            {'schema': 'ORCID', 'value': '0000-0002-0165-6297'}
+        ]
+    }
+    head = {
+        'ids': [
+            {'value': 'INSPIRE-00231894', 'schema': 'INSPIRE ID'},
+            {'value': 'V.Nikolaenko.1', 'schema': 'INSPIRE BAI'}
+        ]
+    }
+    root = {
+        'ids': [
+            {'schema': 'INSPIRE ID', 'value': 'INSPIRE-00231894'},
+            {'schema': 'ORCID', 'value': '0000-0002-0165-6297'}
+        ]
+    }
+
+    m = Merger(root, head, update,
+               DictMergerOps.FALLBACK_KEEP_HEAD,
+               UnifierOps.KEEP_UPDATE_AND_HEAD_ENTITIES_UPDATE_FIRST)
+
+    m.merge()
+    assert m.merged_root['ids'] == [
+        {'value': 'INSPIRE-00231894', 'schema': 'INSPIRE ID'},
+        {'value': 'V.Nikolaenko.1', 'schema': 'INSPIRE BAI'}
+    ]

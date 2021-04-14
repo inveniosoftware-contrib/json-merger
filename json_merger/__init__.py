@@ -119,7 +119,7 @@ of:
 >>> m = Merger(root, head, update, DictMergerOps.FALLBACK_KEEP_HEAD,
 ...            UnifierOps.KEEP_ONLY_HEAD_ENTITIES)
 >>> m.merge() # No conflict here
->>> m.merged_root['badges'] == ['cool', 'nice', 'random']
+>>> m.merged_root['badges'] == ['cool', 'nice']
 True
 >>> m = Merger(root, head, update, DictMergerOps.FALLBACK_KEEP_HEAD,
 ...            UnifierOps.KEEP_ONLY_UPDATE_ENTITIES)
@@ -135,12 +135,12 @@ If we want to do a union of the elements we can use:
 >>> m = Merger(root, head, update, DictMergerOps.FALLBACK_KEEP_HEAD,
 ...            UnifierOps.KEEP_UPDATE_AND_HEAD_ENTITIES_HEAD_FIRST)
 >>> m.merge() # No conflict here
->>> m.merged_root['badges'] == ['cool', 'fun', 'nice', 'random', 'healthy']
+>>> m.merged_root['badges'] == ['cool', 'fun', 'nice', 'healthy']
 True
 >>> m = Merger(root, head, update, DictMergerOps.FALLBACK_KEEP_HEAD,
 ...            UnifierOps.KEEP_UPDATE_AND_HEAD_ENTITIES_UPDATE_FIRST)
 >>> m.merge()
->>> m.merged_root['badges'] == ['fun', 'cool', 'nice', 'healthy', 'random']
+>>> m.merged_root['badges'] == ['fun', 'cool', 'nice', 'healthy']
 True
 
 These options keep the order relations between the entities. For example,
