@@ -87,18 +87,6 @@ def test_merge_with_nothing():
     m.merge()
     assert m.merged_root == {'some': 'other object'}
 
-    m = SkipListsMerger({'some': 'other object'},
-                        NOTHING, {'some': 'other object'},
-                        DictMergerOps.FALLBACK_KEEP_HEAD)
-    m.merge()
-    assert m.merged_root == NOTHING
-
-    m = SkipListsMerger({'some': 'other object'},
-                        {'some': 'other object'}, NOTHING,
-                        DictMergerOps.FALLBACK_KEEP_HEAD)
-    m.merge()
-    assert m.merged_root == NOTHING
-
 
 def test_simple_conflicts_keep_head():
     r = {}

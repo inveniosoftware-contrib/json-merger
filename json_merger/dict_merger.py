@@ -139,13 +139,13 @@ class SkipListsMerger(object):
     def _merge_base_values(self):
         if self.head == self.update:
             self.merged_root = self.head
-        elif self.head == self.root:
-            self.merged_root = self.update
-        elif self.update == self.root:
-            self.merged_root = self.head
         elif self.head == NOTHING:
             self.merged_root = self.update
         elif self.update == NOTHING:
+            self.merged_root = self.head
+        elif self.head == self.root:
+            self.merged_root = self.update
+        elif self.update == self.root:
             self.merged_root = self.head
         else:
             strategy = self._get_rule_for_field(self.key_path)
@@ -171,10 +171,19 @@ class SkipListsMerger(object):
             self._solve_dict_conflicts(non_list_merger, e.content)
 
         self._restore_lists()
+        remove_patches = []
+        other_patches = []
+        for patch_ in non_list_merger.unified_patches:
+            if patch_[0] == 'remove':
+                remove_patches.append(patch_)
+            else:
+                other_patches.append(patch_)
+        remove_patches_deduped = dedupe_list(remove_patches)
+        unified_patches = remove_patches_deduped + other_patches
         self.merged_root = patch(
-            dedupe_list(non_list_merger.unified_patches),
-            self.root
-        )
+                unified_patches,
+                self.root
+            )
 
     def _solve_dict_conflicts(self, non_list_merger, conflicts):
         strategies = [self._get_custom_strategy(conflict)
