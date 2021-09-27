@@ -25,6 +25,7 @@
 """Python module that is able to merge json record objects."""
 
 import os
+import sys
 
 from setuptools import find_packages, setup
 
@@ -45,7 +46,7 @@ tests_require = [
 contrib_require = [
     'editdistance>=0.3.1',
     'munkres<=1.0.12',
-    'Unidecode>=0.4.19'
+    'Unidecode==0.4.19' if sys.version_info < (3, 6) else 'Unidecode>=0.4.19'
 ]
 
 tests_require += contrib_require
@@ -63,7 +64,7 @@ for reqs in extras_require.values():
     extras_require['all'].extend(reqs)
 
 install_requires = [
-    'dictdiffer>=0.6.0',
+    'dictdiffer==0.8.1' if sys.version_info < (3, 6) else 'dictdiffer>=0.6.0',
     'six>=1.10.0',
     'pyrsistent>=0.11.13'
 ]
