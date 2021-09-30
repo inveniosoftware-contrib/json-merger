@@ -33,7 +33,6 @@ from .comparator import DefaultComparator
 from .dict_merger import SkipListsMerger
 from .errors import MergeError
 from .list_unify import ListUnifier
-from .nothing import NOTHING
 from .utils import (
     get_conf_set_for_key_path, get_dotted_key_path, get_obj_at_key_path,
     set_obj_at_key_path
@@ -262,8 +261,7 @@ class Merger(object):
                 )
                 new_obj = self._recursive_merge(root_obj, head_obj, update_obj,
                                                 absolute_key_path + (idx, ))
-                if new_obj != NOTHING:
-                    new_list.append(new_obj)
+                new_list.append(new_obj)
 
             root = set_obj_at_key_path(root, list_field, new_list)
             self._build_aligned_lists_and_stats(unifier, absolute_key_path)
