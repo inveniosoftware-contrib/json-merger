@@ -17,7 +17,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
         with:
-          python-version: ${{ matrix.python-version }}
           fetch-depth: 0
 
       - name: Set up Python 2.7
@@ -37,7 +36,7 @@ jobs:
         run: |
           ./run-tests.sh
       - name: Build package
-        if: ${{ success() && github.event_name == 'push' && matrix.python-version == '3.6'  }}
+        if: ${{ matrix.python-version == '3.6'  }}
         run: |
           python setup.py sdist bdist_wheel
       - name: Publish package
