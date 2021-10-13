@@ -3,10 +3,10 @@ name: Build and release
 on:
   push:
     branches: [master]
-    tags:
-      - "*"
   pull_request:
     branches: [master]
+  release:
+    types: [published]
 
 jobs:
   Test:
@@ -14,7 +14,6 @@ jobs:
     strategy:
       matrix:
         python-version: [2.7, 3.6]
-
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -41,12 +40,12 @@ jobs:
           ./run-tests.sh
 
       - name: Build package
-        if: ${{ success() && github.event_name == 'push' && matrix.python-version == '3.6'  }}
+        if: ${{ success() && github.event_name == 'release' && matrix.python-version == '3.6'  }}
         run: |
           python setup.py sdist bdist_wheel
 
       - name: Publish package
-        if: ${{ success() && github.event_name == 'push' && matrix.python-version == '3.6'  }}
+        if: ${{ success() && github.event_name == 'release' && matrix.python-version == '3.6'  }}
         uses: pypa/gh-action-pypi-publish@v1.3.1
         with:
           user: __token__
