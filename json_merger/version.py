@@ -30,4 +30,6 @@ and parsed by ``setup.py``.
 
 from __future__ import absolute_import, print_function
 
-__version__ = "0.7.6"
+from autosemver.packaging import get_current_version
+
+__version__ = get_current_version(project_name="json-merger")

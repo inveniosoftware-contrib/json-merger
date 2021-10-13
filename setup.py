@@ -66,21 +66,19 @@ for reqs in extras_require.values():
 install_requires = [
     'dictdiffer==0.8.1' if sys.version_info < (3, 6) else 'dictdiffer>=0.6.0',
     'six>=1.10.0',
+    "autosemver==0.5.5",
     'pyrsistent>=0.11.13'
 ]
 
 packages = find_packages()
 
-
-# Get the version string. Cannot be done with import!
-g = {}
-with open(os.path.join('json_merger', 'version.py'), 'rt') as fp:
-    exec(fp.read(), g)
-    version = g['__version__']
+setup_require = [
+    "autosemver==0.5.5"
+]
 
 setup(
     name='json-merger',
-    version=version,
+    autosemver=True,
     description=__doc__,
     long_description=readme + '\n\n' + history,
     keywords='JSON patch merge conflict',
@@ -94,6 +92,7 @@ setup(
     platforms='any',
     entry_points={
     },
+    setup_requires=setup_require,
     extras_require=extras_require,
     install_requires=install_requires,
     classifiers=[
