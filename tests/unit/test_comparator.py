@@ -56,10 +56,10 @@ def test_list_of_primary_keys():
 
     inst = MyComp(lst1, lst2)
 
-    assert not inst.get_matches('l1', 0)
-    assert not inst.get_matches('l1', 1)
-    assert not inst.get_matches('l2', 0)
-    assert not inst.get_matches('l2', 1)
+    assert inst.get_matches('l1', 0)
+    assert inst.get_matches('l1', 1)
+    assert inst.get_matches('l2', 0)
+    assert inst.get_matches('l2', 1)
     assert not inst.get_matches('l2', 3)
 
     assert inst.get_matches('l1', 2) == [(2, lst2[2])]
@@ -81,10 +81,10 @@ def test_list_of_primary_keys_normalization():
 
     inst = MyComp(lst1, lst2)
 
-    assert not inst.get_matches('l1', 0)
-    assert not inst.get_matches('l1', 1)
-    assert not inst.get_matches('l2', 0)
-    assert not inst.get_matches('l2', 1)
+    assert inst.get_matches('l1', 0)
+    assert inst.get_matches('l1', 1)
+    assert inst.get_matches('l2', 0)
+    assert inst.get_matches('l2', 1)
     assert not inst.get_matches('l2', 3)
 
     assert inst.get_matches('l1', 2) == [(2, lst2[2])]

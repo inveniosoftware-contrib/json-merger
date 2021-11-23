@@ -113,6 +113,8 @@ class PrimaryKeyComparator(BaseComparator):
 
     def _have_field_equal(self, obj1, obj2, field):
         o1, o2 = self._get_compared_objects_at_field_path(obj1, obj2, field)
+        if o1 == NOTHING and o2 == NOTHING:
+            return True
         if o1 == NOTHING or o2 == NOTHING:
             return False
 
