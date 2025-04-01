@@ -26,10 +26,12 @@
 
 from __future__ import absolute_import, print_function
 
+import os
+
 from .comparator import DefaultComparator
 from .config import UnifierOps
 from .conflict import Conflict, ConflictType
-from .errors import MergeError
+from .errors import MaxThresholdExceededError, MergeError
 from .graph_builder import (
     ListMatchGraphBuilder, sort_cyclic_graph_best_effort, toposort
 )
@@ -94,6 +96,11 @@ class ListUnifier(object):
         self.unified = []
 
     def unify(self):
+        MAX_DETAILED_CONFLICTS = os.environ.get("MAX_DETAILED_CONFLICTS")
+        MAX_DETAILED_CONFLICTS = (
+            int(MAX_DETAILED_CONFLICTS)
+            if MAX_DETAILED_CONFLICTS else None
+        )
         graph_builder = ListMatchGraphBuilder(
             self.root, self.head, self.update, self.sources,
             self.comparator_cls)
@@ -103,8 +110,17 @@ class ListUnifier(object):
 
         conflicts = []
         if graph_builder.multiple_match_choices:
+            multiple_match_choices = graph_builder.multiple_match_choices
+            conflict_count = len(multiple_match_choices)
+            if (
+                MAX_DETAILED_CONFLICTS and
+                conflict_count > MAX_DETAILED_CONFLICTS
+            ):
+                raise MaxThresholdExceededError(
+                        'Too many conflicts to process in MANUAL_MERGE. '
+                        'Number of conflicts: %s. ' % conflict_count)
             conflicts = [Conflict(ConflictType.MANUAL_MERGE, (), choice)
-                         for choice in graph_builder.multiple_match_choices]
+                         for choice in multiple_match_choices]
 
         try:
             node_order = toposort(graph, self.pick_first)

@@ -24,16 +24,14 @@
 
 """Python module that is able to merge json record objects."""
 
-import os
 import sys
 
 from setuptools import find_packages, setup
 
 readme = open('README.rst').read()
-history = open('CHANGES.rst').read()
+version_info = sys.version_info[:2] 
 
 tests_require = [
-    'check-manifest>=0.25',
     'coverage>=4.0',
     'isort>=4.2.2',
     'pydocstyle>=1.0.0',
@@ -46,16 +44,13 @@ tests_require = [
 contrib_require = [
     'editdistance>=0.3.1',
     'munkres<=1.0.12',
-    'Unidecode==0.4.19' if sys.version_info < (3, 6) else 'Unidecode>=0.4.19'
+    'Unidecode==0.4.19' if version_info <= (2, 7) else 'Unidecode>=0.4.19'
 ]
 
 tests_require += contrib_require
 
 extras_require = {
     'contrib': contrib_require,
-    'docs': [
-        'Sphinx>=1.4.2',
-    ],
     'tests': tests_require
 }
 
@@ -64,23 +59,18 @@ for reqs in extras_require.values():
     extras_require['all'].extend(reqs)
 
 install_requires = [
-    'dictdiffer==0.8.1' if sys.version_info < (3, 6) else 'dictdiffer>=0.6.0',
+    'bump2version~=0.0,<1' if version_info <= (2, 7) else 'bump2version~=1.0',
+    'dictdiffer==0.8.1' if version_info <= (2, 7) else 'dictdiffer>=0.6.0',
     'six>=1.10.0',
-    "autosemver==0.5.5",
     'pyrsistent>=0.11.13'
 ]
 
 packages = find_packages()
 
-setup_require = [
-    "autosemver==0.5.5"
-]
-
 setup(
     name='json-merger',
-    autosemver=True,
     description=__doc__,
-    long_description=readme + '\n\n' + history,
+    long_description=readme,
     keywords='JSON patch merge conflict',
     license='GPLv2',
     author='CERN',
@@ -92,7 +82,7 @@ setup(
     platforms='any',
     entry_points={
     },
-    setup_requires=setup_require,
+    version='0.7.11',
     extras_require=extras_require,
     install_requires=install_requires,
     classifiers=[
@@ -106,7 +96,7 @@ setup(
         'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.11',
         'Development Status :: 4 - Beta',
     ],
 )

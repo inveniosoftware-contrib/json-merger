@@ -25,9 +25,6 @@
  json-merger
 =============
 
-.. image:: https://img.shields.io/travis/inspirehep/json-merger.svg
-        :target: https://travis-ci.org/inspirehep/json-merger
-
 .. image:: https://img.shields.io/coveralls/inspirehep/json-merger.svg
         :target: https://coveralls.io/r/inspirehep/json-merger
 
@@ -46,5 +43,23 @@ Module for merging JSON Objects.
 * Free software: GPLv2 license
 * Documentation: https://pythonhosted.org/json-merger/
 
-* For the simple use-case: ``pip install json-merger``
-* To install contrib dependencies: ``pip install json-merger[contrib]``
+
+Installation
+------------
+
+Install your local copy into a virtualenv. Assuming you have
+virtualenvwrapper installed, this is how you set up your fork for local
+development:
+
+.. code-block:: console
+
+        $ pyenv virtualenv json-merger
+        $ pyenv activate json-merger
+        $ cd json-merger/
+        $ pip install -e ".[all]"
+
+You can now run the tests with:
+
+.. code-block:: console
+
+        $ ./run-tests.sh

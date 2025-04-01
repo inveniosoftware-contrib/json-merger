@@ -1,29 +1,24 @@
-name: Build and release
+name: test and bump
 
 on:
   push:
     branches: [master]
   pull_request:
     branches: [master]
-  release:
-    types: [published]
 
 jobs:
-  Test:
+  test:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: [2.7, 3.6]
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
-          python-version: ${{ matrix.python-version }}
+          fetch-depth: 0
 
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v2
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: '3.11'
 
       - name: Install python dependencies
         run: |
@@ -39,14 +34,48 @@ jobs:
         run: |
           ./run-tests.sh
 
-      - name: Build package
-        if: ${{ success() && github.event_name == 'release' && matrix.python-version == '3.6'  }}
-        run: |
-          python setup.py sdist bdist_wheel
+  bump:
+    outputs:
+      new_sha: ${{ steps.sha.outputs.SHA }}
+    needs: test
+    if: ${{ github.event_name == 'push' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
 
-      - name: Publish package
-        if: ${{ success() && github.event_name == 'release' && matrix.python-version == '3.6'  }}
-        uses: pypa/gh-action-pypi-publish@v1.3.1
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
-          user: __token__
-          password: ${{ secrets.pypi_token }}
+          python-version: '3.11'
+
+      - name: Install bump2version
+        shell: bash
+        run: |
+          python -m pip install --upgrade pip
+          pip install bump2version
+
+      - name: Configure git
+        shell: bash
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+
+      - name: Bump version
+        shell: bash
+        run: |
+          bump2version patch --tag --verbose
+
+      - name: Push changes
+        uses: ad-m/github-push-action@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: ${{ github.ref }}
+          tags: true
+
+      - name: get sha
+        id: sha
+        run: |
+          sha_new=$(git rev-parse HEAD)
+          echo $sha_new
+          echo "::set-output name=SHA::$sha_new"

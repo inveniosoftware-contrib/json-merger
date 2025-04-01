@@ -37,3 +37,15 @@ class MergeError(Exception):
         super(MergeError, self).__init__(message)
         self.message = message
         self.content = content
+
+
+class MaxThresholdExceededError(Exception):
+    """Max Threshold Exceeded Error."""
+
+    def __init__(self, message):
+        """
+        Attributes:
+            message: Error message.
+        """
+        super(MaxThresholdExceededError, self).__init__(message)
+        self.message = message
