@@ -1,6 +1,8 @@
 name: test (python 2.7)
 
 on:
+  push:
+    branches: [master]
   pull_request:
     branches: [master]
 
