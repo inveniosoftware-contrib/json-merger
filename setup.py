@@ -59,7 +59,6 @@ for reqs in extras_require.values():
     extras_require['all'].extend(reqs)
 
 install_requires = [
-    'bump2version~=0.0,<1' if version_info <= (2, 7) else 'bump2version~=1.0',
     'dictdiffer==0.8.1' if version_info <= (2, 7) else 'dictdiffer>=0.6.0',
     'six>=1.10.0',
     'pyrsistent>=0.11.13'
