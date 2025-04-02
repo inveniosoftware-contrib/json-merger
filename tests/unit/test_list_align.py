@@ -32,7 +32,7 @@ import pytest
 from json_merger.config import UnifierOps
 from json_merger.conflict import ConflictType
 from json_merger.comparator import PrimaryKeyComparator
-from json_merger.errors import MergeError
+from json_merger.errors import MaxThresholdExceededError, MergeError
 from json_merger.list_unify import ListUnifier
 from json_merger.nothing import NOTHING
 
@@ -186,6 +186,20 @@ def test_error_on_multiple_match():
     assert not expected_bodies
 
     assert u.unified == [(2, 2, 2)]
+
+
+def test_error_on_multiple_match_raises_based_on_env_var(monkeypatch):
+    monkeypatch.setenv("MAX_DETAILED_CONFLICTS", "2")
+    root = [2, 3]
+    head = [1, 1, 2, 3, 3]
+    update = [1, 2, 3]
+
+    list_unify = ListUnifier(root, head, update,
+                             UnifierOps.KEEP_ONLY_UPDATE_ENTITIES)
+    with pytest.raises(MaxThresholdExceededError) as excinfo:
+        list_unify.unify()
+
+    assert 'Too many conflicts' in excinfo.value.message
 
 
 def test_multiple_match_symmetry():

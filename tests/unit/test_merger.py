@@ -33,7 +33,7 @@ import pytest
 
 from json_merger.config import DictMergerOps, UnifierOps
 from json_merger.conflict import Conflict, ConflictType
-from json_merger.errors import MergeError
+from json_merger.errors import MaxThresholdExceededError, MergeError
 from json_merger.merger import Merger
 from json_merger.dict_merger import patch_to_conflict_set
 
@@ -60,6 +60,21 @@ def test_merge_bare_str_lists():
                UnifierOps.KEEP_ONLY_UPDATE_ENTITIES)
     m.merge()
     assert m.merged_root == ['1', '2', '5']
+
+
+def test_merge_raises_based_on_env_var(monkeypatch):
+    monkeypatch.setenv("MAX_DETAILED_CONFLICTS", "2")
+    r = [2, 3]
+    h = [1, 1, 2, 3, 3]
+    u = [1, 2, 3]
+
+    m = Merger(r, h, u,
+               DictMergerOps.FALLBACK_KEEP_HEAD,
+               UnifierOps.KEEP_ONLY_UPDATE_ENTITIES)
+
+    with pytest.raises(MaxThresholdExceededError) as excinfo:
+        m.merge()
+    assert 'Too many conflicts' in excinfo.value.message
 
 
 def test_merge_nested_lists():

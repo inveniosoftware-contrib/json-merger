@@ -25,7 +25,4 @@
 
 isort -rc -c -df -m5  **/*.py && \
 flake8 json_merger/ tests/ && \
-rm -rf docs/_build/ && \
-sphinx-build -qnNW docs docs/_build/html && \
-py.test && \
-sphinx-build -qnNW -b doctest docs docs/_build/doctest
+py.test

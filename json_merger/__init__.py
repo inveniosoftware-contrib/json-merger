@@ -427,6 +427,7 @@ These instances can be used as class parameters for
 from __future__ import absolute_import, print_function
 
 from .merger import Merger
-from .version import __version__
+
+__version__ = "0.7.11"
 
 __all__ = ('__version__', 'Merger')
