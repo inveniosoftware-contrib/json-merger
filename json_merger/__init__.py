@@ -428,6 +428,6 @@ from __future__ import absolute_import, print_function
 
 from .merger import Merger
 
-__version__ = '0.7.11'
+__version__ = '0.7.12'
 
 __all__ = ('__version__', 'Merger')

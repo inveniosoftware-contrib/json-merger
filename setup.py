@@ -82,7 +82,7 @@ setup(
     platforms='any',
     entry_points={
     },
-    version='0.7.11',
+    version='0.7.12',
     extras_require=extras_require,
     install_requires=install_requires,
     classifiers=[
