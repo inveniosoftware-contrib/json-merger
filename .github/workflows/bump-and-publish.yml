@@ -1,44 +1,10 @@
-name: test, bump and publish
+name: bump and publish
 
 on:
-  push:
-    branches: [master]
-  pull_request:
-    branches: [master]
+  workflow_call:
 
 jobs:
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      - name: Install python dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install setuptools twine wheel coveralls
-          pip install -e .[all]
-
-      - name: Show python dependencies
-        run: |
-          pip freeze
-
-      - name: Run tests
-        run: |
-          ./run-tests.sh
-
   bump:
-    outputs:
-      new_sha: ${{ steps.sha.outputs.SHA }}
-    needs: test
-    if: ${{ github.event_name == 'push' }}
     runs-on: ubuntu-latest
     steps:
       - name: Check out the repository
@@ -73,23 +39,16 @@ jobs:
           branch: ${{ github.ref }}
           tags: true
 
-      - name: get sha
-        id: sha
-        run: |
-          sha_new=$(git rev-parse HEAD)
-          echo $sha_new
-          echo "::set-output name=SHA::$sha_new"
 
   publish:
     needs: bump
-    if: ${{ github.event_name == 'push' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          ref: ${{ needs.bump.outputs.new_sha }}
+          fetch-tags: true
 
       - name: Set up Python
         uses: actions/setup-python@v5
