@@ -1,10 +1,7 @@
-name: test (python 2.7)
+name: Test Python 2
 
 on:
-  push:
-    branches: [master]
-  pull_request:
-    branches: [master]
+  workflow_call:
 
 jobs:
   test:
@@ -16,7 +13,7 @@ jobs:
             pip: pip
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
