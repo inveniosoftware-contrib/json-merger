@@ -30,7 +30,7 @@ import pytest
 
 from json_merger.config import DictMergerOps
 from json_merger.conflict import Conflict, ConflictType
-from dictdiffer.conflict import Conflict as Dictdiffer_Conflict
+from inspire_dictdiffer.conflict import Conflict as Dictdiffer_Conflict
 from json_merger.dict_merger import SkipListsMerger
 from json_merger.errors import MergeError
 from json_merger.nothing import NOTHING

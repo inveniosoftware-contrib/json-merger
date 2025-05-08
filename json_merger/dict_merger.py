@@ -28,8 +28,8 @@ import copy
 import logging
 
 import six
-from dictdiffer import ADD, CHANGE, REMOVE, patch
-from dictdiffer.merge import Merger, UnresolvedConflictsException
+from inspire_dictdiffer import ADD, CHANGE, REMOVE, patch
+from inspire_dictdiffer.merge import Merger, UnresolvedConflictsException
 
 from .config import DictMergerOps
 from .conflict import Conflict, ConflictType
