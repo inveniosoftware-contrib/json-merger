@@ -59,7 +59,7 @@ for reqs in extras_require.values():
     extras_require['all'].extend(reqs)
 
 install_requires = [
-    'dictdiffer==0.8.1' if version_info <= (2, 7) else 'dictdiffer>=0.6.0',
+    'inspire-dictdiffer',
     'six>=1.10.0',
     'pyrsistent>=0.11.13'
 ]
