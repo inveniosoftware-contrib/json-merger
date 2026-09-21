@@ -25,20 +25,16 @@
 
 """Test inspirehep specific features."""
 
-from __future__ import absolute_import, print_function
-
-from json_merger.contrib.inspirehep.author_util import (NameInitial,
-                                                        NameToken,
-                                                        simple_tokenize)
+from json_merger.contrib.inspirehep.author_util import NameInitial, NameToken, simple_tokenize
 
 
 def test_simple_tokenize_handles_unicode():
-    name = u'Dœ, Jöhn Π.'
+    name = "Dœ, Jöhn Π."
 
     result = simple_tokenize(name)
     expected = {
-        'lastnames': [NameToken(u'dœ')],
-        'nonlastnames': [NameToken(u'jöhn'), NameInitial(u'π')],
+        "lastnames": [NameToken("dœ")],
+        "nonlastnames": [NameToken("jöhn"), NameInitial("π")],
     }
 
     assert result == expected

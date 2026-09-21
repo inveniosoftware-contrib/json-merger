@@ -1,0 +1,49 @@
+[project]
+name = "json-merger"
+version = "0.7.18"
+description = "Python module that is able to merge json record objects."
+authors = [{ name = "CERN", email = "admin@inspirehep.net" }]
+license = "GPL-2.0-only"
+readme = "README.md"
+requires-python = ">=3.11,<4"
+classifiers = [
+    "Environment :: Web Environment",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: GNU General Public License v2 (GPLv2)",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Topic :: Internet :: WWW/HTTP :: Dynamic Content",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Development Status :: 4 - Beta",
+]
+dependencies = [
+    "inspire-dictdiffer>=0.0.7",
+    "pyrsistent>=0.20.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/inveniosoftware-contrib/json-merger"
+
+[project.optional-dependencies]
+contrib = [
+    "editdistance>=0.8.1",
+    "munkres>=1.1.4",
+    "Unidecode>=1.4.0",
+]
+
+[tool.poetry]
+packages = [{ include = "json_merger" }]
+
+[tool.poetry.group.tests.dependencies]
+coverage = ">=7.0"
+pytest-cov = ">=5.0"
+pytest = ">=8.0"
+
+[build-system]
+requires = ["poetry-core>=2.0.0"]
+build-backend = "poetry.core.masonry.api"

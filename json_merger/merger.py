@@ -24,21 +24,21 @@
 
 """Definition for JSON merger class."""
 
-from __future__ import absolute_import, print_function
-
 import copy
 import logging
 
-from .comparator import DefaultComparator
-from .dict_merger import SkipListsMerger
-from .errors import MergeError
-from .list_unify import ListUnifier
-from .utils import (
-    get_conf_set_for_key_path, get_dotted_key_path, get_obj_at_key_path,
-    set_obj_at_key_path
+from json_merger.comparator import DefaultComparator
+from json_merger.dict_merger import SkipListsMerger
+from json_merger.errors import MergeError
+from json_merger.list_unify import ListUnifier
+from json_merger.utils import (
+    get_conf_set_for_key_path,
+    get_dotted_key_path,
+    get_obj_at_key_path,
+    set_obj_at_key_path,
 )
 
-PLACEHOLDER_STR = '#$PLACEHOLDER$#'
+PLACEHOLDER_STR = "#$PLACEHOLDER$#"
 LOGGER = logging.getLogger(__name__)
 
 
@@ -50,10 +50,18 @@ class Merger(object):
     per-field comparator classes.
     """
 
-    def __init__(self, root, head, update,
-                 default_dict_merge_op, default_list_merge_op,
-                 list_dict_ops=None, list_merge_ops=None,
-                 comparators=None, data_lists=None):
+    def __init__(
+        self,
+        root,
+        head,
+        update,
+        default_dict_merge_op,
+        default_list_merge_op,
+        list_dict_ops=None,
+        list_merge_ops=None,
+        comparators=None,
+        data_lists=None,
+    ):
         """
         Args:
             root: A common ancestor of the two objects being merged.
@@ -219,17 +227,18 @@ class Merger(object):
             and aligned_update are always populated by following the
             startegies set for the merger instance.
         """
-        self.merged_root = self._recursive_merge(self.root, self.head,
-                                                 self.update)
+        self.merged_root = self._recursive_merge(self.root, self.head, self.update)
         if self.conflicts:
-            raise MergeError('Conflicts Occurred in Merge Process',
-                             self.conflicts)
+            raise MergeError("Conflicts Occurred in Merge Process", self.conflicts)
 
     def _recursive_merge(self, root, head, update, key_path=()):
         dotted_key_path = get_dotted_key_path(key_path, filter_int_keys=True)
 
-        if (isinstance(head, list) and isinstance(update, list) and
-                dotted_key_path not in self.data_lists):
+        if (
+            isinstance(head, list)
+            and isinstance(update, list)
+            and dotted_key_path not in self.data_lists
+        ):
             # In this case we are merging two lists of objects.
             lists_to_unify = [()]
             if not isinstance(root, list):
@@ -247,8 +256,7 @@ class Merger(object):
             head_l = get_obj_at_key_path(head, list_field, [])
             update_l = get_obj_at_key_path(update, list_field, [])
 
-            unifier = self._unify_lists(root_l, head_l, update_l,
-                                        absolute_key_path)
+            unifier = self._unify_lists(root_l, head_l, update_l, absolute_key_path)
 
             new_list = []
             for idx, objects in enumerate(unifier.unified):
@@ -257,10 +265,11 @@ class Merger(object):
                     "Merging matched elements: root=%s, head=%s, update=%s",
                     root_obj,
                     head_obj,
-                    update_obj
+                    update_obj,
                 )
-                new_obj = self._recursive_merge(root_obj, head_obj, update_obj,
-                                                absolute_key_path + (idx, ))
+                new_obj = self._recursive_merge(
+                    root_obj, head_obj, update_obj, absolute_key_path + (idx,)
+                )
                 new_list.append(new_obj)
 
             root = set_obj_at_key_path(root, list_field, new_list)
@@ -273,10 +282,9 @@ class Merger(object):
 
         LOGGER.debug("Merging non-lists at %s", key_path)
 
-        object_merger = SkipListsMerger(root, head, update,
-                                        self.default_dict_merge_op,
-                                        data_lists, self.list_dict_ops,
-                                        key_path)
+        object_merger = SkipListsMerger(
+            root, head, update, self.default_dict_merge_op, data_lists, self.list_dict_ops, key_path
+        )
 
         try:
             object_merger.merge()
@@ -288,10 +296,8 @@ class Merger(object):
     def _unify_lists(self, root, head, update, key_path):
         dotted_key_path = get_dotted_key_path(key_path, True)
 
-        operation = self.list_merge_ops.get(dotted_key_path,
-                                            self.default_list_merge_op)
-        comparator_cls = self.comparators.get(dotted_key_path,
-                                              DefaultComparator)
+        operation = self.list_merge_ops.get(dotted_key_path, self.default_list_merge_op)
+        comparator_cls = self.comparators.get(dotted_key_path, DefaultComparator)
 
         LOGGER.debug(
             "Unifying lists at %s using operation %s and comparator %s",
@@ -299,8 +305,7 @@ class Merger(object):
             operation,
             comparator_cls,
         )
-        list_unifier = ListUnifier(root, head, update,
-                                   operation, comparator_cls)
+        list_unifier = ListUnifier(root, head, update, operation, comparator_cls)
         try:
             list_unifier.unify()
         except MergeError as e:
@@ -320,12 +325,9 @@ class Merger(object):
             update_list.append(update_obj or PLACEHOLDER_STR)
 
         # Try to put back the list if the key path existed in the first place.
-        self.aligned_root = set_obj_at_key_path(self.aligned_root,
-                                                key_path, root_list, False)
-        self.aligned_head = set_obj_at_key_path(self.aligned_head,
-                                                key_path, head_list, False)
-        self.aligned_update = set_obj_at_key_path(self.aligned_update,
-                                                  key_path, update_list, False)
+        self.aligned_root = set_obj_at_key_path(self.aligned_root, key_path, root_list, False)
+        self.aligned_head = set_obj_at_key_path(self.aligned_head, key_path, head_list, False)
+        self.aligned_update = set_obj_at_key_path(self.aligned_update, key_path, update_list, False)
 
         # Also copy over the stats.
         self.head_stats[key_path] = list_unifier.head_stats

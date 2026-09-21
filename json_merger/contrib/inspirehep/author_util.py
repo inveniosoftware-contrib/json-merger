@@ -22,17 +22,14 @@
 # waive the privileges and immunities granted to it by virtue of its status
 # as an Intergovernmental Organization or submit itself to any jurisdiction.
 
-from __future__ import absolute_import, print_function
 
 import re
 
 import editdistance
-import six
-
 from munkres import Munkres
 from unidecode import unidecode
 
-_RE_NAME_TOKEN_SEPARATOR = re.compile(r'[^\w\'-]+', re.UNICODE)
+_RE_NAME_TOKEN_SEPARATOR = re.compile(r"[^\w\'-]+", re.UNICODE)
 
 
 def _normalized_edit_dist(s1, s2):
@@ -47,13 +44,12 @@ class NameToken(object):
         return self.token == other.token
 
     def __repr__(self):
-        return repr(u'{}: {}'.format(self.__class__.__name__,
-                                     self.token))
+        return repr("{}: {}".format(self.__class__.__name__, self.token))
 
 
 class NameInitial(NameToken):
     def __eq__(self, other):
-        return self.token == other.token[:len(self.token)]
+        return self.token == other.token[: len(self.token)]
 
 
 def token_distance(t1, t2, initial_match_penalization):
@@ -69,25 +65,21 @@ def token_distance(t1, t2, initial_match_penalization):
 
 def simple_tokenize(name):
     """Simple tokenizer function to be used with the normalizers."""
-    last_names, first_names = name.split(',')
+    last_names, first_names = name.split(",")
     last_names = _RE_NAME_TOKEN_SEPARATOR.split(last_names)
     first_names = _RE_NAME_TOKEN_SEPARATOR.split(first_names)
 
-    first_names = [NameToken(n) if len(n) > 1 else NameInitial(n)
-                   for n in first_names if n]
-    last_names = [NameToken(n) if len(n) > 1 else NameInitial(n)
-                  for n in last_names if n]
-    return {'lastnames': last_names,
-            'nonlastnames': first_names}
+    first_names = [NameToken(n) if len(n) > 1 else NameInitial(n) for n in first_names if n]
+    last_names = [NameToken(n) if len(n) > 1 else NameInitial(n) for n in last_names if n]
+    return {"lastnames": last_names, "nonlastnames": first_names}
 
 
 class AuthorNameNormalizer(object):
     """Callable that normalizes an author name given a tokenizer function."""
 
-    def __init__(self, tokenize_function,
-                 first_names_number=None,
-                 first_name_to_initial=False,
-                 asciify=False):
+    def __init__(
+        self, tokenize_function, first_names_number=None, first_name_to_initial=False, asciify=False
+    ):
         """Initialize the normalizer.
 
         Args:
@@ -113,23 +105,24 @@ class AuthorNameNormalizer(object):
         self.normalize_chars = lambda x: _asciify(x) if asciify else x
 
     def __call__(self, author):
-        name = author.get('full_name', '')
+        name = author.get("full_name", "")
         name = _decode_if_not_unicode(name)
         name = self.normalize_chars(name)
         tokens = self.tokenize_function(name)
         last_fn_char = 1 if self.first_name_to_initial else None
         last_fn_idx = self.first_names_number
 
-        return (tuple(n.token.lower() for n in tokens['lastnames']) +
-                tuple(n.token.lower()[:last_fn_char]
-                      for n in tokens['nonlastnames'][:last_fn_idx]))
+        return tuple(n.token.lower() for n in tokens["lastnames"]) + tuple(
+            n.token.lower()[:last_fn_char] for n in tokens["nonlastnames"][:last_fn_idx]
+        )
 
 
 class AuthorNameDistanceCalculator(object):
     """Callable that calculates a distance between two author's names."""
 
-    def __init__(self, tokenize_function, match_on_initial_penalization=0.05,
-                 full_name_field='full_name'):
+    def __init__(
+        self, tokenize_function, match_on_initial_penalization=0.05, full_name_field="full_name"
+    ):
         """Initialize the distance calculator.
 
         Args:
@@ -163,13 +156,14 @@ class AuthorNameDistanceCalculator(object):
 
         tokens_a1 = self.tokenize_function(name_a1)
         tokens_a2 = self.tokenize_function(name_a2)
-        tokens_a1 = tokens_a1['lastnames'] + tokens_a1['nonlastnames']
-        tokens_a2 = tokens_a2['lastnames'] + tokens_a2['nonlastnames']
+        tokens_a1 = tokens_a1["lastnames"] + tokens_a1["nonlastnames"]
+        tokens_a2 = tokens_a2["lastnames"] + tokens_a2["nonlastnames"]
 
         # Match all names by editdistance.
         dist_matrix = [
-            [token_distance(t1, t2, self.match_on_initial_penalization)
-             for t2 in tokens_a2] for t1 in tokens_a1]
+            [token_distance(t1, t2, self.match_on_initial_penalization) for t2 in tokens_a2]
+            for t1 in tokens_a1
+        ]
 
         matcher = Munkres()
         indices = matcher.compute(dist_matrix)
@@ -177,8 +171,9 @@ class AuthorNameDistanceCalculator(object):
         matched_only_initials = True
         for idx_a1, idx_a2 in indices:
             cost += dist_matrix[idx_a1][idx_a2]
-            if (not isinstance(tokens_a1[idx_a1], NameInitial) or
-                    not isinstance(tokens_a2[idx_a2], NameInitial)):
+            if not isinstance(tokens_a1[idx_a1], NameInitial) or not isinstance(
+                tokens_a2[idx_a2], NameInitial
+            ):
                 matched_only_initials = False
 
         # Johnny, D will not be equal with Donny, J
@@ -191,11 +186,11 @@ class AuthorNameDistanceCalculator(object):
 def _decode_if_not_unicode(value):
     to_return = value
 
-    if not isinstance(value, six.text_type):
-        to_return = value.decode('utf-8')
+    if not isinstance(value, str):
+        to_return = value.decode("utf-8")
 
     return to_return
 
 
 def _asciify(value):
-    return six.text_type(unidecode(value))
+    return str(unidecode(value))

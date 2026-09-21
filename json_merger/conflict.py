@@ -22,13 +22,12 @@
 # waive the privileges and immunities granted to it by virtue of its status
 # as an Intergovernmental Organization or submit itself to any jurisdiction.
 
-from __future__ import absolute_import, print_function
 
 import json
 
 from pyrsistent import freeze, thaw
 
-from .utils import force_list
+from json_merger.utils import force_list
 
 
 class ConflictType(object):
@@ -51,16 +50,17 @@ class ConflictType(object):
         INSERT: The object specified as the conflict body needs to be
             inserted at the path specified in the conflict object.
     """
+
     pass
 
 
 _CONFLICTS = (
-    'REORDER',
-    'MANUAL_MERGE',
-    'ADD_BACK_TO_HEAD',
-    'SET_FIELD',
-    'REMOVE_FIELD',
-    'INSERT',
+    "REORDER",
+    "MANUAL_MERGE",
+    "ADD_BACK_TO_HEAD",
+    "SET_FIELD",
+    "REMOVE_FIELD",
+    "INSERT",
 )
 for conflict_type in _CONFLICTS:
     setattr(ConflictType, conflict_type, conflict_type)
@@ -87,7 +87,7 @@ class Conflict(tuple):
 
     def __new__(cls, conflict_type, path, body):
         if conflict_type not in _CONFLICTS:
-            raise ValueError('Bad Conflict Type %s' % conflict_type)
+            raise ValueError("Bad Conflict Type %s" % conflict_type)
         body = freeze(body)
         return tuple.__new__(cls, (conflict_type, path, body))
 
@@ -112,33 +112,29 @@ class Conflict(tuple):
         """
         # map ConflictType to json-patch operator
         path = self.path
-        if self.conflict_type in ('REORDER', 'SET_FIELD'):
-            op = 'replace'
-        elif self.conflict_type in ('MANUAL_MERGE', 'ADD_BACK_TO_HEAD'):
-            op = 'add'
-            path += ('-',)
-        elif self.conflict_type == 'REMOVE_FIELD':
-            op = 'remove'
+        if self.conflict_type in ("REORDER", "SET_FIELD"):
+            op = "replace"
+        elif self.conflict_type in ("MANUAL_MERGE", "ADD_BACK_TO_HEAD"):
+            op = "add"
+            path += ("-",)
+        elif self.conflict_type == "REMOVE_FIELD":
+            op = "remove"
         elif self.conflict_type == "INSERT":
             op = "add"
         else:
             raise ValueError(
-                'Conflict Type %s can not be mapped to a json-patch operation'
-                % conflict_type
+                "Conflict Type %s can not be mapped to a json-patch operation" % conflict_type
             )
 
         # stringify path array
-        json_pointer = '/' + '/'.join(str(el) for el in path)
+        json_pointer = "/" + "/".join(str(el) for el in path)
 
         conflict_values = force_list(self.body)
         conflicts = []
         for value in conflict_values:
-            if value is not None or self.conflict_type == 'REMOVE_FIELD':
-                conflicts.append({
-                    'path': json_pointer,
-                    'op': op,
-                    'value': value,
-                    '$type': self.conflict_type
-                })
+            if value is not None or self.conflict_type == "REMOVE_FIELD":
+                conflicts.append(
+                    {"path": json_pointer, "op": op, "value": value, "$type": self.conflict_type}
+                )
 
         return json.dumps(conflicts)

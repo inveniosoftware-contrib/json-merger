@@ -22,9 +22,8 @@
 # waive the privileges and immunities granted to it by virtue of its status
 # as an Intergovernmental Organization or submit itself to any jurisdiction.
 
-from __future__ import absolute_import, print_function
 
-from .nothing import NOTHING
+from json_merger.nothing import NOTHING
 
 
 def get_obj_at_key_path(obj, key_path, default=None):
@@ -76,24 +75,22 @@ def del_obj_at_key_path(obj, key_path, raise_key_error=True):
 
 
 def has_prefix(key_path, prefix):
-    return len(prefix) <= len(key_path) and key_path[:len(prefix)] == prefix
+    return len(prefix) <= len(key_path) and key_path[: len(prefix)] == prefix
 
 
 def remove_prefix(key_path, prefix):
     if not has_prefix(key_path, prefix):
-        raise ValueError('Bad Prefix {}'.format(prefix))
-    return key_path[len(prefix):]
+        raise ValueError("Bad Prefix {}".format(prefix))
+    return key_path[len(prefix) :]
 
 
 def get_dotted_key_path(key_path, filter_int_keys=False):
-    return '.'.join(k for k in key_path
-                    if not isinstance(k, int) and filter_int_keys)
+    return ".".join(k for k in key_path if not isinstance(k, int) and filter_int_keys)
 
 
 def get_conf_set_for_key_path(conf_set, key_path):
     prefix = get_dotted_key_path(key_path, True)
-    return set(remove_prefix(k, prefix).lstrip('.')
-               for k in conf_set if has_prefix(k, prefix))
+    return set(remove_prefix(k, prefix).lstrip(".") for k in conf_set if has_prefix(k, prefix))
 
 
 def force_list(data):

@@ -22,20 +22,13 @@
 # waive the privileges and immunities granted to it by virtue of its status
 # as an Intergovernmental Organization or submit itself to any jurisdiction.
 
-from __future__ import absolute_import, print_function
-
 
 class Nothing(object):
-
     def __eq__(self, other):
-        if isinstance(other, Nothing):
-            return True
-        return False
+        return bool(isinstance(other, Nothing))
 
     def __ne__(self, other):
-        if isinstance(other, Nothing):
-            return False
-        return True
+        return not isinstance(other, Nothing)
 
     def __nonzero__(self):
         return False
@@ -44,10 +37,10 @@ class Nothing(object):
         return False
 
     def __str__(self):
-        return 'NOTHING'
+        return "NOTHING"
 
     def __repr__(self):
-        return 'NOTHING'
+        return "NOTHING"
 
 
 # Create a new placeholder for None objects that doesn't conflict with None

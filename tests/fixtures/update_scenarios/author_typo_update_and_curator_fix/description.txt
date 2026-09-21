@@ -1,1 +1,1 @@
-Curator touched an author name, Update touched another, successfully merge the records. 
+Curator touched an author name, Update touched another, successfully merge the records.

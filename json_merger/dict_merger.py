@@ -22,22 +22,23 @@
 # waive the privileges and immunities granted to it by virtue of its status
 # as an Intergovernmental Organization or submit itself to any jurisdiction.
 
-from __future__ import absolute_import, print_function
 
 import copy
 import logging
 
-import six
 from inspire_dictdiffer import ADD, CHANGE, REMOVE, patch
 from inspire_dictdiffer.merge import Merger, UnresolvedConflictsException
 
-from .config import DictMergerOps
-from .conflict import Conflict, ConflictType
-from .errors import MergeError
-from .nothing import NOTHING
-from .utils import (
-    dedupe_list, del_obj_at_key_path, get_dotted_key_path, get_obj_at_key_path,
-    set_obj_at_key_path
+from json_merger.config import DictMergerOps
+from json_merger.conflict import Conflict, ConflictType
+from json_merger.errors import MergeError
+from json_merger.nothing import NOTHING
+from json_merger.utils import (
+    dedupe_list,
+    del_obj_at_key_path,
+    get_dotted_key_path,
+    get_obj_at_key_path,
+    set_obj_at_key_path,
 )
 
 LOGGER = logging.getLogger(__name__)
@@ -47,8 +48,8 @@ def _get_list_fields(obj, res, key_path=()):
     if isinstance(obj, list):
         res.append(key_path)
     elif isinstance(obj, dict):
-        for key, value in six.iteritems(obj):
-            _get_list_fields(value, res, key_path + (key, ))
+        for key, value in obj.items():
+            _get_list_fields(value, res, key_path + (key,))
 
     return res
 
@@ -59,13 +60,13 @@ def patch_to_conflict_set(patch):
     if isinstance(patched_key, list):
         key_path = tuple(patched_key)
     else:
-        key_path = tuple(k for k in patched_key.split('.') if k)
+        key_path = tuple(k for k in patched_key.split(".") if k)
 
     conflicts = set()
     if patch_type == REMOVE:
         conflict_type = ConflictType.REMOVE_FIELD
-        for key, obj in value:
-            conflicts.add(Conflict(conflict_type, key_path + (key, ), None))
+        for key, _obj in value:
+            conflicts.add(Conflict(conflict_type, key_path + (key,), None))
     elif patch_type == CHANGE:
         conflict_type = ConflictType.SET_FIELD
         first_val, second_val = value
@@ -73,7 +74,7 @@ def patch_to_conflict_set(patch):
     elif patch_type == ADD:
         conflict_type = ConflictType.SET_FIELD
         for key, obj in value:
-            conflicts.add(Conflict(conflict_type, key_path + (key, ), obj))
+            conflicts.add(Conflict(conflict_type, key_path + (key,), obj))
 
     return conflicts
 
@@ -81,8 +82,11 @@ def patch_to_conflict_set(patch):
 class SkipListsMerger(object):
     """3-way Merger that ignores list fields."""
 
-    def __init__(self, root, head, update, default_op,
-                 data_lists=None, custom_ops={}, key_path=None):
+    def __init__(
+        self, root, head, update, default_op, data_lists=None, custom_ops=None, key_path=None
+    ):
+        if custom_ops is None:
+            custom_ops = {}
         self.root = copy.deepcopy(root)
         self.head = copy.deepcopy(head)
         self.update = copy.deepcopy(update)
@@ -115,7 +119,8 @@ class SkipListsMerger(object):
             self.list_backups[list_] = (
                 get_obj_at_key_path(self.root, list_),
                 get_obj_at_key_path(self.head, list_),
-                get_obj_at_key_path(self.update, list_))
+                get_obj_at_key_path(self.update, list_),
+            )
             # The root is the only one that may not be there. Head and update
             # are retrieved using list intersection.
             del_obj_at_key_path(self.root, list_, False)
@@ -123,7 +128,7 @@ class SkipListsMerger(object):
             del_obj_at_key_path(self.update, list_)
 
     def _restore_lists(self):
-        for list_, (bak_r, bak_h, bak_u) in six.iteritems(self.list_backups):
+        for list_, (bak_r, bak_h, bak_u) in self.list_backups.items():
             if bak_r is not None:
                 set_obj_at_key_path(self.root, list_, bak_r)
             set_obj_at_key_path(self.head, list_, bak_h)
@@ -150,10 +155,10 @@ class SkipListsMerger(object):
         else:
             strategy = self._get_rule_for_field(self.key_path)
             self.merged_root, conflict = {
-                'f': (self.head, self.update),
-                's': (self.update, self.head)}[strategy]
-            self.conflict_set.add(
-                Conflict(ConflictType.SET_FIELD, (), conflict))
+                "f": (self.head, self.update),
+                "s": (self.update, self.head),
+            }[strategy]
+            self.conflict_set.add(Conflict(ConflictType.SET_FIELD, (), conflict))
 
     def _merge_dicts(self):
         self._backup_lists()
@@ -174,25 +179,20 @@ class SkipListsMerger(object):
         remove_patches = []
         other_patches = []
         for patch_ in non_list_merger.unified_patches:
-            if patch_[0] == 'remove':
+            if patch_[0] == "remove":
                 remove_patches.append(patch_)
             else:
                 other_patches.append(patch_)
         remove_patches_deduped = dedupe_list(remove_patches)
         unified_patches = remove_patches_deduped + other_patches
-        self.merged_root = patch(
-                unified_patches,
-                self.root
-            )
+        self.merged_root = patch(unified_patches, self.root)
 
     def _solve_dict_conflicts(self, non_list_merger, conflicts):
-        strategies = [self._get_custom_strategy(conflict)
-                      for conflict in conflicts]
+        strategies = [self._get_custom_strategy(conflict) for conflict in conflicts]
         non_list_merger.continue_run(strategies)
 
-        for conflict, strategy in zip(conflicts, strategies):
-            conflict_patch = {'f': conflict.second_patch,
-                              's': conflict.first_patch}[strategy]
+        for conflict, strategy in zip(conflicts, strategies, strict=False):
+            conflict_patch = {"f": conflict.second_patch, "s": conflict.first_patch}[strategy]
             conflict_set = patch_to_conflict_set(conflict_patch)
             LOGGER.debug(
                 "Solved conflict using strategy %s, conflicts=%s",
@@ -215,7 +215,7 @@ class SkipListsMerger(object):
         elif field:
             full_path.append(field)
 
-        if (isinstance(modification, list) and modification[0][0]):
+        if isinstance(modification, list) and modification[0][0]:
             full_path.append(modification[0][0])
 
         return full_path
@@ -225,9 +225,9 @@ class SkipListsMerger(object):
         if callable(operation):
             return operation
         elif operation == DictMergerOps.FALLBACK_KEEP_HEAD:
-            return lambda head, update, down_path: 'f'
+            return lambda head, update, down_path: "f"
         elif operation == DictMergerOps.FALLBACK_KEEP_UPDATE:
-            return lambda head, update, down_path: 's'
+            return lambda head, update, down_path: "s"
         else:
             return lambda head, update, down_path: None
 
@@ -243,14 +243,12 @@ class SkipListsMerger(object):
         rule = None
 
         while current_path:
-            operation = self._operation_to_function(
-                self.custom_ops.get(current_path)
-            )
+            operation = self._operation_to_function(self.custom_ops.get(current_path))
             rule = operation(head, update, down_path)
             if rule:
                 break
-            current_path_parts = current_path.split('.')
-            current_path = '.'.join(current_path_parts[:-1])
+            current_path_parts = current_path.split(".")
+            current_path = ".".join(current_path_parts[:-1])
             down_path.append(current_path_parts[-1])
 
         return rule or self.default_op(head, update, field_path)
@@ -265,4 +263,4 @@ class SkipListsMerger(object):
             self._merge_base_values()
 
         if self.conflict_set:
-            raise MergeError('Dictdiffer Errors', self.conflicts)
+            raise MergeError("Dictdiffer Errors", self.conflicts)

@@ -22,8 +22,6 @@
 # waive the privileges and immunities granted to it by virtue of its status
 # as an Intergovernmental Organization or submit itself to any jurisdiction.
 
-from __future__ import absolute_import, print_function
-
 
 class ListMatchStats(object):
     """Class for holding list entity matching stats."""
@@ -90,8 +88,7 @@ class ListMatchStats(object):
 
     @property
     def not_in_result_not_root_match_idx(self):
-        return self.not_in_result_idx.difference(
-            self.not_in_result_root_match_idx)
+        return self.not_in_result_idx.difference(self.not_in_result_root_match_idx)
 
     @property
     def in_result(self):
@@ -111,11 +108,12 @@ class ListMatchStats(object):
 
     @property
     def not_in_result_root_match_pairs(self):
-        return [(self.lst[e], self.root[self.root_matches[e]])
-                for e in self.not_in_result_root_match_idx]
+        return [
+            (self.lst[e], self.root[self.root_matches[e]])
+            for e in self.not_in_result_root_match_idx
+        ]
 
     @property
     def not_matched_root_objects(self):
         matched_root_idx = set(self.root_matches.values())
-        return [o for idx, o in enumerate(self.root)
-                if idx not in matched_root_idx]
+        return [o for idx, o in enumerate(self.root) if idx not in matched_root_idx]

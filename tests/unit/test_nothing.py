@@ -25,36 +25,33 @@
 
 """Test NOTHING global variable value."""
 
-from __future__ import absolute_import, print_function
-
-
-from json_merger.nothing import Nothing, NOTHING
+from json_merger.nothing import NOTHING, Nothing
 
 
 def test_nothing_eq():
     assert NOTHING == NOTHING
-    assert NOTHING == Nothing()
+    assert Nothing() == NOTHING
     assert NOTHING is not None
     # Force evaluation of the __eq__ method.
     assert (NOTHING == {}) is False
     assert (NOTHING == []) is False
     assert (NOTHING == 0) is False
-    assert (NOTHING == '') is False
+    assert (NOTHING == "") is False
 
 
 def test_nothing_neq():
     # Force evaluation of the __neq__ method.
     assert (NOTHING != NOTHING) is False
-    assert (NOTHING != Nothing()) is False
+    assert (Nothing() != NOTHING) is False
     assert NOTHING != {}
     assert NOTHING != []
     assert NOTHING != 0
-    assert NOTHING != ''
+    assert NOTHING != ""
 
 
 def test_nothing_repr():
-    assert str(NOTHING) == 'NOTHING'
-    assert repr(NOTHING) == 'NOTHING'
+    assert str(NOTHING) == "NOTHING"
+    assert repr(NOTHING) == "NOTHING"
 
 
 def test_nothing_bool():

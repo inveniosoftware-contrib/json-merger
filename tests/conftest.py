@@ -25,8 +25,6 @@
 
 """Pytest configuration."""
 
-from __future__ import absolute_import, print_function
-
 import json
 import os
 
@@ -45,19 +43,18 @@ class AbstractFixtureLoader(object):
         return json.loads(self._read_file(test_dir, file_name))
 
     def load_test(self, test_dir):
-        raise NotImplementedError('You have to implement me!')
+        raise NotImplementedError("You have to implement me!")
 
 
-@pytest.fixture()
+@pytest.fixture
 def update_fixture_loader():
     class _Loader(AbstractFixtureLoader):
-
         def load_test(self, test_dir):
-            root = self.load_single(test_dir, 'root.json')
-            head = self.load_single(test_dir, 'head.json')
-            update = self.load_single(test_dir, 'update.json')
-            expected = self.load_single(test_dir, 'expected.json')
-            desc = self._read_file(test_dir, 'description.txt')
+            root = self.load_single(test_dir, "root.json")
+            head = self.load_single(test_dir, "head.json")
+            update = self.load_single(test_dir, "update.json")
+            expected = self.load_single(test_dir, "expected.json")
+            desc = self._read_file(test_dir, "description.txt")
             return root, head, update, expected, desc
 
-    return _Loader('./tests/fixtures/update_scenarios/')
+    return _Loader("./tests/fixtures/update_scenarios/")

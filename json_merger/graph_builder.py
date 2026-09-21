@@ -22,17 +22,14 @@
 # waive the privileges and immunities granted to it by virtue of its status
 # as an Intergovernmental Organization or submit itself to any jurisdiction.
 
-from __future__ import absolute_import, print_function
 
 from collections import deque
 
-import six
+from json_merger.comparator import DefaultComparator
+from json_merger.nothing import NOTHING
+from json_merger.stats import ListMatchStats
 
-from .comparator import DefaultComparator
-from .nothing import NOTHING
-from .stats import ListMatchStats
-
-FIRST = 'first'
+FIRST = "first"
 
 
 class BeforeNodes(object):
@@ -43,14 +40,13 @@ class BeforeNodes(object):
         self.update_node = update_node
 
     def __repr__(self):
-        return 'BeforeNodes <head_node: {}, update_node: {}>'.format(
-            self.head_node, self.update_node)
+        return "BeforeNodes <head_node: {}, update_node: {}>".format(
+            self.head_node, self.update_node
+        )
 
 
 class ListMatchGraphBuilder(object):
-
-    def __init__(self, root, head, update, sources,
-                 comparator_cls=DefaultComparator):
+    def __init__(self, root, head, update, sources, comparator_cls=DefaultComparator):
         self.root = root
         self.head = head
         self.update = update
@@ -63,12 +59,12 @@ class ListMatchGraphBuilder(object):
         # Keys are (target, source), values are comparator_instance and
         # the source list from which to search.
         self.comparators = {
-            ('root', 'head'): (self.root_head_comparator, 'l2'),
-            ('head', 'root'): (self.root_head_comparator, 'l1'),
-            ('root', 'update'): (self.root_update_comparator, 'l2'),
-            ('update', 'root'): (self.root_update_comparator, 'l1'),
-            ('head', 'update'): (self.head_update_comparator, 'l2'),
-            ('update', 'head'): (self.head_update_comparator, 'l1'),
+            ("root", "head"): (self.root_head_comparator, "l2"),
+            ("head", "root"): (self.root_head_comparator, "l1"),
+            ("root", "update"): (self.root_update_comparator, "l2"),
+            ("update", "root"): (self.root_update_comparator, "l1"),
+            ("head", "update"): (self.head_update_comparator, "l2"),
+            ("update", "head"): (self.head_update_comparator, "l1"),
         }
 
         self.node_data = {}
@@ -106,10 +102,12 @@ class ListMatchGraphBuilder(object):
             self._update_idx_to_node[update_idx] = node_id
 
     def _get_matches(self, source, source_idx, source_obj):
-        other_two = {'head': ['root', 'update'],
-                     'update': ['root', 'head'],
-                     'root': ['head', 'update']}
-        indices = {'root': {}, 'head': {}, 'update': {}}
+        other_two = {
+            "head": ["root", "update"],
+            "update": ["root", "head"],
+            "root": ["head", "update"],
+        }
+        indices = {"root": {}, "head": {}, "update": {}}
         indices[source][source_idx] = source_obj
 
         # Start a BFS of matching elements.
@@ -133,38 +131,33 @@ class ListMatchGraphBuilder(object):
             else:
                 result[lst] = sorted(res_indices.items())
 
-        return result['root'], result['head'], result['update']
+        return result["root"], result["head"], result["update"]
 
     def _add_matches(self, root_elems, head_elems, update_elems):
-        matches = [(r, h, u)
-                   for r in root_elems
-                   for h in head_elems
-                   for u in update_elems]
+        matches = [(r, h, u) for r in root_elems for h in head_elems for u in update_elems]
         if len(matches) == 1:
             self._push_node(*matches[0])
         else:
-            self.multiple_match_choice_idx.update([(r[0], h[0], u[0])
-                                                   for r, h, u in matches])
+            self.multiple_match_choice_idx.update([(r[0], h[0], u[0]) for r, h, u in matches])
 
     def _populate_nodes(self):
         for idx, obj in enumerate(self.head):
-            r_elems, h_elems, u_elems = self._get_matches('head', idx, obj)
-            if 'head' in self.sources:
+            r_elems, h_elems, u_elems = self._get_matches("head", idx, obj)
+            if "head" in self.sources:
                 self._add_matches(r_elems, h_elems, u_elems)
             if len(r_elems) == 1 and r_elems[0][0] >= 0:
                 self.head_stats.add_root_match(idx, r_elems[0][0])
 
         for idx, obj in enumerate(self.update):
-            r_elems, h_elems, u_elems = self._get_matches('update', idx, obj)
+            r_elems, h_elems, u_elems = self._get_matches("update", idx, obj)
             # Only add the node to the graph only if not already added.
-            if ('update' in self.sources and
-                    idx not in self._update_idx_to_node):
+            if "update" in self.sources and idx not in self._update_idx_to_node:
                 self._add_matches(r_elems, h_elems, u_elems)
             if len(r_elems) == 1 and r_elems[0][0] >= 0:
                 self.update_stats.add_root_match(idx, r_elems[0][0])
 
         # Add stats from built nodes.
-        for root_idx, head_idx, update_idx in self._node_src_indices.values():
+        for _root_idx, head_idx, update_idx in self._node_src_indices.values():
             if head_idx >= 0:
                 self.head_stats.move_to_result(head_idx)
             if update_idx >= 0:
@@ -180,10 +173,7 @@ class ListMatchGraphBuilder(object):
     def _get_next_node(self, source, indices):
         if source not in self.sources:
             return None
-        idx_to_node = {
-            'head': self._head_idx_to_node,
-            'update': self._update_idx_to_node
-        }[source]
+        idx_to_node = {"head": self._head_idx_to_node, "update": self._update_idx_to_node}[source]
         for idx in indices:
             if idx in idx_to_node:
                 return idx_to_node[idx]
@@ -197,15 +187,14 @@ class ListMatchGraphBuilder(object):
         self.node_data[FIRST] = (NOTHING, NOTHING, NOTHING)
         self.graph[FIRST] = BeforeNodes()
 
-        next_head_node = self._get_next_node('head', range(len(self.head)))
-        next_update_node = self._get_next_node('update',
-                                               range(len(self.update)))
+        next_head_node = self._get_next_node("head", range(len(self.head)))
+        next_update_node = self._get_next_node("update", range(len(self.update)))
         self.graph[FIRST].head_node = next_head_node
         self.graph[FIRST].update_node = next_update_node
 
         # Link any other nodes with the elements that come after them in their
         # source lists.
-        for node_id, node_indices in six.iteritems(self._node_src_indices):
+        for node_id, node_indices in self._node_src_indices.items():
             root_idx, head_idx, update_idx = node_indices
             head_next_l = []
             update_next_l = []
@@ -214,28 +203,28 @@ class ListMatchGraphBuilder(object):
             if update_idx >= 0:
                 update_next_l = range(update_idx + 1, len(self.update))
 
-            next_head_node = self._get_next_node('head', head_next_l)
-            next_update_node = self._get_next_node('update', update_next_l)
+            next_head_node = self._get_next_node("head", head_next_l)
+            next_update_node = self._get_next_node("update", update_next_l)
             self.graph[node_id] = BeforeNodes(next_head_node, next_update_node)
 
         return self.graph, self.node_data
 
 
 def _get_traversal(next_nodes, pick_first):
-    if pick_first == 'head':
+    if pick_first == "head":
         return [next_nodes.update_node, next_nodes.head_node]
     else:
         return [next_nodes.head_node, next_nodes.update_node]
 
 
-def toposort(graph, pick_first='head'):
+def toposort(graph, pick_first="head"):
     """Toplogically sorts a list match graph.
 
     Tries to perform a topological sort using as tiebreaker the pick_first
     argument. If the graph contains cycles, raise ValueError.
     """
     in_deg = {}
-    for node, next_nodes in six.iteritems(graph):
+    for _node, next_nodes in graph.items():
         for next_node in [next_nodes.head_node, next_nodes.update_node]:
             if next_node is None:
                 continue
@@ -254,7 +243,7 @@ def toposort(graph, pick_first='head'):
             if next_node is None:
                 continue
             if next_node in visited:
-                raise ValueError('Graph has a cycle')
+                raise ValueError("Graph has a cycle")
 
             in_deg[next_node] -= 1
             if in_deg[next_node] == 0:
@@ -262,21 +251,21 @@ def toposort(graph, pick_first='head'):
 
     # Nodes may not be walked because they don't reach in degree 0.
     if len(ordered) != len(graph) - 1:
-        raise ValueError('Graph has a cycle')
+        raise ValueError("Graph has a cycle")
     return ordered
 
 
-def sort_cyclic_graph_best_effort(graph, pick_first='head'):
+def sort_cyclic_graph_best_effort(graph, pick_first="head"):
     """Fallback for cases in which the graph has cycles."""
     ordered = []
     visited = set()
     # Go first on the pick_first chain then go back again on the others
     # that were not visited. Given the way the graph is built both chains
     # will always contain all the elements.
-    if pick_first == 'head':
-        fst_attr, snd_attr = ('head_node', 'update_node')
+    if pick_first == "head":
+        fst_attr, snd_attr = ("head_node", "update_node")
     else:
-        fst_attr, snd_attr = ('update_node', 'head_node')
+        fst_attr, snd_attr = ("update_node", "head_node")
 
     current = FIRST
     while current is not None:

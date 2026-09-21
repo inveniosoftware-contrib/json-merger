@@ -25,21 +25,19 @@
 
 """Test list aligner correct output."""
 
-from __future__ import absolute_import, print_function
-
 import pytest
 
+from json_merger.comparator import PrimaryKeyComparator
 from json_merger.config import UnifierOps
 from json_merger.conflict import ConflictType
-from json_merger.comparator import PrimaryKeyComparator
 from json_merger.errors import MaxThresholdExceededError, MergeError
 from json_merger.list_unify import ListUnifier
 from json_merger.nothing import NOTHING
 
 
 def test_value_error():
-    with pytest.raises(ValueError):
-        ListUnifier([], [], [], 'BAD_OPERATION')
+    with pytest.raises(ValueError, match="Operation 'BAD_OPERATION' not permitted"):
+        ListUnifier([], [], [], "BAD_OPERATION")
 
 
 def test_keep_only_head_entitites():
@@ -69,15 +67,18 @@ def test_keep_update_and_head_ent_head_fst():
     head = [5, 4, 3, 2]
     update = [10, 3, 1, 2, 11]
 
-    u = ListUnifier(root, head, update,
-                    UnifierOps.KEEP_UPDATE_AND_HEAD_ENTITIES_HEAD_FIRST)
+    u = ListUnifier(root, head, update, UnifierOps.KEEP_UPDATE_AND_HEAD_ENTITIES_HEAD_FIRST)
     u.unify()
 
-    assert u.unified == [(NOTHING, 5, NOTHING), (NOTHING, 4, NOTHING),
-                         (NOTHING, NOTHING, 10),
-                         (NOTHING, 3, 3), (1, NOTHING, 1),
-                         (2, 2, 2),
-                         (NOTHING, NOTHING, 11)]
+    assert u.unified == [
+        (NOTHING, 5, NOTHING),
+        (NOTHING, 4, NOTHING),
+        (NOTHING, NOTHING, 10),
+        (NOTHING, 3, 3),
+        (1, NOTHING, 1),
+        (2, 2, 2),
+        (NOTHING, NOTHING, 11),
+    ]
 
 
 def test_keep_update_and_head_ent_update_fst():
@@ -85,15 +86,18 @@ def test_keep_update_and_head_ent_update_fst():
     head = [5, 4, 3, 2]
     update = [10, 3, 1, 2, 11]
 
-    u = ListUnifier(root, head, update,
-                    UnifierOps.KEEP_UPDATE_AND_HEAD_ENTITIES_UPDATE_FIRST)
+    u = ListUnifier(root, head, update, UnifierOps.KEEP_UPDATE_AND_HEAD_ENTITIES_UPDATE_FIRST)
     u.unify()
 
-    assert u.unified == [(NOTHING, NOTHING, 10),
-                         (NOTHING, 5, NOTHING), (NOTHING, 4, NOTHING),
-                         (NOTHING, 3, 3), (1, NOTHING, 1),
-                         (2, 2, 2),
-                         (NOTHING, NOTHING, 11)]
+    assert u.unified == [
+        (NOTHING, NOTHING, 10),
+        (NOTHING, 5, NOTHING),
+        (NOTHING, 4, NOTHING),
+        (NOTHING, 3, 3),
+        (1, NOTHING, 1),
+        (2, 2, 2),
+        (NOTHING, NOTHING, 11),
+    ]
 
 
 def test_keep_update_and_head_ent_head_fst_fallback():
@@ -101,8 +105,7 @@ def test_keep_update_and_head_ent_head_fst_fallback():
     head = [1, 2, 3]
     update = [7, 3, 6, 1, 5, 2, 4]
 
-    u = ListUnifier(root, head, update,
-                    UnifierOps.KEEP_UPDATE_AND_HEAD_ENTITIES_HEAD_FIRST)
+    u = ListUnifier(root, head, update, UnifierOps.KEEP_UPDATE_AND_HEAD_ENTITIES_HEAD_FIRST)
 
     with pytest.raises(MergeError) as excinfo:
         u.unify()
@@ -113,11 +116,15 @@ def test_keep_update_and_head_ent_head_fst_fallback():
     assert conflict.path == ()
     assert conflict.body is None
 
-    assert u.unified == [(1, 1, 1), (2, 2, 2), (NOTHING, 3, 3),
-                         (NOTHING, NOTHING, 7),
-                         (NOTHING, NOTHING, 6),
-                         (NOTHING, NOTHING, 5),
-                         (NOTHING, NOTHING, 4)]
+    assert u.unified == [
+        (1, 1, 1),
+        (2, 2, 2),
+        (NOTHING, 3, 3),
+        (NOTHING, NOTHING, 7),
+        (NOTHING, NOTHING, 6),
+        (NOTHING, NOTHING, 5),
+        (NOTHING, NOTHING, 4),
+    ]
 
 
 def test_error_on_head_delete():
@@ -125,8 +132,7 @@ def test_error_on_head_delete():
     head = [1, 2, 3, 5]
     update = [1, 2, 4]
 
-    u = ListUnifier(root, head, update,
-                    UnifierOps.KEEP_UPDATE_ENTITIES_CONFLICT_ON_HEAD_DELETE)
+    u = ListUnifier(root, head, update, UnifierOps.KEEP_UPDATE_ENTITIES_CONFLICT_ON_HEAD_DELETE)
 
     with pytest.raises(MergeError) as excinfo:
         u.unify()
@@ -148,8 +154,7 @@ def test_error_on_head_delete_from_root():
     head = [1, 2]
     update = [1, 4]
 
-    u = ListUnifier(root, head, update,
-                    UnifierOps.KEEP_UPDATE_ENTITIES_CONFLICT_ON_HEAD_DELETE)
+    u = ListUnifier(root, head, update, UnifierOps.KEEP_UPDATE_ENTITIES_CONFLICT_ON_HEAD_DELETE)
 
     with pytest.raises(MergeError) as excinfo:
         u.unify()
@@ -171,8 +176,7 @@ def test_error_on_multiple_match():
     head = [1, 1, 2, 3, 3]
     update = [1, 2, 3]
 
-    u = ListUnifier(root, head, update,
-                    UnifierOps.KEEP_ONLY_UPDATE_ENTITIES)
+    u = ListUnifier(root, head, update, UnifierOps.KEEP_ONLY_UPDATE_ENTITIES)
     with pytest.raises(MergeError) as excinfo:
         u.unify()
 
@@ -194,12 +198,11 @@ def test_error_on_multiple_match_raises_based_on_env_var(monkeypatch):
     head = [1, 1, 2, 3, 3]
     update = [1, 2, 3]
 
-    list_unify = ListUnifier(root, head, update,
-                             UnifierOps.KEEP_ONLY_UPDATE_ENTITIES)
+    list_unify = ListUnifier(root, head, update, UnifierOps.KEEP_ONLY_UPDATE_ENTITIES)
     with pytest.raises(MaxThresholdExceededError) as excinfo:
         list_unify.unify()
 
-    assert 'Too many conflicts' in excinfo.value.message
+    assert "Too many conflicts" in excinfo.value.message
 
 
 def test_multiple_match_symmetry():
@@ -207,10 +210,8 @@ def test_multiple_match_symmetry():
     l1 = [1, 2, 3, 3, 3]
     l2 = [1, 2, 3]
 
-    u1 = ListUnifier(root, l1, l2,
-                     UnifierOps.KEEP_UPDATE_AND_HEAD_ENTITIES_HEAD_FIRST)
-    u2 = ListUnifier(root, l2, l1,
-                     UnifierOps.KEEP_UPDATE_AND_HEAD_ENTITIES_UPDATE_FIRST)
+    u1 = ListUnifier(root, l1, l2, UnifierOps.KEEP_UPDATE_AND_HEAD_ENTITIES_HEAD_FIRST)
+    u2 = ListUnifier(root, l2, l1, UnifierOps.KEEP_UPDATE_AND_HEAD_ENTITIES_UPDATE_FIRST)
 
     with pytest.raises(MergeError) as u1_excinfo:
         u1.unify()
@@ -234,8 +235,7 @@ def test_stats():
     head = [1, 3, 4, 2]
     update = [1, 3, 5]
 
-    u = ListUnifier(root, head, update,
-                    UnifierOps.KEEP_ONLY_UPDATE_ENTITIES)
+    u = ListUnifier(root, head, update, UnifierOps.KEEP_ONLY_UPDATE_ENTITIES)
     u.unify()
 
     assert sorted(u.head_stats.in_result) == [1, 3]
@@ -255,23 +255,22 @@ def test_stats():
 
 def test_transitive_equality():
     class Comp(PrimaryKeyComparator):
-        primary_key_fields = ['id0', 'id1']
+        primary_key_fields = ["id0", "id1"]
 
-    only0 = {'id0': 0}
-    only1 = {'id1': 1}
-    both = {'id0': 0, 'id1': 1}
+    only0 = {"id0": 0}
+    only1 = {"id1": 1}
+    both = {"id0": 0, "id1": 1}
 
-    u = ListUnifier([only0], [both], [only1],
-                    UnifierOps.KEEP_ONLY_UPDATE_ENTITIES, Comp)
+    u = ListUnifier([only0], [both], [only1], UnifierOps.KEEP_ONLY_UPDATE_ENTITIES, Comp)
     u.unify()
     assert u.unified == [(only0, both, only1)]
 
-    u = ListUnifier([only0], [only1], [both],
-                    UnifierOps.KEEP_ONLY_HEAD_ENTITIES, Comp)
+    u = ListUnifier([only0], [only1], [both], UnifierOps.KEEP_ONLY_HEAD_ENTITIES, Comp)
     u.unify()
     assert u.unified == [(only0, only1, both)]
 
-    u = ListUnifier([only0], [only1], [both],
-                    UnifierOps.KEEP_UPDATE_AND_HEAD_ENTITIES_HEAD_FIRST, Comp)
+    u = ListUnifier(
+        [only0], [only1], [both], UnifierOps.KEEP_UPDATE_AND_HEAD_ENTITIES_HEAD_FIRST, Comp
+    )
     u.unify()
     assert u.unified == [(only0, only1, both)]
