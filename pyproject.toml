@@ -1,6 +1,6 @@
 [project]
 name = "json-merger"
-version = "0.7.18"
+version = "0.7.19"
 description = "Python module that is able to merge json record objects."
 authors = [{ name = "CERN", email = "admin@inspirehep.net" }]
 license = "GPL-2.0-only"

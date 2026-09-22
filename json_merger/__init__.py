@@ -426,6 +426,6 @@ These instances can be used as class parameters for
 
 from json_merger.merger import Merger
 
-__version__ = "0.7.18"
+__version__ = "0.7.19"
 
 __all__ = ("__version__", "Merger")
