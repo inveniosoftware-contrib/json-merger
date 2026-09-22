@@ -424,10 +424,8 @@ These instances can be used as class parameters for
 ``DistanceFunctionComparator``
 """
 
-from __future__ import absolute_import, print_function
+from json_merger.merger import Merger
 
-from .merger import Merger
+__version__ = "0.7.18"
 
-__version__ = '0.7.18'
-
-__all__ = ('__version__', 'Merger')
+__all__ = ("__version__", "Merger")

@@ -25,67 +25,65 @@
 
 """Test merger corner cases that are unlikely to appear as usage scenarios."""
 
-from __future__ import absolute_import, print_function
-
 from json_merger.comparator import PrimaryKeyComparator
 
 
 def test_multiple_primary_keys():
     class MyComp(PrimaryKeyComparator):
-        primary_key_fields = ['id', 'f.id']
+        primary_key_fields = ["id", "f.id"]
 
-    lst = [{'id': 0}, {'id': 1}, {'f': {'id': 0}}, {'f': {'id': 1}}]
+    lst = [{"id": 0}, {"id": 1}, {"f": {"id": 0}}, {"f": {"id": 1}}]
     inst = MyComp(lst, lst)
 
     for i, obj in enumerate(lst):
-        assert inst.get_matches('l1', i) == [(i, obj)]
-        assert inst.get_matches('l2', i) == [(i, obj)]
+        assert inst.get_matches("l1", i) == [(i, obj)]
+        assert inst.get_matches("l2", i) == [(i, obj)]
 
 
 def test_list_of_primary_keys():
     class MyComp(PrimaryKeyComparator):
-        primary_key_fields = [['id1', 'id2']]
+        primary_key_fields = [["id1", "id2"]]
 
-    lst1 = [{'id1': 0, 'data': 1},
-            {'id2': 0, 'data': 1},
-            {'id1': 1, 'id2': 1, 'data': 1}]
-    lst2 = [{'id1': 0, 'data': 2},
-            {'id2': 0, 'data': 2},
-            {'id1': 1, 'id2': 1, 'data': 2},
-            {'id1': 1, 'id2': 0, 'data': 2}]
+    lst1 = [{"id1": 0, "data": 1}, {"id2": 0, "data": 1}, {"id1": 1, "id2": 1, "data": 1}]
+    lst2 = [
+        {"id1": 0, "data": 2},
+        {"id2": 0, "data": 2},
+        {"id1": 1, "id2": 1, "data": 2},
+        {"id1": 1, "id2": 0, "data": 2},
+    ]
 
     inst = MyComp(lst1, lst2)
 
-    assert inst.get_matches('l1', 0)
-    assert inst.get_matches('l1', 1)
-    assert inst.get_matches('l2', 0)
-    assert inst.get_matches('l2', 1)
-    assert not inst.get_matches('l2', 3)
+    assert inst.get_matches("l1", 0)
+    assert inst.get_matches("l1", 1)
+    assert inst.get_matches("l2", 0)
+    assert inst.get_matches("l2", 1)
+    assert not inst.get_matches("l2", 3)
 
-    assert inst.get_matches('l1', 2) == [(2, lst2[2])]
-    assert inst.get_matches('l2', 2) == [(2, lst1[2])]
+    assert inst.get_matches("l1", 2) == [(2, lst2[2])]
+    assert inst.get_matches("l2", 2) == [(2, lst1[2])]
 
 
 def test_list_of_primary_keys_normalization():
     class MyComp(PrimaryKeyComparator):
-        primary_key_fields = [['id1', 'id2']]
-        normalization_functions = {'id2': str.lower}
+        primary_key_fields = [["id1", "id2"]]
+        normalization_functions = {"id2": str.lower}
 
-    lst1 = [{'id1': 0, 'data': 1},
-            {'id2': 'a', 'data': 1},
-            {'id1': 1, 'id2': 'a', 'data': 1}]
-    lst2 = [{'id1': 0, 'data': 2},
-            {'id2': 'A', 'data': 2},
-            {'id1': 1, 'id2': 'A', 'data': 2},
-            {'id1': 1, 'id2': 'B', 'data': 2}]
+    lst1 = [{"id1": 0, "data": 1}, {"id2": "a", "data": 1}, {"id1": 1, "id2": "a", "data": 1}]
+    lst2 = [
+        {"id1": 0, "data": 2},
+        {"id2": "A", "data": 2},
+        {"id1": 1, "id2": "A", "data": 2},
+        {"id1": 1, "id2": "B", "data": 2},
+    ]
 
     inst = MyComp(lst1, lst2)
 
-    assert inst.get_matches('l1', 0)
-    assert inst.get_matches('l1', 1)
-    assert inst.get_matches('l2', 0)
-    assert inst.get_matches('l2', 1)
-    assert not inst.get_matches('l2', 3)
+    assert inst.get_matches("l1", 0)
+    assert inst.get_matches("l1", 1)
+    assert inst.get_matches("l2", 0)
+    assert inst.get_matches("l2", 1)
+    assert not inst.get_matches("l2", 3)
 
-    assert inst.get_matches('l1', 2) == [(2, lst2[2])]
-    assert inst.get_matches('l2', 2) == [(2, lst1[2])]
+    assert inst.get_matches("l1", 2) == [(2, lst2[2])]
+    assert inst.get_matches("l2", 2) == [(2, lst1[2])]

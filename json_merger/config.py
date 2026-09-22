@@ -31,21 +31,18 @@ class DictMergerOps(object):
 
         FALLBACK_KEEP_UPDATE: In case of conflict keep the `update` value.
     """
-    allowed_ops = [
-        'FALLBACK_KEEP_HEAD',
-        'FALLBACK_KEEP_UPDATE'
-    ]
+
+    allowed_ops = ["FALLBACK_KEEP_HEAD", "FALLBACK_KEEP_UPDATE"]
 
     @staticmethod
     def keep_longest(head, update, down_path):
-        """Keep longest field among `head` and `update`.
-        """
+        """Keep longest field among `head` and `update`."""
         if update is None:
-            return 'f'
+            return "f"
         if head is None:
-            return 's'
+            return "s"
 
-        return 'f' if len(head) >= len(update) else 's'
+        return "f" if len(head) >= len(update) else "s"
 
 
 for mode in DictMergerOps.allowed_ops:
@@ -75,14 +72,15 @@ class UnifierOps(object):
             in the diff between the `root` and `head` lists but it's not
             present in the `update` list then raise a conflict.
     """
+
     allowed_ops = [
-        'KEEP_ONLY_HEAD_ENTITIES',
-        'KEEP_ONLY_UPDATE_ENTITIES',
-        'KEEP_UPDATE_AND_HEAD_ENTITIES_HEAD_FIRST',
-        'KEEP_UPDATE_AND_HEAD_ENTITIES_UPDATE_FIRST',
-        'KEEP_UPDATE_ENTITIES_CONFLICT_ON_HEAD_DELETE',
-        'KEEP_UPDATE_AND_HEAD_ENTITIES_CONFLICT_ON_HEAD_DELETE',
-        'KEEP_HEAD_ENTITIES_CONFLICT_ON_NEW_UPDATE'
+        "KEEP_ONLY_HEAD_ENTITIES",
+        "KEEP_ONLY_UPDATE_ENTITIES",
+        "KEEP_UPDATE_AND_HEAD_ENTITIES_HEAD_FIRST",
+        "KEEP_UPDATE_AND_HEAD_ENTITIES_UPDATE_FIRST",
+        "KEEP_UPDATE_ENTITIES_CONFLICT_ON_HEAD_DELETE",
+        "KEEP_UPDATE_AND_HEAD_ENTITIES_CONFLICT_ON_HEAD_DELETE",
+        "KEEP_HEAD_ENTITIES_CONFLICT_ON_NEW_UPDATE",
     ]
 
 

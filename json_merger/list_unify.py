@@ -24,38 +24,33 @@
 
 """Module for aligning the same entities in lists."""
 
-from __future__ import absolute_import, print_function
-
 import os
 
-from .comparator import DefaultComparator
-from .config import UnifierOps
-from .conflict import Conflict, ConflictType
-from .errors import MaxThresholdExceededError, MergeError
-from .graph_builder import (
-    ListMatchGraphBuilder, sort_cyclic_graph_best_effort, toposort
-)
-from .nothing import Nothing
+from json_merger.comparator import DefaultComparator
+from json_merger.config import UnifierOps
+from json_merger.conflict import Conflict, ConflictType
+from json_merger.errors import MaxThresholdExceededError, MergeError
+from json_merger.graph_builder import ListMatchGraphBuilder, sort_cyclic_graph_best_effort, toposort
+from json_merger.nothing import Nothing
 
 _SOURCES = {
-    UnifierOps.KEEP_ONLY_UPDATE_ENTITIES: ['update'],
-    UnifierOps.KEEP_ONLY_HEAD_ENTITIES: ['head'],
-    UnifierOps.KEEP_UPDATE_AND_HEAD_ENTITIES_HEAD_FIRST: ['update', 'head'],
-    UnifierOps.KEEP_UPDATE_AND_HEAD_ENTITIES_UPDATE_FIRST: ['update', 'head'],
-    UnifierOps.KEEP_UPDATE_ENTITIES_CONFLICT_ON_HEAD_DELETE: ['update'],
-    UnifierOps.KEEP_UPDATE_AND_HEAD_ENTITIES_CONFLICT_ON_HEAD_DELETE:
-        ['update', 'head'],
-    UnifierOps.KEEP_HEAD_ENTITIES_CONFLICT_ON_NEW_UPDATE: ['head', 'update'],
+    UnifierOps.KEEP_ONLY_UPDATE_ENTITIES: ["update"],
+    UnifierOps.KEEP_ONLY_HEAD_ENTITIES: ["head"],
+    UnifierOps.KEEP_UPDATE_AND_HEAD_ENTITIES_HEAD_FIRST: ["update", "head"],
+    UnifierOps.KEEP_UPDATE_AND_HEAD_ENTITIES_UPDATE_FIRST: ["update", "head"],
+    UnifierOps.KEEP_UPDATE_ENTITIES_CONFLICT_ON_HEAD_DELETE: ["update"],
+    UnifierOps.KEEP_UPDATE_AND_HEAD_ENTITIES_CONFLICT_ON_HEAD_DELETE: ["update", "head"],
+    UnifierOps.KEEP_HEAD_ENTITIES_CONFLICT_ON_NEW_UPDATE: ["head", "update"],
 }
 
 _PICK_FIRST = {
-    UnifierOps.KEEP_ONLY_UPDATE_ENTITIES: 'update',
-    UnifierOps.KEEP_ONLY_HEAD_ENTITIES: 'head',
-    UnifierOps.KEEP_UPDATE_AND_HEAD_ENTITIES_HEAD_FIRST: 'head',
-    UnifierOps.KEEP_UPDATE_AND_HEAD_ENTITIES_UPDATE_FIRST: 'update',
-    UnifierOps.KEEP_UPDATE_ENTITIES_CONFLICT_ON_HEAD_DELETE: 'update',
-    UnifierOps.KEEP_UPDATE_AND_HEAD_ENTITIES_CONFLICT_ON_HEAD_DELETE: 'update',
-    UnifierOps.KEEP_HEAD_ENTITIES_CONFLICT_ON_NEW_UPDATE: 'update',
+    UnifierOps.KEEP_ONLY_UPDATE_ENTITIES: "update",
+    UnifierOps.KEEP_ONLY_HEAD_ENTITIES: "head",
+    UnifierOps.KEEP_UPDATE_AND_HEAD_ENTITIES_HEAD_FIRST: "head",
+    UnifierOps.KEEP_UPDATE_AND_HEAD_ENTITIES_UPDATE_FIRST: "update",
+    UnifierOps.KEEP_UPDATE_ENTITIES_CONFLICT_ON_HEAD_DELETE: "update",
+    UnifierOps.KEEP_UPDATE_AND_HEAD_ENTITIES_CONFLICT_ON_HEAD_DELETE: "update",
+    UnifierOps.KEEP_HEAD_ENTITIES_CONFLICT_ON_NEW_UPDATE: "update",
 }
 
 _RAISE_ERROR_OPS = [
@@ -63,17 +58,13 @@ _RAISE_ERROR_OPS = [
     UnifierOps.KEEP_UPDATE_AND_HEAD_ENTITIES_CONFLICT_ON_HEAD_DELETE,
 ]
 
-_RAISE_ON_UPDATE_CHANGED = [
-    UnifierOps.KEEP_HEAD_ENTITIES_CONFLICT_ON_NEW_UPDATE
-]
+_RAISE_ON_UPDATE_CHANGED = [UnifierOps.KEEP_HEAD_ENTITIES_CONFLICT_ON_NEW_UPDATE]
 
 
 class ListUnifier(object):
-
-    def __init__(self, root, head, update, operation,
-                 comparator_cls=DefaultComparator):
+    def __init__(self, root, head, update, operation, comparator_cls=DefaultComparator):
         if operation not in UnifierOps.allowed_ops:
-            raise ValueError('Operation %r not permitted' % operation)
+            raise ValueError("Operation %r not permitted" % operation)
 
         self.root = root
         self.head = head
@@ -97,13 +88,10 @@ class ListUnifier(object):
 
     def unify(self):
         MAX_DETAILED_CONFLICTS = os.environ.get("MAX_DETAILED_CONFLICTS")
-        MAX_DETAILED_CONFLICTS = (
-            int(MAX_DETAILED_CONFLICTS)
-            if MAX_DETAILED_CONFLICTS else None
-        )
+        MAX_DETAILED_CONFLICTS = int(MAX_DETAILED_CONFLICTS) if MAX_DETAILED_CONFLICTS else None
         graph_builder = ListMatchGraphBuilder(
-            self.root, self.head, self.update, self.sources,
-            self.comparator_cls)
+            self.root, self.head, self.update, self.sources, self.comparator_cls
+        )
         graph, nodes = graph_builder.build_graph()
         self.head_stats = graph_builder.head_stats
         self.update_stats = graph_builder.update_stats
@@ -112,15 +100,14 @@ class ListUnifier(object):
         if graph_builder.multiple_match_choices:
             multiple_match_choices = graph_builder.multiple_match_choices
             conflict_count = len(multiple_match_choices)
-            if (
-                MAX_DETAILED_CONFLICTS and
-                conflict_count > MAX_DETAILED_CONFLICTS
-            ):
+            if MAX_DETAILED_CONFLICTS and conflict_count > MAX_DETAILED_CONFLICTS:
                 raise MaxThresholdExceededError(
-                        'Too many conflicts to process in MANUAL_MERGE. '
-                        'Number of conflicts: %s. ' % conflict_count)
-            conflicts = [Conflict(ConflictType.MANUAL_MERGE, (), choice)
-                         for choice in multiple_match_choices]
+                    "Too many conflicts to process in MANUAL_MERGE. "
+                    "Number of conflicts: %s. " % conflict_count
+                )
+            conflicts = [
+                Conflict(ConflictType.MANUAL_MERGE, (), choice) for choice in multiple_match_choices
+            ]
 
         try:
             node_order = toposort(graph, self.pick_first)
@@ -130,22 +117,20 @@ class ListUnifier(object):
 
         for node in node_order:
             self.unified.append(nodes[node])
-        if (self.raise_on_head_delete and
-                self.head_stats.not_in_result):
+        if self.raise_on_head_delete and self.head_stats.not_in_result:
             removed = self.head_stats.not_in_result
-            conflicts.extend([Conflict(ConflictType.ADD_BACK_TO_HEAD, (), r)
-                              for r in removed])
+            conflicts.extend([Conflict(ConflictType.ADD_BACK_TO_HEAD, (), r) for r in removed])
         if self.raise_on_new_update:
             idx_to_remove = []
             for idx, (root, head, update) in enumerate(self.unified):
-                if isinstance(root, Nothing) and \
-                        isinstance(head, Nothing) and \
-                        not isinstance(update, Nothing):
-                    conflicts.append(
-                        Conflict(ConflictType.INSERT, (idx,), update)
-                    )
+                if (
+                    isinstance(root, Nothing)
+                    and isinstance(head, Nothing)
+                    and not isinstance(update, Nothing)
+                ):
+                    conflicts.append(Conflict(ConflictType.INSERT, (idx,), update))
                     idx_to_remove.append(idx)
             for idx in sorted(idx_to_remove, reverse=True):
                 del self.unified[idx]
         if conflicts:
-            raise MergeError('Errors in list unifier', conflicts)
+            raise MergeError("Errors in list unifier", conflicts)

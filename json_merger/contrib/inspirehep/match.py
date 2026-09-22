@@ -22,13 +22,14 @@
 # waive the privileges and immunities granted to it by virtue of its status
 # as an Intergovernmental Organization or submit itself to any jurisdiction.
 
-from __future__ import absolute_import, print_function
 
 from munkres import Munkres
 
 
-def distance_function_match(l1, l2, thresh, dist_fn, norm_funcs=[]):
+def distance_function_match(l1, l2, thresh, dist_fn, norm_funcs=None):
     """Returns pairs of matching indices from l1 and l2."""
+    if norm_funcs is None:
+        norm_funcs = []
     common = []
     # We will keep track of the global index in the source list as we
     # will successively reduce their sizes.
@@ -41,10 +42,12 @@ def distance_function_match(l1, l2, thresh, dist_fn, norm_funcs=[]):
     # index computed above.
     for norm_fn in norm_funcs:
         new_common, l1, l2 = _match_by_norm_func(
-                l1, l2,
-                lambda a: norm_fn(a[1]),
-                lambda a1, a2: dist_fn(a1[1], a2[1]),
-                thresh)
+            l1,
+            l2,
+            lambda a, norm_fn=norm_fn: norm_fn(a[1]),
+            lambda a1, a2: dist_fn(a1[1], a2[1]),
+            thresh,
+        )
         # Keep only the global list index in the end result.
         common.extend((c1[0], c2[0]) for c1, c2 in new_common)
 
@@ -67,8 +70,7 @@ def distance_function_match(l1, l2, thresh, dist_fn, norm_funcs=[]):
         part_l1 = [l1[i] for i in l1_indices]
         part_l2 = [l2[i] for i in l2_indices]
 
-        part_dist_matrix = [[dist_matrix[l1_i][l2_i] for l2_i in l2_indices]
-                            for l1_i in l1_indices]
+        part_dist_matrix = [[dist_matrix[l1_i][l2_i] for l2_i in l2_indices] for l1_i in l1_indices]
         part_cmn = _match_munkres(part_l1, part_l2, part_dist_matrix, thresh)
 
         common.extend((c1[0], c2[0]) for c1, c2 in part_cmn)
@@ -118,14 +120,15 @@ def _match_by_norm_func(l1, l2, norm_fn, dist_fn, thresh):
         _, (_, e1_first) = l1_elements[0]
         _, (_, e2_first) = l2_elements[0]
         match_is_ambiguous = not (
-            len(l1_elements) == len(l2_elements) and (
-                all(e2 == e2_first for (_, (_, e2)) in l2_elements) or
-                all(e1 == e1_first for (_, (_, e1)) in l1_elements)
+            len(l1_elements) == len(l2_elements)
+            and (
+                all(e2 == e2_first for (_, (_, e2)) in l2_elements)
+                or all(e1 == e1_first for (_, (_, e1)) in l1_elements)
             )
         )
         if match_is_ambiguous:
             continue
-        for (e1_idx, e1), (e2_idx, e2) in zip(l1_elements, l2_elements):
+        for (e1_idx, e1), (e2_idx, e2) in zip(l1_elements, l2_elements, strict=False):
             if dist_fn(e1, e2) > thresh:
                 continue
             l1_only_idx.remove(e1_idx)
@@ -175,8 +178,7 @@ class BipartiteConnectedComponents(object):
         self._union(node_1, node_2)
 
     def get_connected_components(self):
-        components_by_root = _group_by_fn(self.parents.keys(),
-                                          self._find)
+        components_by_root = _group_by_fn(self.parents.keys(), self._find)
         for root in components_by_root:
             components_by_root[root].append(root)
 

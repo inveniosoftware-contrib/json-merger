@@ -22,11 +22,9 @@
 # waive the privileges and immunities granted to it by virtue of its status
 # as an Intergovernmental Organization or submit itself to any jurisdiction.
 
-from __future__ import absolute_import, print_function
 
 from json_merger.comparator import BaseComparator
-
-from .match import distance_function_match
+from json_merger.contrib.inspirehep.match import distance_function_match
 
 
 class DistanceFunctionComparator(BaseComparator):
@@ -36,11 +34,9 @@ class DistanceFunctionComparator(BaseComparator):
 
     def process_lists(self):
         if self.distance_function is None:
-            raise NotImplementedError('You need to provide a distance '
-                                      'function')
+            raise NotImplementedError("You need to provide a distance " "function")
         # Get the unbound version of the distance function.
-        dist_fn = self.__class__.__dict__['distance_function']
-        self.matches = set(distance_function_match(self.l1, self.l2,
-                                                   self.threshold,
-                                                   dist_fn,
-                                                   self.norm_functions))
+        dist_fn = self.__class__.__dict__["distance_function"]
+        self.matches = set(
+            distance_function_match(self.l1, self.l2, self.threshold, dist_fn, self.norm_functions)
+        )

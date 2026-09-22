@@ -25,17 +25,13 @@
 
 """Test merger corner cases that are unlikely to appear as usage scenarios."""
 
-from __future__ import absolute_import, print_function
-
-
 import pytest
-
 
 from json_merger.config import DictMergerOps, UnifierOps
 from json_merger.conflict import Conflict, ConflictType
+from json_merger.dict_merger import patch_to_conflict_set
 from json_merger.errors import MaxThresholdExceededError, MergeError
 from json_merger.merger import Merger
-from json_merger.dict_merger import patch_to_conflict_set
 
 
 def test_merge_bare_int_lists():
@@ -43,23 +39,19 @@ def test_merge_bare_int_lists():
     h = [1, 2, 3, 4]
     u = [1, 2, 5]
 
-    m = Merger(r, h, u,
-               DictMergerOps.FALLBACK_KEEP_HEAD,
-               UnifierOps.KEEP_ONLY_UPDATE_ENTITIES)
+    m = Merger(r, h, u, DictMergerOps.FALLBACK_KEEP_HEAD, UnifierOps.KEEP_ONLY_UPDATE_ENTITIES)
     m.merge()
     assert m.merged_root == [1, 2, 5]
 
 
 def test_merge_bare_str_lists():
-    r = ['1', '2', '3']
-    h = ['1', '2', '3', '4']
-    u = ['1', '2', '5']
+    r = ["1", "2", "3"]
+    h = ["1", "2", "3", "4"]
+    u = ["1", "2", "5"]
 
-    m = Merger(r, h, u,
-               DictMergerOps.FALLBACK_KEEP_HEAD,
-               UnifierOps.KEEP_ONLY_UPDATE_ENTITIES)
+    m = Merger(r, h, u, DictMergerOps.FALLBACK_KEEP_HEAD, UnifierOps.KEEP_ONLY_UPDATE_ENTITIES)
     m.merge()
-    assert m.merged_root == ['1', '2', '5']
+    assert m.merged_root == ["1", "2", "5"]
 
 
 def test_merge_raises_based_on_env_var(monkeypatch):
@@ -68,13 +60,11 @@ def test_merge_raises_based_on_env_var(monkeypatch):
     h = [1, 1, 2, 3, 3]
     u = [1, 2, 3]
 
-    m = Merger(r, h, u,
-               DictMergerOps.FALLBACK_KEEP_HEAD,
-               UnifierOps.KEEP_ONLY_UPDATE_ENTITIES)
+    m = Merger(r, h, u, DictMergerOps.FALLBACK_KEEP_HEAD, UnifierOps.KEEP_ONLY_UPDATE_ENTITIES)
 
     with pytest.raises(MaxThresholdExceededError) as excinfo:
         m.merge()
-    assert 'Too many conflicts' in excinfo.value.message
+    assert "Too many conflicts" in excinfo.value.message
 
 
 def test_merge_nested_lists():
@@ -82,79 +72,68 @@ def test_merge_nested_lists():
     h = [[1], [2], [3], [4]]
     u = [[1], [2], [5]]
 
-    m = Merger(r, h, u,
-               DictMergerOps.FALLBACK_KEEP_HEAD,
-               UnifierOps.KEEP_ONLY_UPDATE_ENTITIES)
+    m = Merger(r, h, u, DictMergerOps.FALLBACK_KEEP_HEAD, UnifierOps.KEEP_ONLY_UPDATE_ENTITIES)
     m.merge()
 
     assert m.merged_root == [[1], [2], [5]]
 
 
 def test_merge_root_is_not_list():
-    r = 'randomstring'
+    r = "randomstring"
     h = [[1], [2, 3], [5]]
     u = [[1], [2, 3], [5]]
 
-    m = Merger(r, h, u,
-               DictMergerOps.FALLBACK_KEEP_HEAD,
-               UnifierOps.KEEP_ONLY_UPDATE_ENTITIES)
+    m = Merger(r, h, u, DictMergerOps.FALLBACK_KEEP_HEAD, UnifierOps.KEEP_ONLY_UPDATE_ENTITIES)
     m.merge()
     # Here the lists are aligned as entities and lists of entities.
     assert m.merged_root == [[1], [2, 3], [5]]
 
 
 def test_merge_list_with_string():
-    r = 'somerandomvalue'
+    r = "somerandomvalue"
     h = [1, 2, 3]
-    u = 'a given string'
+    u = "a given string"
 
-    m = Merger(r, h, u,
-               DictMergerOps.FALLBACK_KEEP_HEAD,
-               UnifierOps.KEEP_ONLY_UPDATE_ENTITIES)
+    m = Merger(r, h, u, DictMergerOps.FALLBACK_KEEP_HEAD, UnifierOps.KEEP_ONLY_UPDATE_ENTITIES)
     with pytest.raises(MergeError) as excinfo:
         m.merge()
 
     assert m.merged_root == [1, 2, 3]
     assert len(excinfo.value.content) == 1
-    assert excinfo.value.content[0] == Conflict(ConflictType.SET_FIELD, (),
-                                                'a given string')
+    assert excinfo.value.content[0] == Conflict(ConflictType.SET_FIELD, (), "a given string")
 
 
 def test_merge_str_with_keep_longest():
     r = {}
-    h = 'A short string'
-    u = 'A much longer string'
+    h = "A short string"
+    u = "A much longer string"
 
-    m = Merger(r, h, u,
-               DictMergerOps.keep_longest,
-               UnifierOps.KEEP_ONLY_UPDATE_ENTITIES)
+    m = Merger(r, h, u, DictMergerOps.keep_longest, UnifierOps.KEEP_ONLY_UPDATE_ENTITIES)
 
     with pytest.raises(MergeError):
         m.merge()
 
-    assert m.merged_root == 'A much longer string'
+    assert m.merged_root == "A much longer string"
 
 
 def test_merge_dict_with_keep_longest():
     r = {}
     h = {
-        'a': 'A short string',
-        'b': 'An extremely long string',
+        "a": "A short string",
+        "b": "An extremely long string",
     }
     u = {
-        'a': 'A much longer string',
-        'b': 'Another short string',
-        'c': 'Other string',
+        "a": "A much longer string",
+        "b": "Another short string",
+        "c": "Other string",
     }
 
-    m = Merger(r, h, u,
-               DictMergerOps.keep_longest,
-               UnifierOps.KEEP_ONLY_UPDATE_ENTITIES)
+    m = Merger(r, h, u, DictMergerOps.keep_longest, UnifierOps.KEEP_ONLY_UPDATE_ENTITIES)
 
     expected = {
-        'a': 'A much longer string',
-        'b': 'An extremely long string',
-        'c': 'Other string',
+        "a": "A much longer string",
+        "b": "An extremely long string",
+        "c": "Other string",
     }
 
     with pytest.raises(MergeError):
@@ -165,29 +144,27 @@ def test_merge_dict_with_keep_longest():
 
 def test_merge_list_with_keep_longest():
     r = {
-        'a': [
+        "a": [
             {
-                'b': 'One string',
+                "b": "One string",
             },
         ],
     }
     h = {
-        'a': [
+        "a": [
             {
-                'b': 'A different string',
+                "b": "A different string",
             },
         ],
     }
     u = {}
 
-    m = Merger(r, h, u,
-               DictMergerOps.keep_longest,
-               UnifierOps.KEEP_ONLY_UPDATE_ENTITIES)
+    m = Merger(r, h, u, DictMergerOps.keep_longest, UnifierOps.KEEP_ONLY_UPDATE_ENTITIES)
 
     expected = {
-        'a': [
+        "a": [
             {
-                'b': 'A different string',
+                "b": "A different string",
             },
         ],
     }  # as len(h['a']) > len(u['a']) and strategy is keep_longest
@@ -199,24 +176,24 @@ def test_merge_list_with_keep_longest():
 
 
 def test_patch_to_conflict_set_handles_change_patch_with_dotted_key():
-    patch = ('change', 'a.b', ('1', '2'))
+    patch = ("change", "a.b", ("1", "2"))
 
     conflicts = patch_to_conflict_set(patch)
 
     expected_conflicts = {
-        ('SET_FIELD', ('a', 'b'), '2'),
+        ("SET_FIELD", ("a", "b"), "2"),
     }
 
     assert conflicts == expected_conflicts
 
 
 def test_patch_to_conflict_set_handles_change_patch_with_list_key():
-    patch = ('change', ['a', 0, 'b'], ('1', '2'))
+    patch = ("change", ["a", 0, "b"], ("1", "2"))
 
     conflicts = patch_to_conflict_set(patch)
 
     expected_conflicts = {
-        ('SET_FIELD', ('a', 0, 'b'), '2'),
+        ("SET_FIELD", ("a", 0, "b"), "2"),
     }
 
     assert conflicts == expected_conflicts
@@ -227,13 +204,13 @@ def test_keep_head_conflict_on_new_update():
     h = [1, 2]
     u = [3]
 
-    m = Merger(r, h, u,
-               DictMergerOps.keep_longest,
-               UnifierOps.KEEP_HEAD_ENTITIES_CONFLICT_ON_NEW_UPDATE)
+    m = Merger(
+        r, h, u, DictMergerOps.keep_longest, UnifierOps.KEEP_HEAD_ENTITIES_CONFLICT_ON_NEW_UPDATE
+    )
     with pytest.raises(MergeError):
         m.merge()
 
     expected_merge = [1, 2]
-    expected_conflict = [('INSERT', (0,), 3)]
+    expected_conflict = [("INSERT", (0,), 3)]
     assert m.merged_root == expected_merge
     assert m.conflicts == expected_conflict

@@ -22,10 +22,9 @@
 # waive the privileges and immunities granted to it by virtue of its status
 # as an Intergovernmental Organization or submit itself to any jurisdiction.
 
-from __future__ import absolute_import, print_function
 
-from .nothing import NOTHING
-from .utils import get_obj_at_key_path
+from json_merger.nothing import NOTHING
+from json_merger.utils import get_obj_at_key_path
 
 
 class BaseComparator(object):
@@ -59,19 +58,19 @@ class BaseComparator(object):
         e.g. get_matches(self, 'l1', 0) will return all elements from self.l2
         matching with self.l1[0]
         """
-        if src not in ('l1', 'l2'):
+        if src not in ("l1", "l2"):
             raise ValueError('Must have one of "l1" or "l2" as src')
-        if src == 'l1':
-            target_list = self.l2
-        else:
-            target_list = self.l1
+        target_list = self.l2 if src == "l1" else self.l1
         comparator = {
-            'l1': lambda s_idx, t_idx: (s_idx, t_idx) in self.matches,
-            'l2': lambda s_idx, t_idx: (t_idx, s_idx) in self.matches,
+            "l1": lambda s_idx, t_idx: (s_idx, t_idx) in self.matches,
+            "l2": lambda s_idx, t_idx: (t_idx, s_idx) in self.matches,
         }[src]
 
-        return [(trg_idx, obj) for trg_idx, obj in enumerate(target_list)
-                if comparator(src_idx, trg_idx)]
+        return [
+            (trg_idx, obj)
+            for trg_idx, obj in enumerate(target_list)
+            if comparator(src_idx, trg_idx)
+        ]
 
 
 class PrimaryKeyComparator(BaseComparator):
@@ -102,11 +101,11 @@ class PrimaryKeyComparator(BaseComparator):
             obj1 = {'key1': 'id123'} and obj2 = {'key1': 'id123'}
     """
 
-    primary_key_fields = ['pk']
+    primary_key_fields = ["pk"]
     normalization_functions = {}
 
     def _get_compared_objects_at_field_path(self, obj1, obj2, field):
-        key_path = tuple(k for k in field.split('.') if k)
+        key_path = tuple(k for k in field.split(".") if k)
         o1 = get_obj_at_key_path(obj1, key_path, NOTHING)
         o2 = get_obj_at_key_path(obj2, key_path, NOTHING)
         return o1, o2
@@ -133,11 +132,9 @@ class PrimaryKeyComparator(BaseComparator):
         for field_set in self.primary_key_fields:
             if not isinstance(field_set, list):
                 field_set = [field_set]
-            checks = [self._have_field_equal(obj1, obj2, field)
-                      for field in field_set]
+            checks = [self._have_field_equal(obj1, obj2, field) for field in field_set]
             are_all_fields_nothing = [
-                self._are_fields_nothing(obj1, obj2, field)
-                for field in field_set
+                self._are_fields_nothing(obj1, obj2, field) for field in field_set
             ]
             if all(checks) and not all(are_all_fields_nothing):
                 return True
